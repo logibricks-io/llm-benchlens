@@ -178,9 +178,15 @@ export default function Benchmarks() {
                 <span>{CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}</span>
                 <span className="tnum">
                   难度 ×{b.difficultyCoefficient.toFixed(2)}
-                  {b.scoreCount > 0 && ` · ${b.scoreCount} 条记录`}
+                  {b.scoreCount > 0 ? ` · ${b.scoreCount} 条记录` : ""}
                 </span>
               </div>
+              {b.scoreCount === 0 && (
+                <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[color:var(--signal-caution)]">
+                  <AlertTriangle className="size-2.5" />
+                  暂无可追溯成绩，无法用于比较
+                </div>
+              )}
               {!b.ciDisclosed && (
                 <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[color:var(--signal-caution)]">
                   <AlertTriangle className="size-2.5" />
@@ -201,6 +207,12 @@ export default function Benchmarks() {
                 <th className="px-3 py-2 text-left font-medium">状态</th>
                 <th className="px-3 py-2 text-right font-medium">
                   <span className="inline-flex items-center gap-1">效用 <InfoHint>{UTILITY_EXPLAIN}</InfoHint></span>
+                </th>
+                <th className="px-3 py-2 text-right font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    证据
+                    <InfoHint>该评测下已收录的可追溯成绩条数。为 0 时无法用于比较模型，效用分已被相应折减。</InfoHint>
+                  </span>
                 </th>
                 <th className="px-3 py-2 text-right font-medium">可信</th>
                 <th className="px-3 py-2 text-right font-medium">分辨</th>
@@ -232,6 +244,11 @@ export default function Benchmarks() {
                     </div>
                   </td>
                   <td className="tnum px-3 py-2 text-right font-semibold text-primary">{b.utilityScore}</td>
+                  <td className="tnum px-3 py-2 text-right text-xs">
+                    <span className={b.scoreCount === 0 ? "text-[color:var(--signal-caution)]" : "text-muted-foreground"}>
+                      {b.scoreCount}
+                    </span>
+                  </td>
                   <td className="tnum px-3 py-2 text-right text-xs">{b.trustScore}</td>
                   <td className="tnum px-3 py-2 text-right text-xs">{b.discriminativePower}</td>
                   <td className="tnum px-4 py-2 text-right text-xs">×{b.difficultyCoefficient.toFixed(2)}</td>
