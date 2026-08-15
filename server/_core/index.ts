@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { auditDataHandler } from "../scheduled";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -36,6 +37,9 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  // Scheduled (Heartbeat) callbacks. Must be registered before the Vite /
+  // static fallthrough — `/api/scheduled/*` is not auto-mounted.
+  app.post("/api/scheduled/auditData", auditDataHandler);
   // tRPC API
   app.use(
     "/api/trpc",

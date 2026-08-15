@@ -99,7 +99,26 @@
 - [x] 全部 45 项测试通过
 
 ## 已知限制
-- [ ] 数据刷新仍需人工触发采集脚本，未接入定时抓取管线
+- [x] 数据刷新仍需人工触发采集脚本，未接入定时抓取管线 → 已接入 Heartbeat 定时审计端点 /api/scheduled/auditData（自动重算覆盖率、新鲜度分布、出处完整性并写入刷新记录）
+
+## 补齐项（第五轮）
+- [x] server/scheduled.ts：定时审计回调，403 拒绝非 cron 调用而非 500（避免平台重试）
+- [x] 在 server/_core/index.ts 注册 /api/scheduled/auditData
+- [x] 数据运维页新增「定时审计」面板，明确自动化只覆盖体检、不覆盖采集
+- [x] 定时端点测试 3 项（匿名拒绝、非 cron 拒绝、cron 正常返回体检摘要）
+- [x] 全部 48 项测试通过
+
+## 待用户操作
+- [ ] 站点发布后创建定时任务（需先 Publish，沙箱地址平台不可达）
+
+## 补齐项（第六轮：实体一致性）
+- [x] 归一 sourceType：9 种取值折叠为 4 种（leaderboard/official → official_leaderboard，third_party/aggregator → third_party_aggregator，vendor → self_reported）
+- [x] 归并推理档位别名：-high/-max 等后缀视为推理设置而非独立模型，合并至规范模型并保留 effort 标签
+- [x] 模型数 384 → 353，去重后 857 条证据，覆盖 94/95
+- [x] 保守归并策略：仅在同厂商且规范行已存在时合并；带日期快照、尺寸、preview/flash/turbo 变体保持独立
+- [x] 新增实体一致性测试 4 项（来源封闭词表、无未归并别名、无重复证据行、出处仍零缺失）
+
+## 设计取舍（非缺陷）
 - [ ] 移动端为可安装 PWA，非原生 iOS/Android 打包
 - [ ] macOS 挂件为 Web 形态模拟，非原生 menubar 应用
 - [ ] 部分指标仅有 1–2 条证据，置信度低（已在界面显式标注，非数据错误）

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { startLogin } from "@/const";
-import { AlertTriangle, CheckCircle2, Database, ExternalLink, Lock, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Database, ExternalLink, Lock, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -166,6 +166,25 @@ export default function Admin() {
                 })}
             </div>
           )}
+        </div>
+
+        {/* Automation boundary */}
+        <div className="panel p-4">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Clock className="size-3.5 text-muted-foreground" />
+            <h3 className="text-[13px] font-semibold">定时审计</h3>
+            <InfoHint>
+              Heartbeat 定时任务会 POST 到 /api/scheduled/auditData，重算覆盖率、证据新鲜度分布与出处完整性，
+              并把结果写入上方的刷新记录。需站点发布后由维护者创建定时任务。
+            </InfoHint>
+          </div>
+          <p className="text-[12px] leading-relaxed text-muted-foreground">
+            自动化只覆盖「体检」，不覆盖「采集」。定时任务负责持续测量数据基座的健康度，让陈旧和缺口自己浮现；
+            而抓取第三方榜单、消解模型别名、重算元模型派生量无法安全地塞进一次两分钟的无状态调用——
+            更重要的是，静默导入未经核验的数字会破坏这个系统唯一不可让渡的前提：
+            <span className="text-foreground">每一条分数都必须能追溯到真实出处</span>。
+            因此新增成绩仍由维护者显式运行采集脚本并复核后装载。
+          </p>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
