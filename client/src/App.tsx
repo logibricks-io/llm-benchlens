@@ -14,6 +14,7 @@ import Matrix from "./pages/Matrix";
 import Mobile from "./pages/Mobile";
 import Models from "./pages/Models";
 import Radar from "./pages/Radar";
+import Admin from "./pages/Admin";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/compare" component={Compare} />
       <Route path="/decide" component={Decide} />
       <Route path="/radar" component={Radar} />
+      <Route path="/admin" component={Admin} />
       {/* Purpose-built form factors, not responsive resizes of the workbench. */}
       <Route path="/m" component={Mobile} />
       <Route path="/m/:rest*" component={Mobile} />

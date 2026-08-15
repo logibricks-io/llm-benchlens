@@ -21,7 +21,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 /** Horizontal swipe detection for card decks. */
 function useSwipe(onLeft: () => void, onRight: () => void) {
@@ -76,6 +77,20 @@ const TABS: Array<{ key: Tab; label: string; icon: typeof Radio }> = [
 export default function Mobile() {
   const [tab, setTab] = useState<Tab>("radar");
 
+  // Offline is a first-class state here: the service worker keeps serving the
+  // last known scores, and the user deserves to be told that is what they see.
+  const [offline, setOffline] = useState(() => !navigator.onLine);
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+
   return (
     <div className="mx-auto flex h-screen max-w-[430px] flex-col overflow-hidden bg-background">
       <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
@@ -87,6 +102,12 @@ export default function Mobile() {
         </div>
         <a href="/" className="text-[11px] text-muted-foreground">桌面版</a>
       </header>
+
+      {offline && (
+        <div className="shrink-0 border-b border-[color:var(--signal-caution)]/30 bg-[color:var(--signal-caution)]/10 px-4 py-1.5 text-[10px] leading-relaxed text-[color:var(--signal-caution)]">
+          离线中 · 显示的是上次加载的成绩，每条记录的出处与采集时间仍然有效
+        </div>
+      )}
 
       <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {tab === "radar" && <RadarTab />}
@@ -116,6 +137,8 @@ export default function Mobile() {
           );
         })}
       </nav>
+
+      <InstallPrompt />
     </div>
   );
 }

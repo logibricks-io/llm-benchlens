@@ -113,12 +113,18 @@ export default function Models() {
                   <span className="inline-flex items-center gap-1">
                     综合分
                     <InfoHint>
-                      对该模型所有归一化分做证据加权平均。权重由指标可信度、分辨力与出处强度合成，
-                      因此覆盖面窄或仅有厂商自报数据的模型不会因为分数漂亮而排到前面。
+                      对该模型所有归一化分做证据加权平均，再按证据条数向全库中位（50）收缩：
+                      n 条证据时观测均值只占 n/(n+4) 的权重。这样仅有一两条成绩的模型不会因为一次高分登顶。
+                      权重本身由指标可信度、分辨力与出处强度合成。
                     </InfoHint>
                   </span>
                 </th>
-                <th className="px-3 py-2 text-right font-medium">证据</th>
+                <th className="px-3 py-2 text-right font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    证据
+                    <InfoHint>该模型的成绩条数，以及由此得出的置信度 n/(n+4)。置信度越低，综合分越被拉向中位。</InfoHint>
+                  </span>
+                </th>
                 <th className="px-4 py-2 text-right font-medium">输出价格</th>
                 <th className="px-4 py-2 text-right font-medium"></th>
               </tr>
@@ -156,11 +162,36 @@ export default function Models() {
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <span className={cn("tnum text-[13px] font-semibold", m.compositeScore === null && "text-muted-foreground/40")}>
-                      {m.compositeScore ?? "—"}
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className={cn("tnum text-[13px] font-semibold", m.compositeScore === null && "text-muted-foreground/40")}>
+                        {m.compositeScore ?? "—"}
+                      </span>
+                      {m.rawMean !== null && m.confidence < 0.8 && (
+                        <span className="tnum text-[9px] text-muted-foreground/60">观测 {m.rawMean}</span>
+                      )}
+                    </div>
                   </td>
-                  <td className="tnum px-3 py-2 text-right text-xs text-muted-foreground">{m.coverage}</td>
+                  <td className="px-3 py-2 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span className="tnum text-xs text-muted-foreground">{m.coverage}</span>
+                      <span
+                        className="h-1 w-8 shrink-0 overflow-hidden rounded-full bg-muted"
+                        title={`置信度 ${Math.round(m.confidence * 100)}%`}
+                      >
+                        <span
+                          className={cn(
+                            "block h-full rounded-full",
+                            m.confidence >= 0.8
+                              ? "bg-[color:var(--signal-good)]/70"
+                              : m.confidence >= 0.5
+                                ? "bg-[color:var(--signal-warn)]/70"
+                                : "bg-[color:var(--signal-danger)]/60",
+                          )}
+                          style={{ width: `${m.confidence * 100}%` }}
+                        />
+                      </span>
+                    </div>
+                  </td>
                   <td className="tnum px-4 py-2 text-right text-xs text-muted-foreground">
                     {m.priceOutput === null ? "—" : `$${m.priceOutput}`}
                   </td>

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Activity,
   Boxes,
@@ -9,6 +10,7 @@ import {
   Grid3x3,
   Radio,
   ShieldCheck,
+  Wrench,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -22,8 +24,22 @@ const NAV = [
   { href: "/radar", label: "发布雷达", icon: Radio, hint: "新模型与新评测事件流" },
 ];
 
+/** Maintainer-only entry, appended for admins so it never teases other users. */
+const ADMIN_ITEM = {
+  href: "/admin",
+  label: "数据运维",
+  icon: Wrench,
+  hint: "覆盖度审计、陈旧证据与刷新记录",
+};
+
+function useNavItems() {
+  const { user } = useAuth();
+  return user?.role === "admin" ? [...NAV, ADMIN_ITEM] : NAV;
+}
+
 function Sidebar() {
   const [location] = useLocation();
+  const items = useNavItems();
   return (
     <aside className="hidden w-[212px] shrink-0 flex-col border-r border-border bg-sidebar lg:flex">
       <Link
@@ -40,7 +56,7 @@ function Sidebar() {
       </Link>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-2">
-        {NAV.map(item => {
+        {items.map(item => {
           const active = item.href === "/" ? location === "/" : location.startsWith(item.href);
           const Icon = item.icon;
           return (
@@ -100,9 +116,10 @@ function CoverageFooter() {
 /** Mobile / tablet fallback nav for the PC workbench routes. */
 function TopNav() {
   const [location] = useLocation();
+  const items = useNavItems();
   return (
     <div className="flex items-center gap-1 overflow-x-auto border-b border-border bg-sidebar px-3 py-2 lg:hidden">
-      {NAV.map(item => {
+      {items.map(item => {
         const active = item.href === "/" ? location === "/" : location.startsWith(item.href);
         return (
           <Link

@@ -56,10 +56,35 @@ export async function getUserByOpenId(openId: string) {
 
 /* ------------------------------------------------------------------ queries */
 
+/**
+ * The matrix endpoints read the whole score table on every request and then
+ * recompute derived values. With ~850 rows joined across three tables that is
+ * a 1-2s round trip per page load, which shows up as blank tables in the UI.
+ * A short process-local TTL cache removes the repeat cost while keeping the
+ * data trivially refreshable: any write path calls `invalidateCaches()`.
+ */
+const TTL_MS = 60_000;
+type CacheEntry<T> = { value: T; at: number };
+const cache = new Map<string, CacheEntry<unknown>>();
+
+async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key) as CacheEntry<T> | undefined;
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
+  const value = await load();
+  cache.set(key, { value, at: Date.now() });
+  return value;
+}
+
+export function invalidateCaches() {
+  cache.clear();
+}
+
 export async function listBenchmarks() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(benchmarks).orderBy(desc(benchmarks.utilityScore));
+  return cached("benchmarks", async () => {
+    const db = await getDb();
+    if (!db) return [];
+    return db.select().from(benchmarks).orderBy(desc(benchmarks.utilityScore));
+  });
 }
 
 export async function getBenchmarkBySlug(slug: string) {
@@ -70,9 +95,11 @@ export async function getBenchmarkBySlug(slug: string) {
 }
 
 export async function listModels() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(models).orderBy(models.name);
+  return cached("models", async () => {
+    const db = await getDb();
+    if (!db) return [];
+    return db.select().from(models).orderBy(models.name);
+  });
 }
 
 export async function getModelBySlug(slug: string) {
@@ -84,6 +111,10 @@ export async function getModelBySlug(slug: string) {
 
 /** Full score matrix with benchmark + model identifiers joined in. */
 export async function listScores() {
+  return cached("scores", listScoresUncached);
+}
+
+async function listScoresUncached() {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -166,6 +197,9 @@ export async function coverageStats() {
 export async function touchScores(benchmarkSlugs?: string[]) {
   const db = await getDb();
   if (!db) return 0;
+  // Any write must drop the read cache, otherwise the UI keeps showing stale
+  // freshness for up to a minute after a refresh.
+  invalidateCaches();
   if (benchmarkSlugs && benchmarkSlugs.length > 0) {
     const bms = await db
       .select({ id: benchmarks.id })
@@ -180,6 +214,7 @@ export async function touchScores(benchmarkSlugs?: string[]) {
     return (res as unknown as { affectedRows?: number }).affectedRows ?? 0;
   }
   const res = await db.update(scores).set({ lastUpdated: new Date() });
+  invalidateCaches();
   return (res as unknown as { affectedRows?: number }).affectedRows ?? 0;
 }
 

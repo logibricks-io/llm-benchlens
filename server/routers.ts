@@ -107,17 +107,41 @@ function toBenchmark<T extends { difficultyCoefficient: unknown; utilityScore: u
   };
 }
 
-/** Aggregate a model's standing from its measurements, weighted by evidence. */
+/**
+ * Aggregate a model's standing from its measurements, weighted by evidence.
+ *
+ * A raw weighted mean lets a model with one lucky score outrank a model
+ * measured on twenty benchmarks, which is the single most common way naive
+ * leaderboards mislead. So the mean is shrunk toward the prior (the library-wide
+ * midpoint) in proportion to how thin the evidence is: with n measurements the
+ * observed mean carries n/(n+K) of the weight. Thin evidence therefore reports
+ * a defensible "we don't know yet" instead of a spurious 100.
+ */
+const SHRINK_K = 4;
+const PRIOR = 50;
+
 function aggregate(rows: DecoratedScore[], weightOf: (r: DecoratedScore) => number) {
   let wsum = 0;
   let acc = 0;
+  let n = 0;
   for (const r of rows) {
     const w = weightOf(r);
     if (w <= 0) continue;
     wsum += w;
     acc += w * r.normalized;
+    n++;
   }
-  return { score: wsum > 0 ? Math.round((acc / wsum) * 10) / 10 : null, weightSum: Math.round(wsum * 100) / 100 };
+  if (wsum <= 0) return { score: null, weightSum: 0, shrinkage: 0, rawMean: null };
+  const rawMean = acc / wsum;
+  const confidence = n / (n + SHRINK_K);
+  const shrunk = confidence * rawMean + (1 - confidence) * PRIOR;
+  return {
+    score: Math.round(shrunk * 10) / 10,
+    weightSum: Math.round(wsum * 100) / 100,
+    /** 0 = fully shrunk to prior, 1 = fully trusted. */
+    shrinkage: Math.round(confidence * 1000) / 1000,
+    rawMean: Math.round(rawMean * 10) / 10,
+  };
 }
 
 export const appRouter = router({
@@ -250,6 +274,8 @@ export const appRouter = router({
           priceOutput: m.priceOutput === null ? null : num(m.priceOutput),
           coverage: rows.length,
           compositeScore: agg.score,
+          rawMean: agg.rawMean,
+          confidence: agg.shrinkage,
           evidenceWeight: agg.weightSum,
           domains: Array.from(new Set(rows.map((r: DecoratedScore) => r.capabilityDomain))),
         };
@@ -450,6 +476,69 @@ export const appRouter = router({
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       return db.listRefreshLog();
     }),
+
+    /**
+     * Data-quality audit. Surfaces exactly the gaps a maintainer can act on:
+     * benchmarks with no scores at all, the stalest evidence, and provenance
+     * holes. Everything here is derived, never hand-maintained.
+     */
+    audit: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const [bms, all] = await Promise.all([db.listBenchmarks(), db.listScores()]);
+      const decorated = all.map(decorate);
+
+      const byBenchmark = new Map<number, typeof decorated>();
+      for (const r of decorated) {
+        const list = byBenchmark.get(r.benchmarkId) ?? [];
+        list.push(r);
+        byBenchmark.set(r.benchmarkId, list);
+      }
+
+      const uncovered = bms
+        .filter(b => !byBenchmark.has(b.id))
+        .map(b => ({ slug: b.slug, name: b.name, utilityScore: num(b.utilityScore) }))
+        .sort((a, b) => b.utilityScore - a.utilityScore);
+
+      const thin = bms
+        .filter(b => {
+          const n = byBenchmark.get(b.id)?.length ?? 0;
+          return n > 0 && n < 4;
+        })
+        .map(b => ({ slug: b.slug, name: b.name, scoreCount: byBenchmark.get(b.id)?.length ?? 0 }))
+        .sort((a, b) => a.scoreCount - b.scoreCount);
+
+      const stalest = [...decorated]
+        .filter(r => r.freshness === "stale" || r.freshness === "aging")
+        .sort((a, b) => (a.measuredAt ?? "").localeCompare(b.measuredAt ?? ""))
+        .slice(0, 25)
+        .map(r => ({
+          benchmarkSlug: r.benchmarkSlug,
+          benchmarkName: r.benchmarkName,
+          modelName: r.modelName,
+          measuredAt: r.measuredAt,
+          freshness: r.freshness,
+          sourceUrl: r.sourceUrl,
+        }));
+
+      const sourceMix: Record<string, number> = {};
+      for (const r of decorated) sourceMix[r.sourceType] = (sourceMix[r.sourceType] ?? 0) + 1;
+
+      return {
+        totals: {
+          benchmarks: bms.length,
+          scoreRows: decorated.length,
+          coveredBenchmarks: byBenchmark.size,
+          coverageRate: bms.length ? Math.round((byBenchmark.size / bms.length) * 1000) / 10 : 0,
+          missingProvenance: decorated.filter(r => !r.sourceUrl).length,
+          ciDisclosed: bms.filter(b => b.ciDisclosed).length,
+        },
+        uncovered,
+        thin,
+        stalest,
+        sourceMix,
+      };
+    }),
+
     /** Marks tracked score rows as re-verified; the freshness layer reads this. */
     refreshData: protectedProcedure
       .input(z.object({ scope: z.enum(["all", "benchmarks"]), benchmarkSlugs: z.array(z.string()).optional() }))

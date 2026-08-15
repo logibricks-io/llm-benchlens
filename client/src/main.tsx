@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
 import "./index.css";
+import { registerServiceWorker } from "@/components/InstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -79,3 +80,6 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </trpc.Provider>
 );
+
+// Enables home-screen install + offline "last known" reads on mobile.
+registerServiceWorker();

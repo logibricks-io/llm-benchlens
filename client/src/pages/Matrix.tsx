@@ -65,6 +65,14 @@ type MatrixRow = {
 
 const ALL = "__all__";
 
+/**
+ * Mirrors the server-side shrinkage in `aggregate()`. Kept in sync deliberately:
+ * a row average that ignores evidence count would contradict the composite
+ * score shown everywhere else in the product.
+ */
+const SHRINK_K = 4;
+const PRIOR = 50;
+
 /** Heat colour for a normalized 0-100 score. Desaturated at the low end. */
 function heat(v: number): string {
   const t = Math.max(0, Math.min(100, v)) / 100;
@@ -147,7 +155,9 @@ export default function Matrix() {
       const vals = Array.from(m.cells.values());
       if (vals.length === 0) return -1;
       const key = normalize ? "normalized" : "commonScale";
-      return vals.reduce((a, v) => a + (v[key as "normalized"] as number), 0) / vals.length;
+      const mean = vals.reduce((a, v) => a + (v[key as "normalized"] as number), 0) / vals.length;
+      const confidence = vals.length / (vals.length + SHRINK_K);
+      return confidence * mean + (1 - confidence) * PRIOR;
     };
     if (sortBy === "composite") list.sort((a, b) => composite(b) - composite(a));
     else if (sortBy === "coverage") list.sort((a, b) => b.cells.size - a.cells.size);
@@ -327,7 +337,13 @@ export default function Matrix() {
                   模型
                 </th>
                 <th className="sticky left-[230px] z-10 w-[70px] min-w-[70px] border-r border-b border-border bg-background px-2 py-2 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                  均分
+                  <span className="inline-flex items-center gap-1">
+                    均分
+                    <InfoHint>
+                      本行已测指标的均值，并按证据条数向全库中位（50）收缩：n 条证据时观测均值仅占 n/(n+4) 权重。
+                      因此只测过一两项的模型不会靠一次高分排到前面。
+                    </InfoHint>
+                  </span>
                 </th>
                 {columns.map(c => (
                   <th

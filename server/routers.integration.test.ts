@@ -128,6 +128,32 @@ describe("recommend.byScenario", () => {
 });
 
 describe("benchmarks.filters", () => {
+  it("shrinks thin-evidence models toward the prior instead of letting them top the board", async () => {
+    const models = await caller.models.list();
+    const scored = models.filter(m => m.compositeScore !== null);
+    expect(scored.length).toBeGreaterThan(50);
+
+    // A single measurement can never produce a near-perfect composite.
+    const singles = scored.filter(m => m.coverage === 1);
+    for (const m of singles) {
+      expect(m.confidence).toBeCloseTo(1 / 5, 3);
+      expect(m.compositeScore!).toBeLessThan(92);
+    }
+
+    // Confidence must rise monotonically with evidence count.
+    for (const m of scored) {
+      expect(m.confidence).toBeGreaterThan(0);
+      expect(m.confidence).toBeLessThanOrEqual(1);
+      // confidence is rounded to three decimals by the router
+      expect(m.confidence).toBeCloseTo(m.coverage / (m.coverage + 4), 2);
+    }
+
+    // The top of the board should not be dominated by one-shot evidence.
+    const top10 = [...scored].sort((a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0)).slice(0, 10);
+    const thinInTop = top10.filter(m => m.coverage === 1).length;
+    expect(thinInTop).toBeLessThan(10);
+  });
+
   it("returns facet counts that sum to the total benchmark count", async () => {
     const f = await caller.benchmarks.filters();
     expect(f.total).toBeGreaterThanOrEqual(80);

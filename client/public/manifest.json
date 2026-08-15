@@ -1,0 +1,27 @@
+{
+  "name": "BenchLens — AI 评测元智能",
+  "short_name": "BenchLens",
+  "description": "把异构评测指标折叠进同一个表示空间：难度系数归一化、可信度评级与证据出处。",
+  "start_url": "/m",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f10",
+  "theme_color": "#0b0f10",
+  "categories": ["productivity", "utilities", "developer"],
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
