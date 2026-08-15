@@ -129,18 +129,35 @@ export function ContaminationBadge({ risk }: { risk: string }) {
   );
 }
 
+/**
+ * Must stay in sync with the closed vocabulary enforced in `identity.test.ts`.
+ * The older keys (`third_party`, `leaderboard`, `official`, `aggregator`) were
+ * folded during source normalization; they are kept as aliases only so that a
+ * stale cached response never renders a raw snake_case string to the user.
+ */
 const SOURCE_LABELS: Record<string, string> = {
+  official_leaderboard: "官方榜单",
+  third_party_aggregator: "第三方聚合",
   self_reported: "厂商自报",
-  third_party: "第三方复跑",
-  leaderboard: "公开榜单",
   paper: "论文",
+  // Legacy aliases.
+  third_party: "第三方聚合",
+  leaderboard: "官方榜单",
+  official: "官方榜单",
+  aggregator: "第三方聚合",
+  vendor: "厂商自报",
 };
 
 const SOURCE_EXPLAIN: Record<string, string> = {
+  official_leaderboard: "由评测方自己维护的官方榜单收录，运行环境统一，证据强度较高。",
+  third_party_aggregator: "由独立第三方复跑或聚合得出，未经厂商筛选，证据强度高。",
   self_reported: "由模型厂商在发布材料中自行公布，未经独立复跑，存在选择性报告的可能。",
-  third_party: "由独立评测机构自行运行得出，证据强度最高。",
-  leaderboard: "来自公开榜单收录，出处可追溯但运行方各异。",
-  paper: "来自公开论文中的实验结果。",
+  paper: "来自公开论文中的实验结果，方法可查但通常不随模型更新。",
+  third_party: "由独立第三方复跑或聚合得出。",
+  leaderboard: "来自官方榜单收录。",
+  official: "来自官方榜单收录。",
+  aggregator: "由独立第三方聚合得出。",
+  vendor: "由模型厂商自行公布。",
 };
 
 export function SourceBadge({ sourceType, className }: { sourceType: string; className?: string }) {
@@ -150,7 +167,9 @@ export function SourceBadge({ sourceType, className }: { sourceType: string; cla
       className={cn(
         "border-border bg-transparent text-muted-foreground",
         sourceType === "self_reported" && "text-[color:var(--signal-caution)]",
-        sourceType === "third_party" && "text-[color:var(--signal-good)]",
+        sourceType === "vendor" && "text-[color:var(--signal-caution)]",
+        (sourceType === "third_party_aggregator" || sourceType === "third_party") &&
+          "text-[color:var(--signal-good)]",
         className,
       )}
     >

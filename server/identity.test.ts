@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as db from "./db";
 
@@ -53,5 +55,20 @@ describe("entity identity", () => {
   it("still guarantees provenance on every row after the merge", async () => {
     const rows = await db.listScores();
     expect(rows.filter(r => !r.sourceUrl).length).toBe(0);
+  });
+
+  it("has a human-readable label for every sourceType actually stored", async () => {
+    // A missing label leaks a raw snake_case value like "third_party_aggregator"
+    // into the UI, which is exactly the kind of unexplained jargon this product
+    // exists to remove.
+    const badges = readFileSync(
+      resolve(__dirname, "..", "client", "src", "components", "MetaBadges.tsx"),
+      "utf8",
+    );
+    const rows = await db.listScores();
+
+    for (const t of new Set(rows.map(r => r.sourceType))) {
+      expect(badges.includes(`${t}:`), `SOURCE_LABELS missing "${t}"`).toBe(true);
+    }
   });
 });

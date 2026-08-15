@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { InstallPrompt } from "@/components/InstallPrompt";
 
 /** Horizontal swipe detection for card decks. */
@@ -75,7 +76,17 @@ const TABS: Array<{ key: Tab; label: string; icon: typeof Radio }> = [
 ];
 
 export default function Mobile() {
-  const [tab, setTab] = useState<Tab>("radar");
+  // Tab lives in the URL, not in component state: on a PWA installed to the
+  // home screen a shared link or a reload must land on the same panel, and the
+  // OS back gesture should step back through panels rather than leaving the app.
+  const [location, navigate] = useLocation();
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  const requested = new URLSearchParams(search).get("tab");
+  const tab: Tab = (TABS.some(t => t.key === requested) ? requested : "radar") as Tab;
+  const setTab = (next: Tab) => {
+    const base = location.split("?")[0];
+    navigate(next === "radar" ? base : `${base}?tab=${next}`);
+  };
 
   // Offline is a first-class state here: the service worker keeps serving the
   // last known scores, and the user deserves to be told that is what they see.

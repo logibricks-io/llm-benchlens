@@ -146,17 +146,24 @@ export default function Home() {
               <span className="text-[11px] text-muted-foreground">全库均值</span>
             </div>
             <div className="space-y-3">
-              <ScoreMeter
-                value={o?.avgTrust ?? 0}
-                label="平均可信度"
-                explain={TRUST_EXPLAIN}
-              />
-              <ScoreMeter
-                value={o?.avgDiscriminative ?? 0}
-                label="平均分辨力"
-                explain={DISC_EXPLAIN}
-                tone="violet"
-              />
+              {/* Never render a real-looking 0 while loading: a "平均可信度 0"
+                  reads as a finding, not as an absent value. */}
+              {overview.isLoading || !o ? (
+                <>
+                  <Skeleton className="h-9 rounded" />
+                  <Skeleton className="h-9 rounded" />
+                </>
+              ) : (
+                <>
+                  <ScoreMeter value={o.avgTrust} label="平均可信度" explain={TRUST_EXPLAIN} />
+                  <ScoreMeter
+                    value={o.avgDiscriminative}
+                    label="平均分辨力"
+                    explain={DISC_EXPLAIN}
+                    tone="violet"
+                  />
+                </>
+              )}
             </div>
             <div className="mt-4 space-y-2 border-t border-border pt-3">
               <div className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
@@ -167,10 +174,14 @@ export default function Home() {
               </div>
               <div className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
                 <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-[color:var(--signal-caution)]" />
-                <span>
-                  证据新鲜度：30 天内 {o?.freshness.fresh ?? 0} 条 · 90 天内 {o?.freshness.recent ?? 0} 条 ·
-                  8 个月内 {o?.freshness.aging ?? 0} 条 · 陈旧 {o?.freshness.stale ?? 0} 条。
-                </span>
+                {o ? (
+                  <span>
+                    证据新鲜度：30 天内 {o.freshness.fresh} 条 · 90 天内 {o.freshness.recent} 条 ·
+                    8 个月内 {o.freshness.aging} 条 · 陈旧 {o.freshness.stale} 条。
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground/60">证据新鲜度：统计中…</span>
+                )}
               </div>
             </div>
           </div>
@@ -182,7 +193,9 @@ export default function Home() {
               <h3 className="text-[13px] font-semibold">能力域覆盖</h3>
             </div>
             <div className="space-y-2">
-              {domainRows.map(([domain, count]) => {
+              {benchmarks.isLoading && domainRows.length === 0
+                ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-4 rounded" />)
+                : domainRows.map(([domain, count]) => {
                 const max = domainRows[0]?.[1] ?? 1;
                 return (
                   <Link
@@ -209,7 +222,11 @@ export default function Home() {
 
         {/* Utility ranking: the platform's most contrarian output */}
         <div className="grid gap-4 lg:grid-cols-2">
-          <TrustScatter points={bms} />
+          {benchmarks.isLoading && bms.length === 0 ? (
+            <Skeleton className="h-[320px] rounded-lg" />
+          ) : (
+            <TrustScatter points={bms} />
+          )}
           <div className="grid gap-4">
             <UtilityList
               title="最值得看的指标"
