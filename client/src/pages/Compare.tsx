@@ -89,9 +89,9 @@ export default function Compare() {
         selected.length > 1 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5">
+              <div className="flex items-center gap-2 rounded-sm hair-all px-2.5 py-1.5">
                 <Switch checked={sharedOnly} onCheckedChange={setSharedOnly} className="scale-90" />
-                <span className="text-xs font-medium whitespace-nowrap">仅共同指标</span>
+                <span className="text-xs whitespace-nowrap">仅共同指标</span>
               </div>
             </TooltipTrigger>
             <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
@@ -109,17 +109,17 @@ export default function Compare() {
           return (
             <div
               key={slug}
-              className="panel flex items-center gap-2 px-3 py-2"
+              className="hair-t flex items-center gap-2 px-3 py-2"
               style={{ borderColor: `color-mix(in oklch, ${PALETTE[i]} 40%, transparent)` }}
             >
               <span className="size-2 shrink-0 rounded-full" style={{ background: PALETTE[i] }} />
               <div className="min-w-0">
-                <div className="truncate text-[13px] font-medium">{m?.name ?? slug}</div>
-                <div className="truncate text-[10px] text-muted-foreground">{m?.provider ?? ""}</div>
+                <div className="truncate text-[13px]">{m?.name ?? slug}</div>
+                <div className="truncate text-[10px] text-ink-500">{m?.provider ?? ""}</div>
               </div>
               <button
                 onClick={() => setSelected(selected.filter(s => s !== slug))}
-                className="ml-1 rounded p-0.5 text-muted-foreground transition-colors duration-150 hover:bg-secondary hover:text-foreground"
+                className="ml-1 rounded p-0.5 text-ink-500 transition-colors duration-150 hover:bg-frost-mist/50 hover:text-ink-900"
               >
                 <X className="size-3.5" />
               </button>
@@ -138,7 +138,7 @@ export default function Compare() {
               <Command>
                 <CommandInput placeholder="搜索模型…" className="text-xs" />
                 <CommandList>
-                  <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">未找到模型</CommandEmpty>
+                  <CommandEmpty className="py-4 text-center text-xs text-ink-500">未找到模型</CommandEmpty>
                   <CommandGroup>
                     {all
                       .filter(m => !selected.includes(m.slug) && m.coverage > 0)
@@ -151,7 +151,7 @@ export default function Compare() {
                         >
                           <div className="flex w-full items-center justify-between gap-2">
                             <span className="truncate">{m.name}</span>
-                            <span className="tnum shrink-0 text-[10px] text-muted-foreground">
+                            <span className="tnum shrink-0 text-[10px] text-ink-500">
                               {m.coverage} 条
                             </span>
                           </div>
@@ -166,10 +166,10 @@ export default function Compare() {
       </div>
 
       {selected.length === 0 ? (
-        <div className="grid-canvas flex h-[320px] items-center justify-center rounded-lg border border-border">
-          <div className="panel max-w-md px-6 py-5 text-center">
-            <p className="text-sm font-medium">从上方添加模型开始对比</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+        <div className="flex h-[320px] items-center justify-center rounded-sm hair-all">
+          <div className="hair-t max-w-md px-6 py-5 text-center">
+            <p className="text-sm">从上方添加模型开始对比</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-ink-500">
               对战台只在共同测过的指标上做比较，并对每个数值标注出处与采集时间。
               跨指标的总分差异会用归一化口径消除量纲影响。
             </p>
@@ -180,29 +180,29 @@ export default function Compare() {
           {/* Composite summary */}
           <div className="mb-4 grid gap-3" style={{ gridTemplateColumns: `repeat(${picked.length}, minmax(0, 1fr))` }}>
             {picked.map((m, i) => (
-              <div key={m.slug} className="panel p-4">
+              <div key={m.slug} className="hair-t p-4">
                 <div className="flex items-center gap-1.5">
                   <span className="size-2 rounded-full" style={{ background: PALETTE[i] }} />
-                  <span className="truncate text-xs text-muted-foreground">{m.provider}</span>
+                  <span className="truncate text-xs text-ink-500">{m.provider}</span>
                 </div>
-                <div className="mt-1.5 truncate text-[13px] font-semibold">{m.name}</div>
+                <div className="mt-1.5 truncate text-[13px]">{m.name}</div>
                 <div className="mt-3 flex items-end justify-between">
                   <div>
-                    <div className="tnum text-2xl leading-none font-semibold" style={{ color: PALETTE[i] }}>
+                    <div className="tnum text-2xl leading-none" style={{ color: PALETTE[i] }}>
                       {m.compositeScore ?? "—"}
                     </div>
-                    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <div className="mt-1 flex items-center gap-1 text-[10px] text-ink-500">
                       综合分
                       <InfoHint>{NORMALIZED_EXPLAIN}</InfoHint>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="tnum text-sm">{m.coverage}</div>
-                    <div className="text-[10px] text-muted-foreground">证据条数</div>
+                    <div className="text-[10px] text-ink-500">证据条数</div>
                   </div>
                 </div>
                 {m.priceOutput !== null && (
-                  <div className="mt-2 border-t border-border pt-2 text-[10px] text-muted-foreground">
+                  <div className="mt-2 hair-t pt-2 text-[10px] text-ink-500">
                     输出 ${m.priceOutput} / 百万 token
                   </div>
                 )}
@@ -211,13 +211,13 @@ export default function Compare() {
           </div>
 
           {/* Per-benchmark comparison */}
-          <div className="panel overflow-hidden">
+          <div className="hair-t">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-[11px] tracking-wide text-muted-foreground uppercase">
-                  <th className="px-4 py-2 text-left font-medium">指标</th>
+                <tr className="hair-b text-[11px] tracking-wide text-ink-500 uppercase">
+                  <th className="px-4 py-2 text-left">指标</th>
                   {picked.map((m, i) => (
-                    <th key={m.slug} className="px-3 py-2 text-right font-medium">
+                    <th key={m.slug} className="px-3 py-2 text-right">
                       <span style={{ color: PALETTE[i] }}>{m.name}</span>
                     </th>
                   ))}
@@ -228,12 +228,12 @@ export default function Compare() {
                   const vals = picked.map(m => b.cells.get(m.slug)?.normalized ?? null);
                   const best = Math.max(...vals.filter((v): v is number => v !== null), -1);
                   return (
-                    <tr key={b.slug} className="border-b border-border/60 last:border-0 hover:bg-secondary/30">
+                    <tr key={b.slug} className="hair-b last:border-0 hover:bg-frost-mist/40">
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <div className="min-w-0">
                             <div className="truncate text-[13px]">{b.name}</div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <div className="flex items-center gap-1.5 text-[10px] text-ink-500">
                               <span>{CAPABILITY_LABELS[b.domain as CapabilityDomain] ?? b.domain}</span>
                               <span className="tnum">×{b.difficulty.toFixed(2)}</span>
                             </div>
@@ -246,7 +246,7 @@ export default function Compare() {
                         if (!cell) {
                           return (
                             <td key={m.slug} className="px-3 py-2 text-right">
-                              <span className="text-xs text-muted-foreground/30">无记录</span>
+                              <span className="text-xs text-ink-400">无记录</span>
                             </td>
                           );
                         }
@@ -258,7 +258,7 @@ export default function Compare() {
                                 <div className="inline-flex cursor-help items-center justify-end gap-1.5">
                                   <FreshnessDot freshness={cell.freshness} />
                                   <span
-                                    className={cn("tnum text-[13px]", isBest && "font-semibold")}
+                                    className={cn("tnum text-[13px]", isBest && "")}
                                     style={isBest ? { color: PALETTE[i] } : undefined}
                                   >
                                     {cell.normalized}
@@ -266,20 +266,20 @@ export default function Compare() {
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent className="w-[260px] space-y-1 text-xs">
-                                <div className="grid grid-cols-2 gap-x-3 text-muted-foreground">
+                                <div className="grid grid-cols-2 gap-x-3 text-ink-500">
                                   <span>原始分</span>
-                                  <span className="tnum text-right text-foreground">{cell.rawScore}</span>
+                                  <span className="tnum text-right text-ink-900">{cell.rawScore}</span>
                                   <span>归一化</span>
-                                  <span className="tnum text-right text-foreground">{cell.normalized}</span>
+                                  <span className="tnum text-right text-ink-900">{cell.normalized}</span>
                                   <span>采集</span>
-                                  <span className="tnum text-right text-foreground">{cell.measuredAt ?? "未标注"}</span>
+                                  <span className="tnum text-right text-ink-900">{cell.measuredAt ?? "未标注"}</span>
                                 </div>
                                 <div className="pt-0.5">
                                   <SourceBadge sourceType={cell.sourceType} />
                                 </div>
                                 {cell.sourceUrl && (
                                   <a href={cell.sourceUrl} target="_blank" rel="noreferrer"
-                                    className="flex items-center gap-1 text-primary hover:underline">
+                                    className="flex items-center gap-1 text-frost-qing hover:underline">
                                     <ExternalLink className="size-3" />
                                     <span className="truncate">{cell.sourceName ?? "出处"}</span>
                                   </a>
@@ -296,8 +296,8 @@ export default function Compare() {
             </table>
             {table.length === 0 && (
               <div className="px-4 py-8 text-center">
-                <p className="text-sm font-medium">这些模型没有共同测过的指标</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-sm">这些模型没有共同测过的指标</p>
+                <p className="mt-1 text-xs text-ink-500">
                   关闭「仅共同指标」可查看各自的记录，但请注意那不构成直接对比。
                 </p>
               </div>

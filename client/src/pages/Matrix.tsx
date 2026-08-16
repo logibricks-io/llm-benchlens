@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { MiniRuler, toneForScore } from "@/components/Ruler";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
@@ -73,12 +74,11 @@ const ALL = "__all__";
 const SHRINK_K = 4;
 const PRIOR = 50;
 
-/** Heat colour for a normalized 0-100 score. Desaturated at the low end. */
-function heat(v: number): string {
-  const t = Math.max(0, Math.min(100, v)) / 100;
-  const alpha = 0.06 + t * 0.34;
-  return `oklch(0.78 0.13 195 / ${alpha.toFixed(3)})`;
-}
+/*
+ * No per-cell heat fill. Shading 95 columns turns the table into a mosaic and
+ * spends the whole colour budget on decoration; a number plus a short graduated
+ * tick reads faster and keeps the page on paper.
+ */
 
 export default function Matrix() {
   const matrix = trpc.models.matrix.useQuery();
@@ -185,18 +185,18 @@ export default function Matrix() {
                 <Columns3 className="size-3" />
                 列
                 {hiddenCols.size > 0 && (
-                  <span className="tnum rounded-full bg-primary/15 px-1.5 text-[10px] text-primary">
+                  <span className="tnum rounded-full bg-frost-qing/12 px-1.5 text-[10px] text-frost-qing">
                     -{hiddenCols.size}
                   </span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[260px] p-0" align="end">
-              <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                <span className="text-xs font-medium">显示的指标列</span>
+              <div className="flex items-center justify-between hair-b px-3 py-2">
+                <span className="text-xs">显示的指标列</span>
                 <button
                   onClick={() => setHiddenCols(new Set())}
-                  className="text-[11px] text-primary hover:underline"
+                  className="text-[11px] text-frost-qing hover:underline"
                 >
                   全选
                 </button>
@@ -207,7 +207,7 @@ export default function Matrix() {
                   return (
                     <label
                       key={c.slug}
-                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-secondary/60"
+                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-frost-mist/50"
                     >
                       <Checkbox
                         checked={shown}
@@ -222,7 +222,7 @@ export default function Matrix() {
                         className="scale-90"
                       />
                       <span className="min-w-0 flex-1 truncate text-xs">{c.name}</span>
-                      <span className="tnum shrink-0 text-[10px] text-muted-foreground">{c.count}</span>
+                      <span className="tnum shrink-0 text-[10px] text-ink-500">{c.count}</span>
                     </label>
                   );
                 })}
@@ -231,9 +231,9 @@ export default function Matrix() {
           </Popover>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5">
+              <div className="flex items-center gap-2 rounded-sm hair-all px-2.5 py-1.5">
                 <Switch checked={normalize} onCheckedChange={setNormalize} className="scale-90" />
-                <span className="text-xs font-medium whitespace-nowrap">
+                <span className="text-xs whitespace-nowrap">
                   {normalize ? "归一化分" : "原始分"}
                 </span>
               </div>
@@ -255,12 +255,12 @@ export default function Matrix() {
       }
     >
       {/* Filter bar */}
-      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-border bg-background/95 px-5 py-2.5 backdrop-blur">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <div className="hair-b bg-background sticky top-0 z-20 flex flex-wrap items-center gap-2 px-7 py-2.5">
+        <div className="ui text-ink-500 flex items-center gap-1.5 text-[11px]">
           <Filter className="size-3.5" />
           <span>筛选</span>
           {activeFilters > 0 && (
-            <span className="tnum rounded-full bg-primary/15 px-1.5 text-[10px] text-primary">{activeFilters}</span>
+            <span className="tnum text-frost-qing text-[10px]">{activeFilters}</span>
           )}
         </div>
         <Input
@@ -322,22 +322,22 @@ export default function Matrix() {
           ))}
         </div>
       ) : columns.length === 0 ? (
-        <div className="grid-canvas flex h-[320px] items-center justify-center">
-          <div className="panel px-6 py-5 text-center">
-            <p className="text-sm font-medium">当前筛选组合下没有记录</p>
-            <p className="mt-1 text-xs text-muted-foreground">尝试放宽能力域或饱和状态筛选</p>
+        <div className="flex h-[320px] items-center justify-center">
+          <div className="text-center">
+            <p className="text-ink-800 text-[15px]">当前筛选组合下没有记录</p>
+            <p className="ui text-ink-500 mt-1.5 text-[11px]">尝试放宽能力域或饱和状态筛选</p>
           </div>
         </div>
       ) : (
         <div className="overflow-auto">
-          <table className="w-max border-separate border-spacing-0 text-sm">
+          <table className="w-max border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 w-[230px] min-w-[230px] border-r border-b border-border bg-background px-4 py-2 text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                <th className="hair-r hair-b bg-background ui text-ink-400 sticky left-0 z-10 w-[210px] min-w-[210px] px-7 py-2 text-left align-bottom text-[9px] tracking-[0.14em] uppercase">
                   模型
                 </th>
-                <th className="sticky left-[230px] z-10 w-[70px] min-w-[70px] border-r border-b border-border bg-background px-2 py-2 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                  <span className="inline-flex items-center gap-1">
+                <th className="hair-r hair-b bg-background ui text-ink-400 sticky left-[210px] z-10 w-[64px] min-w-[64px] px-2 py-2 text-right align-bottom text-[9px] uppercase">
+                  <span className="inline-flex items-center gap-1 normal-case">
                     均分
                     <InfoHint>
                       本行已测指标的均值，并按证据条数向全库中位（50）收缩：n 条证据时观测均值仅占 n/(n+4) 权重。
@@ -348,29 +348,42 @@ export default function Matrix() {
                 {columns.map(c => (
                   <th
                     key={c.slug}
-                    className="min-w-[104px] border-b border-border px-2 py-2 align-bottom"
+                    /* Rotated headers: 95 columns cannot carry horizontal labels,
+                       and the diagonal is what makes this read as a printed
+                       table rather than a spreadsheet. */
+                    className="hair-b h-[124px] w-[46px] min-w-[46px] p-0 align-bottom"
                   >
-                    <Link href={`/benchmarks/${c.slug}`} className="group block text-left">
-                      <div className="mb-1 line-clamp-2 text-[11px] leading-tight font-medium text-foreground/85 group-hover:text-primary">
-                        {c.name}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="tnum cursor-help text-[10px] text-muted-foreground">
-                              ×{c.difficulty.toFixed(2)}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
-                            {DIFFICULTY_EXPLAIN}
-                          </TooltipContent>
-                        </Tooltip>
-                        {c.saturation === "saturated" && (
-                          <span className="text-[10px] text-muted-foreground/70">饱和</span>
-                        )}
-                        {c.scoreForm === "elo" && <span className="text-[10px] text-muted-foreground/70">Elo</span>}
-                      </div>
-                    </Link>
+                    <div className="relative h-[124px] w-[46px] overflow-visible">
+                      <Link
+                        href={`/benchmarks/${c.slug}`}
+                        className="group absolute bottom-1.5 left-3 block"
+                        style={{ transform: "rotate(-42deg)", transformOrigin: "left bottom" }}
+                      >
+                        {/* 124px of vertical room at 42° allows ~166px of run;
+                            cap the label so it never climbs past the header. */}
+                        <div className="flex max-w-[158px] items-baseline gap-1.5 whitespace-nowrap">
+                          <span className="text-ink-700 group-hover:text-ink-900 max-w-[104px] truncate text-[10.5px] transition-colors duration-150">
+                            {c.name}
+                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="tnum text-ink-400 shrink-0 cursor-help text-[9px]">
+                                ×{c.difficulty.toFixed(2)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
+                              {DIFFICULTY_EXPLAIN}
+                            </TooltipContent>
+                          </Tooltip>
+                          {c.saturation === "saturated" && (
+                            <span className="ui text-danger shrink-0 text-[8.5px]">饱和</span>
+                          )}
+                          {c.scoreForm === "elo" && (
+                            <span className="ui text-ink-400 shrink-0 text-[8.5px]">Elo</span>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -378,76 +391,82 @@ export default function Matrix() {
             <tbody>
               {modelRows.map(m => (
                 <tr key={m.slug} className="group">
-                  <td className="sticky left-0 z-10 border-r border-b border-border bg-background px-4 py-1.5 group-hover:bg-secondary/40">
+                  <td className="hair-r hair-row bg-background sticky left-0 z-10 px-7 py-1.5">
                     <Link href={`/models?focus=${m.slug}`} className="block min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="truncate text-[13px] font-medium">{m.name}</span>
+                        <span className="text-ink-800 truncate text-[12.5px]">{m.name}</span>
                         {m.license === "open" && (
-                          <span className="shrink-0 rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-[color:var(--signal-good)]">
-                            开放权重
-                          </span>
+                          <span className="ui text-good shrink-0 text-[8.5px]">开放</span>
                         )}
                         {m.status === "superseded" && (
-                          <span className="shrink-0 text-[9px] text-muted-foreground/70">已被取代</span>
+                          <span className="ui text-ink-400 shrink-0 text-[8.5px]">已取代</span>
                         )}
                       </div>
-                      <div className="truncate text-[10px] text-muted-foreground">{m.provider}</div>
+                      <div className="ui text-ink-400 truncate text-[9.5px]">{m.provider}</div>
                     </Link>
                   </td>
-                  <td className="tnum sticky left-[230px] z-10 border-r border-b border-border bg-background px-2 py-1.5 text-right text-[13px] font-semibold group-hover:bg-secondary/40">
+                  <td className="tnum hair-r hair-row bg-background text-ink-900 sticky left-[210px] z-10 px-2 py-1.5 text-right text-[12.5px]">
                     {m.composite >= 0 ? m.composite.toFixed(1) : "—"}
                   </td>
                   {columns.map(c => {
                     const cell = m.cells.get(c.slug);
                     if (!cell) {
                       return (
-                        <td key={c.slug} className="border-b border-border px-2 py-1.5 text-center">
-                          <span className="text-xs text-muted-foreground/25">—</span>
+                        <td key={c.slug} className="hair-row px-1 py-1.5 text-center">
+                          <span className="text-ink-400/40 text-[11px]">·</span>
                         </td>
                       );
                     }
                     const shown = normalize ? cell.normalized : cell.commonScale;
                     return (
-                      <td
-                        key={c.slug}
-                        className="border-b border-border px-2 py-1.5 text-center"
-                        style={{ background: heat(cell.normalized) }}
-                      >
+                      <td key={c.slug} className="hair-row px-1 py-1.5 text-center">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex cursor-help items-center justify-center gap-1">
-                              <FreshnessDot freshness={cell.freshness} />
-                              <span className="tnum text-[13px] font-medium">{shown.toFixed(1)}</span>
+                            {/* number + a short rule: precise value plus a sense
+                                of where it sits, without a colour wash */}
+                            <div className="cursor-help">
+                              <div className="flex items-center justify-center gap-0.5">
+                                <FreshnessDot freshness={cell.freshness} />
+                                <span className="tnum text-ink-800 text-[11.5px]">
+                                  {shown.toFixed(1)}
+                                </span>
+                              </div>
+                              <MiniRuler
+                                value={cell.normalized}
+                                tone={toneForScore(cell.normalized)}
+                                width={30}
+                                className="mt-[2px]"
+                              />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="w-[290px] space-y-1.5 text-xs">
-                            <div className="font-medium">
+                            <div className="">
                               {cell.modelName} · {cell.benchmarkName}
                             </div>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-muted-foreground">
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-ink-500">
                               <span>原始分</span>
-                              <span className="tnum text-right text-foreground">
+                              <span className="tnum text-right text-ink-900">
                                 {cell.rawScore}
                                 {cell.scoreForm === "elo" ? " Elo" : cell.scoreForm === "percentage" ? "%" : ""}
                               </span>
                               {cell.rawScoreSecondary !== null && (
                                 <>
                                   <span>{cell.secondaryLabel ?? "第二读数"}</span>
-                                  <span className="tnum text-right text-foreground">{cell.rawScoreSecondary}</span>
+                                  <span className="tnum text-right text-ink-900">{cell.rawScoreSecondary}</span>
                                 </>
                               )}
                               <span>归一化</span>
-                              <span className="tnum text-right text-foreground">{cell.normalized}</span>
+                              <span className="tnum text-right text-ink-900">{cell.normalized}</span>
                               <span>难度系数</span>
-                              <span className="tnum text-right text-foreground">×{cell.difficultyCoefficient.toFixed(2)}</span>
+                              <span className="tnum text-right text-ink-900">×{cell.difficultyCoefficient.toFixed(2)}</span>
                               {cell.benchmarkVersion && (
                                 <>
                                   <span>评测版本</span>
-                                  <span className="text-right text-foreground">{cell.benchmarkVersion}</span>
+                                  <span className="text-right text-ink-900">{cell.benchmarkVersion}</span>
                                 </>
                               )}
                               <span>采集时间</span>
-                              <span className="tnum text-right text-foreground">{cell.measuredAt ?? "未标注"}</span>
+                              <span className="tnum text-right text-ink-900">{cell.measuredAt ?? "未标注"}</span>
                             </div>
                             <div className="flex flex-wrap items-center gap-1 pt-0.5">
                               <SourceBadge sourceType={cell.sourceType} />
@@ -458,7 +477,7 @@ export default function Matrix() {
                                 href={cell.sourceUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center gap-1 pt-0.5 text-primary hover:underline"
+                                className="flex items-center gap-1 pt-0.5 text-frost-qing hover:underline"
                               >
                                 <ExternalLink className="size-3" />
                                 <span className="truncate">{cell.sourceName ?? "查看出处"}</span>
@@ -473,9 +492,9 @@ export default function Matrix() {
               ))}
             </tbody>
           </table>
-          <div className="flex items-center gap-2 px-5 py-3 text-[11px] text-muted-foreground">
+          <div className="ui text-ink-500 flex items-center gap-2 px-7 py-4 text-[10.5px]">
             <InfoHint>
-              单元格底色深浅代表归一化分高低。空白表示该模型在该指标上没有可追溯的公开记录——缺失本身也是信息，
+              单元格下方短刻度的长度代表归一化分高低。点号表示该模型在该指标上没有可追溯的公开记录——缺失本身也是信息，
               厂商通常只公布对自己有利的指标。
             </InfoHint>
             <span>

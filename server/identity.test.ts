@@ -71,4 +71,36 @@ describe("entity identity", () => {
       expect(badges.includes(`${t}:`), `SOURCE_LABELS missing "${t}"`).toBe(true);
     }
   });
+
+  it("has a label for every value of every meta-model enum, not just sourceType", async () => {
+    /*
+     * Same failure mode as sourceType, found on the FreshStack detail page: newly
+     * loaded benchmarks used strictness "strict" and stance
+     * "independent_academic", which no label table knew about, so the page showed
+     * bare English identifiers next to Chinese ones. The vocabularies are closed
+     * by design — assert that, rather than trusting each loader script to have
+     * picked from the right list.
+     */
+    const meta = readFileSync(resolve(__dirname, "..", "shared", "metaModel.ts"), "utf8");
+    const benchmarks = await db.listBenchmarks();
+
+    const fields: Array<[string, (b: (typeof benchmarks)[number]) => string]> = [
+      ["scoringMechanism", b => b.scoringMechanism],
+      ["strictness", b => b.strictness],
+      ["issuerStance", b => b.issuerStance],
+      ["contaminationRisk", b => b.contaminationRisk],
+      ["saturationStatus", b => b.saturationStatus],
+      ["capabilityDomain", b => b.capabilityDomain],
+    ];
+
+    const missing: string[] = [];
+    for (const [field, get] of fields) {
+      for (const value of new Set(benchmarks.map(get))) {
+        if (!value) continue;
+        if (!meta.includes(`${value}:`)) missing.push(`${field}="${value}"`);
+      }
+    }
+
+    expect(missing, `unlabelled enum values: ${missing.join(", ")}`).toEqual([]);
+  });
 });

@@ -22,6 +22,9 @@ const DOT_COLOR: Record<SaturationStatus, string> = {
  * Trust (y) against discriminative power (x). The quadrants are the point:
  * top-right = the only benchmarks worth quoting; bottom-left = noise that
  * still shows up in launch decks.
+ *
+ * Frost edition: the plot sits on paper with graduated edges — the frame is
+ * itself a pair of rulers — instead of inside a bordered panel.
  */
 export function TrustScatter({ points }: { points: Point[] }) {
   /**
@@ -49,101 +52,136 @@ export function TrustScatter({ points }: { points: Point[] }) {
   const yMid = points.length ? py(median(ys)) : 50;
 
   return (
-    <div className="panel p-4">
-      <div className="mb-3 flex items-center gap-1.5">
-        <h3 className="text-[13px] font-semibold">可信度 × 分辨力分布</h3>
+    <div>
+      <div className="mb-4 flex items-baseline gap-2">
+        <h3 className="text-ink-800 text-[15px]">可信度 × 分辨力分布</h3>
         <InfoHint>
           横轴为分辨力（还能区分多少模型差异），纵轴为可信度（这把尺子本身可不可信）。
           右上象限是真正值得引用的指标；左下象限的指标既不可信也已失去分辨力，却仍频繁出现在发布材料中。
         </InfoHint>
       </div>
 
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border">
-        {/*
-         * Quadrant shading and the grid are plain divs rather than SVG shapes:
-         * SVG presentation attributes do not reliably parse oklch(), and a
-         * failed parse silently falls back to an opaque fill.
-         */}
-        <div className="absolute inset-0 bg-background" />
-        <div
-          className="absolute bg-[color:var(--signal-good)] opacity-[0.07]"
-          style={{ left: `${xMid}%`, right: 0, top: 0, height: `${yMid}%` }}
-        />
-        <div
-          className="absolute bg-[color:var(--signal-danger)] opacity-[0.07]"
-          style={{ left: 0, width: `${xMid}%`, top: `${yMid}%`, bottom: 0 }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(to right, oklch(0.3 0.012 262 / 0.5) 0 1px, transparent 1px 25%), repeating-linear-gradient(to bottom, oklch(0.3 0.012 262 / 0.5) 0 1px, transparent 1px 25%)",
-          }}
-        />
-        {/* Median axes */}
-        <div className="absolute top-0 bottom-0 w-px bg-border" style={{ left: `${xMid}%` }} />
-        <div className="absolute right-0 left-0 h-px bg-border" style={{ top: `${yMid}%` }} />
+      {/* graduated frame: left and bottom edges are rules with tick marks */}
+      <div className="relative pb-6 pl-6">
+        <div className="paper relative aspect-[4/3] w-full">
+          {/*
+           * No quadrant fills. Two washes covering half the plot would blow the
+           * 5%-signal-colour budget and flatten the restraint the palette is for;
+           * the median hairlines already divide the space, so the quadrants are
+           * named with small corner marks instead.
+           */}
+          <div
+            className="ui absolute text-[9px]"
+            style={{ right: 6, top: 5, color: "var(--sig-good)", opacity: 0.85 }}
+          >
+            可信 · 有分辨力
+          </div>
+          <div
+            className="ui absolute text-[9px]"
+            style={{ left: 6, bottom: 5, color: "var(--sig-danger)", opacity: 0.85 }}
+          >
+            低可信 · 已饱和
+          </div>
+          {/* median axes — the quadrant split, stated as hairlines */}
+          <div
+            className="absolute top-0 bottom-0"
+            style={{ left: `${xMid}%`, width: 1, background: "var(--border)" }}
+          />
+          <div
+            className="absolute right-0 left-0"
+            style={{ top: `${yMid}%`, height: 1, background: "var(--border)" }}
+          />
 
-        {/* Points are absolutely positioned so hover targets stay circular. */}
-        {points.map(p => {
-          const left = px(p.discriminativePower);
-          const top = py(p.trustScore);
-          const color = DOT_COLOR[p.saturationStatus as SaturationStatus] ?? "var(--signal-saturated)";
-          const size = 5 + (p.utilityScore / 100) * 5;
-          return (
-            <Tooltip key={p.slug}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={`/benchmarks/${p.slug}`}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform duration-150 hover:scale-150"
-                  style={{
-                    left: `${left}%`,
-                    top: `${top}%`,
-                    width: `${size}px`,
-                    height: `${size}px`,
-                    background: color,
-                    opacity: 0.75,
-                    transitionTimingFunction: "var(--ease-out)",
-                  }}
-                />
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">
-                <div className="font-medium">{p.name}</div>
-                <div className="tnum mt-0.5 text-muted-foreground">
-                  可信 {p.trustScore} · 分辨 {p.discriminativePower} · 效用 {p.utilityScore}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
+          {points.map(p => {
+            const left = px(p.discriminativePower);
+            const top = py(p.trustScore);
+            const color =
+              DOT_COLOR[p.saturationStatus as SaturationStatus] ?? "var(--signal-saturated)";
+            const size = 5 + (p.utilityScore / 100) * 5;
+            return (
+              <Tooltip key={p.slug}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={`/benchmarks/${p.slug}`}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform duration-150 hover:scale-150"
+                    style={{
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      background: color,
+                      opacity: 0.7,
+                      transitionTimingFunction: "var(--ease-out)",
+                    }}
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">
+                  <div>{p.name}</div>
+                  <div className="tnum text-ink-500 mt-0.5">
+                    可信 {p.trustScore} · 分辨 {p.discriminativePower} · 效用 {p.utilityScore}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
 
+        {/* bottom rule: discriminative power */}
+        <div className="absolute bottom-6 left-6 right-0">
+          <div style={{ height: 1, background: "var(--frost-qing)", opacity: 0.5 }} />
+          {Array.from({ length: 11 }, (_, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                left: `${i * 10}%`,
+                top: 1,
+                width: 1,
+                height: i % 5 === 0 ? 4 : 2.5,
+                background: "var(--frost-qing)",
+                opacity: 0.55,
+              }}
+            />
+          ))}
+        </div>
+        {/* left rule: trust */}
+        <div className="absolute bottom-6 left-6 top-0">
+          <div className="h-full" style={{ width: 1, background: "var(--frost-qing)", opacity: 0.5 }} />
+          {Array.from({ length: 11 }, (_, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                top: `${i * 10}%`,
+                right: 1,
+                height: 1,
+                width: i % 5 === 0 ? 4 : 2.5,
+                background: "var(--frost-qing)",
+                opacity: 0.55,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="ui text-ink-400 absolute bottom-0 left-6 text-[9px]">分辨力 →</div>
+        <div
+          className="ui text-ink-400 absolute top-0 left-0 text-[9px]"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          ↑ 可信度
+        </div>
       </div>
 
-      {/* Quadrant captions sit below the plot so they never overlap points. */}
-      <div className="mt-2 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-[10px] text-[color:var(--signal-danger)]/80">
-          <span className="size-1.5 rounded-sm bg-[color:var(--signal-danger)]/40" />
-          左下：低可信且已饱和
-        </span>
-        <span className="flex items-center gap-1 text-[10px] text-[color:var(--signal-good)]/80">
-          右上：可信且有分辨力
-          <span className="size-1.5 rounded-sm bg-[color:var(--signal-good)]/40" />
-        </span>
-      </div>
-
-      <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
-        <span className="text-[10px] text-muted-foreground/70">横轴 分辨力 →　纵轴 ↑ 可信度</span>
-      </div>
-      <div className="mt-1.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="hair-t mt-2 flex flex-wrap items-center justify-between gap-2 pt-3">
+        <div className="flex items-center gap-3.5">
           {(["frontier", "contested", "saturated"] as SaturationStatus[]).map(s => (
-            <span key={s} className="flex items-center gap-1">
+            <span key={s} className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full" style={{ background: DOT_COLOR[s] }} />
-              <span className="text-[10px] text-muted-foreground">{SATURATION_LABELS[s]}</span>
+              <span className="ui text-ink-500 text-[9.5px]">{SATURATION_LABELS[s]}</span>
             </span>
           ))}
         </div>
-        <span className="text-[10px] text-muted-foreground/70">点面积 ∝ 效用分</span>
+        <span className="ui text-ink-400 text-[9.5px]">点面积 ∝ 效用分</span>
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ export type CapabilityDomain =
 
 export type ScoringMechanism =
   | "execution_verification" | "state_assertion" | "rubric_llm_judge"
-  | "human_preference_elo" | "exact_match" | "composite_index";
+  | "human_preference_elo" | "exact_match" | "composite_index" | "pass_at_k";
 
 export type Strictness = "all_or_nothing" | "partial_credit" | "single_answer";
 export type SaturationStatus = "saturated" | "contested" | "frontier";
@@ -46,6 +46,7 @@ export const MECHANISM_LABELS: Record<ScoringMechanism, string> = {
   human_preference_elo: "盲评对战 Elo",
   exact_match: "精确匹配",
   composite_index: "复合指数",
+  pass_at_k: "pass@k 采样",
 };
 
 export const MECHANISM_EXPLAIN: Record<ScoringMechanism, string> = {
@@ -55,6 +56,8 @@ export const MECHANISM_EXPLAIN: Record<ScoringMechanism, string> = {
   human_preference_elo: "人类或模型在盲评中两两对比，胜负关系换算为 Elo 等级分。",
   exact_match: "与标准答案精确匹配或等价判定，适合有唯一解的题目。",
   composite_index: "把多个子评测按权重合成一个指数，便于概览但会掩盖分项差异。",
+  pass_at_k:
+    "每题采样 k 次，只要有一次通过即算通过。k 越大分数越高，因此不同 k 值的成绩不可直接比较——报告时必须写明 k。",
 };
 
 export const STRICTNESS_LABELS: Record<Strictness, string> = {
@@ -165,7 +168,19 @@ export function normalizedScore(raw: number, bm: NormalizableBenchmark): number 
 export function evidenceWeight(bm: NormalizableBenchmark, sourceType?: string): number {
   const trust = bm.trustScore / 100;
   const disc = bm.discriminativePower / 100;
-  const provenance = sourceType === "third_party" ? 1 : sourceType === "leaderboard" ? 0.9 : 0.72;
+  /*
+   * Provenance discount, keyed on the normalised four-value vocabulary. An
+   * independent re-run outranks an official leaderboard, which outranks a
+   * vendor's own number. (The earlier version keyed on "third_party" and
+   * "leaderboard", values that no longer exist after the source-type merge, so
+   * every row silently fell through to the 0.72 self-reported discount.)
+   */
+  const provenance =
+    sourceType === "third_party_aggregator" || sourceType === "paper"
+      ? 1
+      : sourceType === "official_leaderboard"
+        ? 0.9
+        : 0.72;
   return round3(trust * 0.45 + disc * 0.35 + provenance * 0.2);
 }
 

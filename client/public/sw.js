@@ -9,10 +9,24 @@
  *     when the network genuinely fails, so offline degrades to "last known"
  *     rather than to a blank screen.
  */
-const VERSION = "benchlens-v1";
+const VERSION = "benchlens-v2";
 const SHELL = `${VERSION}-shell`;
 const DATA = `${VERSION}-data`;
 const SHELL_ASSETS = ["/m", "/manifest.json", "/icon.svg"];
+
+/**
+ * Cache-first is only safe for URLs that change when their contents change.
+ * Vite's build emits `/assets/index-<hash>.js`; its dev server emits
+ * `/src/App.tsx?t=…`, which is the *same* path across edits. Caching the latter
+ * pins the app to a stale bundle — and in production the same mistake would
+ * leave returning users on an old release indefinitely.
+ */
+function isImmutableAsset(url) {
+  if (/\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(js|css|woff2?|png|svg|webp|jpg)$/.test(url.pathname)) {
+    return true;
+  }
+  return SHELL_ASSETS.includes(url.pathname);
+}
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -63,6 +77,9 @@ self.addEventListener("fetch", event => {
   }
 
   // Static assets: cache-first.
+  // Anything not content-addressed goes straight to the network, uncached.
+  if (!isImmutableAsset(url)) return;
+
   event.respondWith(
     caches.match(request).then(
       hit =>
@@ -75,4 +92,3 @@ self.addEventListener("fetch", event => {
     ),
   );
 });
-

@@ -80,12 +80,28 @@ export default function Mobile() {
   // home screen a shared link or a reload must land on the same panel, and the
   // OS back gesture should step back through panels rather than leaving the app.
   const [location, navigate] = useLocation();
-  const search = typeof window !== "undefined" ? window.location.search : "";
-  const requested = new URLSearchParams(search).get("tab");
+  /*
+   * wouter's `location` excludes the query string, so reading
+   * window.location.search during render is not reactive — an externally set
+   * ?tab=... never applied, and the OS back gesture left the previous panel on
+   * screen. Mirror the query into state and resync on navigation + popstate.
+   */
+  const readTab = (): string | null =>
+    typeof window === "undefined"
+      ? null
+      : new URLSearchParams(window.location.search).get("tab");
+  const [requested, setRequested] = useState<string | null>(readTab);
+  useEffect(() => {
+    setRequested(readTab());
+    const sync = () => setRequested(readTab());
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, [location]);
   const tab: Tab = (TABS.some(t => t.key === requested) ? requested : "radar") as Tab;
   const setTab = (next: Tab) => {
     const base = location.split("?")[0];
     navigate(next === "radar" ? base : `${base}?tab=${next}`);
+    setRequested(next === "radar" ? null : next);
   };
 
   // Offline is a first-class state here: the service worker keeps serving the
@@ -104,18 +120,18 @@ export default function Mobile() {
 
   return (
     <div className="mx-auto flex h-screen max-w-[430px] flex-col overflow-hidden bg-background">
-      <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
+      <header className="flex shrink-0 items-center justify-between hair-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="grid size-6 place-items-center rounded-md bg-primary/15 ring-1 ring-primary/30">
-            <Sparkles className="size-3 text-primary" />
+          <div className="grid size-6 place-items-center rounded-sm bg-frost-qing/12 ring-1 ring-primary/30">
+            <Sparkles className="size-3 text-frost-qing" />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight">BenchLens</span>
+          <span className="text-[15px] tracking-tight">BenchLens</span>
         </div>
-        <a href="/" className="text-[11px] text-muted-foreground">桌面版</a>
+        <a href="/" className="text-[11px] text-ink-500">桌面版</a>
       </header>
 
       {offline && (
-        <div className="shrink-0 border-b border-[color:var(--signal-caution)]/30 bg-[color:var(--signal-caution)]/10 px-4 py-1.5 text-[10px] leading-relaxed text-[color:var(--signal-caution)]">
+        <div className="shrink-0 border-b border-[color:var(--signal-caution)]/30 bg-[color:var(--signal-caution)]/10 px-4 py-1.5 text-[10px] leading-relaxed text-caution">
           离线中 · 显示的是上次加载的成绩，每条记录的出处与采集时间仍然有效
         </div>
       )}
@@ -128,7 +144,7 @@ export default function Mobile() {
         {tab === "decide" && <DecideTab />}
       </main>
 
-      <nav className="flex shrink-0 border-t border-border bg-sidebar pb-[env(safe-area-inset-bottom)]">
+      <nav className="flex shrink-0 hair-t bg-sidebar pb-[env(safe-area-inset-bottom)]">
         {TABS.map(t => {
           const Icon = t.icon;
           const active = tab === t.key;
@@ -138,12 +154,12 @@ export default function Mobile() {
               onClick={() => setTab(t.key)}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-2.5 transition-transform duration-150 active:scale-[0.94]",
-                active ? "text-primary" : "text-muted-foreground",
+                active ? "text-frost-qing" : "text-ink-500",
               )}
               style={{ transitionTimingFunction: "var(--ease-out)" }}
             >
               <Icon className="size-[18px]" />
-              <span className="text-[10px] font-medium">{t.label}</span>
+              <span className="text-[10px]">{t.label}</span>
             </button>
           );
         })}
@@ -162,49 +178,49 @@ function RadarTab() {
 
   return (
     <div className="p-4">
-      <div className="grid-canvas relative mb-4 overflow-hidden rounded-xl border border-border p-4">
+      <div className="relative mb-4 overflow-hidden rounded-sm hair-all p-4">
         <div className="absolute inset-0 bg-gradient-to-br from-card via-card/90 to-card/50" />
         <div className="relative">
-          <div className="text-[11px] tracking-wide text-primary uppercase">数据基座</div>
+          <div className="text-[11px] tracking-wide text-frost-qing uppercase">数据基座</div>
           <div className="mt-2 flex items-baseline gap-4">
             <div>
-              <div className="tnum text-2xl leading-none font-semibold">{o?.benchmarks ?? "—"}</div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">指标</div>
+              <div className="tnum text-2xl leading-none">{o?.benchmarks ?? "—"}</div>
+              <div className="mt-0.5 text-[10px] text-ink-500">指标</div>
             </div>
             <div>
-              <div className="tnum text-2xl leading-none font-semibold">{o?.models ?? "—"}</div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">模型</div>
+              <div className="tnum text-2xl leading-none">{o?.models ?? "—"}</div>
+              <div className="mt-0.5 text-[10px] text-ink-500">模型</div>
             </div>
             <div>
-              <div className="tnum text-2xl leading-none font-semibold">{o?.scores ?? "—"}</div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">记录</div>
+              <div className="tnum text-2xl leading-none">{o?.scores ?? "—"}</div>
+              <div className="mt-0.5 text-[10px] text-ink-500">记录</div>
             </div>
           </div>
-          <div className="mt-3 flex items-start gap-1.5 rounded-lg border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 px-2.5 py-2">
-            <AlertTriangle className="mt-0.5 size-3 shrink-0 text-[color:var(--signal-caution)]" />
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
-              全库仅 <span className="tnum text-[color:var(--signal-caution)]">{o?.ciDisclosureRate ?? 0}%</span> 的
+          <div className="mt-3 flex items-start gap-1.5 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 px-2.5 py-2">
+            <AlertTriangle className="mt-0.5 size-3 shrink-0 text-caution" />
+            <p className="text-[11px] leading-relaxed text-ink-500">
+              全库仅 <span className="tnum text-caution">{o?.ciDisclosureRate ?? 0}%</span> 的
               指标披露置信区间，{o?.saturated ?? 0} 项已饱和。榜单上的小幅差距通常无法与噪声区分。
             </p>
           </div>
         </div>
       </div>
 
-      <h2 className="mb-2 px-0.5 text-[13px] font-semibold">发布雷达</h2>
+      <h2 className="mb-2 px-0.5 text-[13px]">发布雷达</h2>
       <div className="space-y-2">
         {(releases.data ?? []).map(r => (
-          <div key={r.id} className="rounded-xl border border-border bg-card p-3.5">
+          <div key={r.id} className="rounded-sm hair-all bg-paper p-3.5">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-[14px] font-semibold">{r.modelName}</span>
-              <span className="tnum shrink-0 text-[10px] text-muted-foreground">{r.releasedAt}</span>
+              <span className="truncate text-[14px]">{r.modelName}</span>
+              <span className="tnum shrink-0 text-[10px] text-ink-500">{r.releasedAt}</span>
             </div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">{r.provider}</div>
+            <div className="mt-0.5 text-[11px] text-ink-500">{r.provider}</div>
             {r.headline && (
-              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{r.headline}</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-ink-500">{r.headline}</p>
             )}
             {r.sourceUrl && (
               <a href={r.sourceUrl} target="_blank" rel="noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary">
+                className="mt-2 inline-flex items-center gap-1 text-[11px] text-frost-qing">
                 <ExternalLink className="size-3" />出处
               </a>
             )}
@@ -213,7 +229,7 @@ function RadarTab() {
         {releases.isLoading && (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-[92px] animate-pulse rounded-xl border border-border bg-card/50" />
+              <div key={i} className="h-[92px] animate-pulse rounded-sm hair-all bg-paper/50" />
             ))}
           </div>
         )}
@@ -240,12 +256,12 @@ function BrowseTab() {
   return (
     <div className="p-4">
       <div className="relative mb-3">
-        <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ink-500" />
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="搜索指标"
-          className="h-10 w-full rounded-xl border border-border bg-card pr-3 pl-9 text-[13px] outline-none placeholder:text-muted-foreground focus:border-primary/40"
+          className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[13px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
         />
       </div>
 
@@ -254,23 +270,23 @@ function BrowseTab() {
           <button
             key={b.slug}
             onClick={() => setOpenSlug(b.slug)}
-            className="w-full rounded-xl border border-border bg-card p-3.5 text-left transition-transform duration-150 active:scale-[0.985]"
+            className="w-full rounded-sm hair-all bg-paper p-3.5 text-left transition-transform duration-150 active:scale-[0.985]"
             style={{ transitionTimingFunction: "var(--ease-out)" }}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="truncate text-[14px] font-semibold">{b.name}</div>
-                <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                <div className="truncate text-[14px]">{b.name}</div>
+                <div className="mt-0.5 truncate text-[11px] text-ink-500">
                   {CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                   {b.issuer ? ` · ${b.issuer}` : ""}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <div className="text-right">
-                  <div className="tnum text-lg leading-none font-semibold text-primary">{b.utilityScore}</div>
-                  <div className="mt-0.5 text-[9px] text-muted-foreground">效用</div>
+                  <div className="tnum text-lg leading-none text-frost-qing">{b.utilityScore}</div>
+                  <div className="mt-0.5 text-[9px] text-ink-500">效用</div>
                 </div>
-                <ChevronRight className="size-4 text-muted-foreground/50" />
+                <ChevronRight className="size-4 text-ink-500/50" />
               </div>
             </div>
             <div className="mt-2.5 flex items-center gap-1.5">
@@ -280,9 +296,9 @@ function BrowseTab() {
                 className={cn(
                   "ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px]",
                   b.saturationStatus === "saturated"
-                    ? "bg-muted text-muted-foreground"
+                    ? "bg-frost-mist/50 text-ink-500"
                     : b.saturationStatus === "frontier"
-                      ? "bg-[color:var(--signal-frontier)]/12 text-[color:var(--signal-frontier)]"
+                      ? "bg-[color:var(--signal-frontier)]/12 text-frontier"
                       : "bg-[color:var(--signal-contested)]/12 text-[color:var(--signal-contested)]",
                 )}
               >
@@ -301,8 +317,8 @@ function BrowseTab() {
 function MiniBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1.5">
-      <span className="shrink-0 text-[10px] text-muted-foreground">{label}</span>
-      <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+      <span className="shrink-0 text-[10px] text-ink-500">{label}</span>
+      <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-frost-mist/50">
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, value)}%`, background: color }} />
       </div>
       <span className="tnum shrink-0 text-[10px]" style={{ color }}>{value}</span>
@@ -330,21 +346,21 @@ function ModelsTab() {
   return (
     <div className="p-4">
       <div className="relative mb-2">
-        <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ink-500" />
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="搜索模型或厂商"
-          className="h-10 w-full rounded-xl border border-border bg-card pr-3 pl-9 text-[13px] outline-none placeholder:text-muted-foreground focus:border-primary/40"
+          className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[13px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
         />
       </div>
       <button
         onClick={() => setOpenOnly(!openOnly)}
         className={cn(
-          "mb-3 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors duration-150",
+          "mb-3 rounded-full border px-3 py-1.5 text-[11px] transition-colors duration-150",
           openOnly
-            ? "border-[color:var(--signal-good)]/40 bg-[color:var(--signal-good)]/12 text-[color:var(--signal-good)]"
-            : "border-border bg-card text-muted-foreground",
+            ? "border-[color:var(--signal-good)]/40 bg-[color:var(--signal-good)]/12 text-good"
+            : "border-rule bg-paper text-ink-500",
         )}
       >
         仅开放权重
@@ -352,40 +368,40 @@ function ModelsTab() {
 
       <div className="space-y-2">
         {filtered.map((m, i) => (
-          <div key={m.slug} className="rounded-xl border border-border bg-card p-3.5">
+          <div key={m.slug} className="rounded-sm hair-all bg-paper p-3.5">
             <div className="flex items-start gap-2.5">
-              <span className="tnum mt-0.5 w-4 shrink-0 text-[11px] text-muted-foreground">{i + 1}</span>
+              <span className="tnum mt-0.5 w-4 shrink-0 text-[11px] text-ink-500">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[14px] font-semibold">{m.name}</span>
-                  <span className="tnum shrink-0 text-[15px] font-semibold text-primary">{m.compositeScore}</span>
+                  <span className="truncate text-[14px]">{m.name}</span>
+                  <span className="tnum shrink-0 text-[15px] text-frost-qing">{m.compositeScore}</span>
                 </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-ink-500">
                   <span>{m.provider}</span>
                   {m.license === "open" && (
-                    <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-[color:var(--signal-good)]">
+                    <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-good">
                       开放权重
                     </span>
                   )}
-                  {m.status === "superseded" && <span className="text-muted-foreground/70">已被取代</span>}
+                  {m.status === "superseded" && <span className="text-ink-400">已被取代</span>}
                   <span>· {m.coverage} 条证据</span>
                   {m.priceOutput !== null && <span>· ${m.priceOutput}/M</span>}
                 </div>
-                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-frost-mist/50">
                   <div
-                    className="h-full rounded-full bg-primary/70"
+                    className="h-full rounded-full bg-frost-qing/70"
                     style={{ width: `${((m.compositeScore ?? 0) / Math.max(top, 1)) * 100}%` }}
                   />
                 </div>
                 {m.domains.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {m.domains.slice(0, 3).map(d => (
-                      <span key={d} className="rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                      <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[9px] text-ink-500">
                         {CAPABILITY_LABELS[d as CapabilityDomain] ?? d}
                       </span>
                     ))}
                     {m.domains.length > 3 && (
-                      <span className="text-[9px] text-muted-foreground/70">+{m.domains.length - 3}</span>
+                      <span className="text-[9px] text-ink-400">+{m.domains.length - 3}</span>
                     )}
                   </div>
                 )}
@@ -404,15 +420,15 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 -sm" />
       <div
         onClick={e => e.stopPropagation()}
-        className="relative max-h-[86vh] w-full overflow-y-auto rounded-t-2xl border-t border-border bg-card pb-[env(safe-area-inset-bottom)]"
+        className="relative max-h-[86vh] w-full overflow-y-auto rounded-t-2xl hair-t bg-paper pb-[env(safe-area-inset-bottom)]"
         style={{ animation: "slideUp 260ms var(--ease-out)" }}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 px-4 py-3 backdrop-blur">
-          <div className="mx-auto h-1 w-9 rounded-full bg-muted-foreground/30" />
-          <button onClick={onClose} className="absolute right-3 rounded-lg p-1.5 text-muted-foreground active:bg-secondary">
+        <div className="sticky top-0 z-10 flex items-center justify-between hair-b bg-paper px-4 py-3">
+          <div className="mx-auto h-1 w-9 rounded-full bg-frost-mist/50-foreground/30" />
+          <button onClick={onClose} className="absolute right-3 rounded-sm p-1.5 text-ink-500 active:bg-frost-mist/60">
             <X className="size-4" />
           </button>
         </div>
@@ -420,13 +436,13 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
         {isLoading || !data ? (
           <div className="space-y-3 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted/40" />
+              <div key={i} className="h-12 animate-pulse rounded-sm bg-frost-mist/50/40" />
             ))}
           </div>
         ) : (
           <div className="p-4">
-            <h2 className="text-[17px] leading-tight font-semibold">{data.benchmark.name}</h2>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <h2 className="text-[17px] leading-tight">{data.benchmark.name}</h2>
+            <p className="mt-1 text-[11px] text-ink-500">
               {data.benchmark.issuer ?? "未标注出题方"}
               {data.benchmark.version ? ` · ${data.benchmark.version}` : ""}
             </p>
@@ -437,9 +453,9 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
                 { label: "可信度", value: data.benchmark.trustScore, color: "var(--signal-good)" },
                 { label: "分辨力", value: data.benchmark.discriminativePower, color: "var(--signal-frontier)" },
               ].map(m => (
-                <div key={m.label} className="rounded-xl border border-border bg-background/40 p-2.5 text-center">
-                  <div className="tnum text-xl leading-none font-semibold" style={{ color: m.color }}>{m.value}</div>
-                  <div className="mt-1 text-[10px] text-muted-foreground">{m.label}</div>
+                <div key={m.label} className="rounded-sm hair-all bg-background p-2.5 text-center">
+                  <div className="tnum text-xl leading-none" style={{ color: m.color }}>{m.value}</div>
+                  <div className="mt-1 text-[10px] text-ink-500">{m.label}</div>
                 </div>
               ))}
             </div>
@@ -456,20 +472,20 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
               {!data.benchmark.ciDisclosed && <Tag tone="caution">未披露 CI</Tag>}
             </div>
 
-            <div className="mt-3 rounded-xl border border-border bg-background/40 p-3">
-              <div className="text-[11px] font-medium text-primary">这个指标测什么</div>
-              <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            <div className="mt-3 rounded-sm hair-all bg-background p-3">
+              <div className="text-[11px] text-frost-qing">这个指标测什么</div>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
                 {data.benchmark.scenarioMapping ??
                   SATURATION_EXPLAIN[data.benchmark.saturationStatus as keyof typeof SATURATION_EXPLAIN]}
               </p>
             </div>
 
             {data.benchmark.interpretationCaveat && (
-              <div className="mt-2 rounded-xl border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 p-3">
-                <div className="flex items-center gap-1 text-[11px] font-medium text-[color:var(--signal-caution)]">
+              <div className="mt-2 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 p-3">
+                <div className="flex items-center gap-1 text-[11px] text-caution">
                   <AlertTriangle className="size-3" />解读警示
                 </div>
-                <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
                   {data.benchmark.interpretationCaveat}
                 </p>
               </div>
@@ -477,15 +493,15 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
 
             {data.leaderboard.length > 0 && (
               <div className="mt-3">
-                <div className="mb-1.5 text-[11px] font-medium text-muted-foreground">分数记录</div>
+                <div className="mb-1.5 text-[11px] text-ink-500">分数记录</div>
                 <div className="space-y-1">
                   {data.leaderboard.slice(0, 12).map((r, i) => (
-                    <div key={r.id} className="flex items-center gap-2 rounded-lg bg-background/40 px-2.5 py-2">
-                      <span className="tnum w-4 shrink-0 text-[10px] text-muted-foreground">{i + 1}</span>
+                    <div key={r.id} className="flex items-center gap-2 rounded-sm bg-background px-2.5 py-2">
+                      <span className="tnum w-4 shrink-0 text-[10px] text-ink-500">{i + 1}</span>
                       <span className="min-w-0 flex-1 truncate text-[12px]">{r.modelName}</span>
-                      <span className="tnum shrink-0 text-[12px] font-medium">{r.rawScore}</span>
+                      <span className="tnum shrink-0 text-[12px]">{r.rawScore}</span>
                       {r.sourceUrl && (
-                        <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 text-muted-foreground">
+                        <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 text-ink-500">
                           <ExternalLink className="size-3" />
                         </a>
                       )}
@@ -505,10 +521,10 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "caution" }
   return (
     <span
       className={cn(
-        "rounded-md border px-1.5 py-0.5 text-[10px]",
+        "rounded-sm border px-1.5 py-0.5 text-[10px]",
         tone === "caution"
-          ? "border-[color:var(--signal-caution)]/35 bg-[color:var(--signal-caution)]/10 text-[color:var(--signal-caution)]"
-          : "border-border bg-secondary/60 text-muted-foreground",
+          ? "border-[color:var(--signal-caution)]/35 bg-[color:var(--signal-caution)]/10 text-caution"
+          : "border-rule bg-frost-mist/50 text-ink-500",
       )}
     >
       {children}
@@ -560,47 +576,47 @@ function DuelTab() {
       </div>
 
       {slugs.length < 2 ? (
-        <div className="grid-canvas flex h-[300px] items-center justify-center rounded-xl border border-border">
-          <p className="px-8 text-center text-[12px] leading-relaxed text-muted-foreground">
+        <div className="flex h-[300px] items-center justify-center rounded-sm hair-all">
+          <p className="px-8 text-center text-[12px] leading-relaxed text-ink-500">
             选择两个模型，逐张翻看它们在共同测过的指标上的差距。
           </p>
         </div>
       ) : cards.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-6 text-center">
-          <p className="text-[13px] font-medium">没有共同测过的指标</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">换一组模型再试。</p>
+        <div className="rounded-sm hair-all bg-paper p-6 text-center">
+          <p className="text-[13px]">没有共同测过的指标</p>
+          <p className="mt-1 text-[11px] text-ink-500">换一组模型再试。</p>
         </div>
       ) : (
         <>
           <div
             {...swipe.handlers}
-            className="touch-pan-y rounded-2xl border border-border bg-card p-4 select-none"
+            className="touch-pan-y rounded-2xl hair-all bg-paper p-4 select-none"
             style={{
               transform: `translateX(${swipe.dx * 0.35}px) rotate(${swipe.dx * 0.012}deg)`,
               transition: swipe.dx === 0 ? "transform 220ms var(--ease-out)" : "none",
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[11px] text-ink-500">
                 {CAPABILITY_LABELS[card.domain as CapabilityDomain] ?? card.domain}
               </span>
-              <span className="tnum text-[11px] text-muted-foreground">
+              <span className="tnum text-[11px] text-ink-500">
                 {idx + 1} / {cards.length}
               </span>
             </div>
-            <h3 className="mt-1.5 text-[16px] leading-tight font-semibold">{card.name}</h3>
-            <div className="tnum mt-0.5 text-[10px] text-muted-foreground">难度系数 ×{card.difficulty.toFixed(2)}</div>
+            <h3 className="mt-1.5 text-[16px] leading-tight">{card.name}</h3>
+            <div className="tnum mt-0.5 text-[10px] text-ink-500">难度系数 ×{card.difficulty.toFixed(2)}</div>
 
             <div className="mt-4 space-y-3">
               <DuelBar name={nameA} raw={card.ar} value={card.av} color="var(--chart-1)" win={(card.av ?? 0) >= (card.bv ?? 0)} />
               <DuelBar name={nameB} raw={card.br} value={card.bv} color="var(--chart-2)" win={(card.bv ?? 0) > (card.av ?? 0)} />
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+            <div className="mt-4 flex items-center justify-between hair-t pt-3">
               <button
                 onClick={prev}
                 disabled={idx === 0}
-                className="rounded-lg border border-border px-3 py-2 text-[11px] transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
+                className="rounded-sm hair-all px-3 py-2 text-[11px] transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
               >
                 <ArrowLeft className="size-3.5" />
               </button>
@@ -608,20 +624,20 @@ function DuelTab() {
                 {cards.slice(0, 12).map((_, i) => (
                   <span
                     key={i}
-                    className={cn("size-1 rounded-full transition-colors duration-150", i === idx ? "bg-primary" : "bg-muted")}
+                    className={cn("size-1 rounded-full transition-colors duration-150", i === idx ? "bg-frost-qing" : "bg-frost-mist/50")}
                   />
                 ))}
               </div>
               <button
                 onClick={next}
                 disabled={idx >= cards.length - 1}
-                className="rounded-lg bg-primary px-4 py-2 text-[11px] font-medium text-primary-foreground transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
+                className="rounded-sm bg-frost-qing px-4 py-2 text-[11px] text-paper transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
               >
                 下一项
               </button>
             </div>
           </div>
-          <p className="mt-3 px-1 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-3 px-1 text-[11px] leading-relaxed text-ink-500">
             左右滑动卡片翻看下一个指标。条形长度为归一化分，括号内为原始分。
             只显示两个模型都测过的指标——单方缺失不构成对比。
           </p>
@@ -635,13 +651,13 @@ function DuelBar({ name, raw, value, color, win }: { name: string; raw: number |
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className={cn("truncate text-[12px]", win && "font-semibold")} style={win ? { color } : undefined}>{name}</span>
+        <span className={cn("truncate text-[12px]", win && "")} style={win ? { color } : undefined}>{name}</span>
         <span className="tnum shrink-0 text-[12px]">
           {value ?? "—"}
-          {raw !== null && <span className="ml-1 text-[10px] text-muted-foreground">({raw})</span>}
+          {raw !== null && <span className="ml-1 text-[10px] text-ink-500">({raw})</span>}
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-frost-mist/50">
         <div
           className="h-full rounded-full transition-[width] duration-300"
           style={{ width: `${Math.max(2, Math.min(100, value ?? 0))}%`, background: color, transitionTimingFunction: "var(--ease-out)" }}
@@ -658,19 +674,19 @@ function ModelPicker({
   options: Array<{ slug: string; name: string; provider: string }>; exclude: string | null; color: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-2.5" style={{ borderColor: `color-mix(in oklch, ${color} 30%, transparent)` }}>
+    <div className="rounded-sm hair-all bg-paper p-2.5" style={{ borderColor: `color-mix(in oklch, ${color} 30%, transparent)` }}>
       <div className="mb-1 flex items-center gap-1.5">
         <span className="size-1.5 rounded-full" style={{ background: color }} />
-        <span className="text-[10px] text-muted-foreground">模型 {label}</span>
+        <span className="text-[10px] text-ink-500">模型 {label}</span>
       </div>
       <select
         value={value ?? ""}
         onChange={e => onChange(e.target.value)}
-        className="w-full bg-transparent text-[12px] font-medium outline-none"
+        className="w-full bg-transparent text-[12px] outline-none"
       >
         <option value="" disabled>请选择</option>
         {options.filter(o => o.slug !== exclude).map(o => (
-          <option key={o.slug} value={o.slug} className="bg-card">{o.name}</option>
+          <option key={o.slug} value={o.slug} className="bg-paper">{o.name}</option>
         ))}
       </select>
     </div>
@@ -691,10 +707,10 @@ function DecideTab() {
             key={s.key}
             onClick={() => setScenario(s.key)}
             className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium whitespace-nowrap transition-colors duration-150",
+              "shrink-0 rounded-full border px-3 py-1.5 text-[11px] whitespace-nowrap transition-colors duration-150",
               scenario === s.key
-                ? "border-primary/40 bg-primary/12 text-primary"
-                : "border-border bg-card text-muted-foreground",
+                ? "border-frost-qing/40 bg-frost-qing/12 text-frost-qing"
+                : "border-rule bg-paper text-ink-500",
             )}
           >
             {s.title}
@@ -703,36 +719,36 @@ function DecideTab() {
       </div>
 
       {rec.data?.scenario && (
-        <p className="mb-3 px-0.5 text-[11px] leading-relaxed text-muted-foreground">{rec.data.scenario.summary}</p>
+        <p className="mb-3 px-0.5 text-[11px] leading-relaxed text-ink-500">{rec.data.scenario.summary}</p>
       )}
 
       <div className="space-y-2">
         {(rec.data?.results ?? []).slice(0, 10).map((r, i) => (
-          <div key={r.modelSlug} className="rounded-xl border border-border bg-card p-3.5">
+          <div key={r.modelSlug} className="rounded-sm hair-all bg-paper p-3.5">
             <div className="flex items-start gap-2.5">
               <span
                 className={cn(
-                  "tnum mt-0.5 grid size-5 shrink-0 place-items-center rounded text-[10px] font-semibold",
-                  i === 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+                  "tnum mt-0.5 grid size-5 shrink-0 place-items-center rounded text-[10px]",
+                  i === 0 ? "bg-frost-qing text-paper" : "bg-frost-mist/60 text-ink-500",
                 )}
               >
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px] font-semibold">{r.modelName}</span>
-                  <span className="tnum shrink-0 text-[15px] font-semibold text-primary">{r.fitScore}</span>
+                  <span className="truncate text-[13px]">{r.modelName}</span>
+                  <span className="tnum shrink-0 text-[15px] text-frost-qing">{r.fitScore}</span>
                 </div>
-                <div className="mt-0.5 text-[10px] text-muted-foreground">
+                <div className="mt-0.5 text-[10px] text-ink-500">
                   {r.provider} · {r.evidenceCount} 条证据
                   {r.priceOutput !== null && ` · $${r.priceOutput}/M`}
                 </div>
                 <div className="mt-2 space-y-1">
                   {r.evidence.slice(0, 3).map(e => (
                     <div key={e.benchmarkSlug} className="flex items-center gap-2">
-                      <span className="w-[104px] shrink-0 truncate text-[10px] text-muted-foreground">{e.benchmarkName}</span>
-                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary/60" style={{ width: `${Math.min(100, e.normalized)}%` }} />
+                      <span className="w-[104px] shrink-0 truncate text-[10px] text-ink-500">{e.benchmarkName}</span>
+                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-frost-mist/50">
+                        <div className="h-full rounded-full bg-frost-qing/60" style={{ width: `${Math.min(100, e.normalized)}%` }} />
                       </div>
                       <span className="tnum w-7 shrink-0 text-right text-[10px]">{e.normalized}</span>
                     </div>
@@ -741,7 +757,7 @@ function DecideTab() {
                 {r.caveats.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {r.caveats.map(c => (
-                      <span key={c} className="rounded border border-[color:var(--signal-caution)]/30 px-1 py-0.5 text-[9px] text-[color:var(--signal-caution)]">
+                      <span key={c} className="rounded border border-[color:var(--signal-caution)]/30 px-1 py-0.5 text-[9px] text-caution">
                         {c}
                       </span>
                     ))}

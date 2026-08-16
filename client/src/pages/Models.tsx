@@ -100,16 +100,16 @@ export default function Models() {
 
       {isLoading ? (
         <div className="space-y-2">
-          {Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+          {Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-sm" />)}
         </div>
       ) : (
-        <div className="panel overflow-hidden">
+        <div className="hair-t">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-[11px] tracking-wide text-muted-foreground uppercase">
-                <th className="px-4 py-2 text-left font-medium">模型</th>
-                <th className="px-3 py-2 text-left font-medium">能力覆盖</th>
-                <th className="px-3 py-2 text-right font-medium">
+              <tr className="hair-b text-[11px] tracking-wide text-ink-500 uppercase">
+                <th className="px-4 py-2 text-left">模型</th>
+                <th className="px-3 py-2 text-left">能力覆盖</th>
+                <th className="px-3 py-2 text-right">
                   <span className="inline-flex items-center gap-1">
                     综合分
                     <InfoHint>
@@ -119,31 +119,31 @@ export default function Models() {
                     </InfoHint>
                   </span>
                 </th>
-                <th className="px-3 py-2 text-right font-medium">
+                <th className="px-3 py-2 text-right">
                   <span className="inline-flex items-center gap-1">
                     证据
                     <InfoHint>该模型的成绩条数，以及由此得出的置信度 n/(n+4)。置信度越低，综合分越被拉向中位。</InfoHint>
                   </span>
                 </th>
-                <th className="px-4 py-2 text-right font-medium">输出价格</th>
-                <th className="px-4 py-2 text-right font-medium"></th>
+                <th className="px-4 py-2 text-right">输出价格</th>
+                <th className="px-4 py-2 text-right"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(m => (
-                <tr key={m.slug} className="border-b border-border/60 transition-colors duration-150 last:border-0 hover:bg-secondary/40">
+                <tr key={m.slug} className="hair-b transition-colors duration-150 last:border-0 hover:bg-frost-mist/40">
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[13px] font-medium">{m.name}</span>
+                      <span className="text-[13px]">{m.name}</span>
                       {m.license === "open" && (
-                        <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-[color:var(--signal-good)]">开放权重</span>
+                        <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-good">开放权重</span>
                       )}
-                      {m.status === "superseded" && <span className="text-[9px] text-muted-foreground/70">已被取代</span>}
+                      {m.status === "superseded" && <span className="text-[9px] text-ink-400">已被取代</span>}
                       {m.isReasoning && (
-                        <span className="rounded border border-border px-1 text-[9px] text-muted-foreground">推理型</span>
+                        <span className="rounded hair-all px-1 text-[9px] text-ink-500">推理型</span>
                       )}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-[10px] text-ink-500">
                       {m.provider}
                       {m.contextWindow ? ` · 上下文 ${m.contextWindow}` : ""}
                     </div>
@@ -151,31 +151,31 @@ export default function Models() {
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-1">
                       {m.domains.slice(0, 4).map(d => (
-                        <span key={d} className="rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[10px] text-ink-500">
                           {CAPABILITY_LABELS[d as CapabilityDomain] ?? d}
                         </span>
                       ))}
                       {m.domains.length > 4 && (
-                        <span className="text-[10px] text-muted-foreground/70">+{m.domains.length - 4}</span>
+                        <span className="text-[10px] text-ink-400">+{m.domains.length - 4}</span>
                       )}
-                      {m.domains.length === 0 && <span className="text-[10px] text-muted-foreground/50">无公开记录</span>}
+                      {m.domains.length === 0 && <span className="text-[10px] text-ink-500/50">无公开记录</span>}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex flex-col items-end">
-                      <span className={cn("tnum text-[13px] font-semibold", m.compositeScore === null && "text-muted-foreground/40")}>
+                      <span className={cn("tnum text-[13px]", m.compositeScore === null && "text-ink-400")}>
                         {m.compositeScore ?? "—"}
                       </span>
                       {m.rawMean !== null && m.confidence < 0.8 && (
-                        <span className="tnum text-[9px] text-muted-foreground/60">观测 {m.rawMean}</span>
+                        <span className="tnum text-[9px] text-ink-400">观测 {m.rawMean}</span>
                       )}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <span className="tnum text-xs text-muted-foreground">{m.coverage}</span>
+                      <span className="tnum text-xs text-ink-500">{m.coverage}</span>
                       <span
-                        className="h-1 w-8 shrink-0 overflow-hidden rounded-full bg-muted"
+                        className="h-1 w-8 shrink-0 overflow-hidden rounded-full bg-frost-mist/50"
                         title={`置信度 ${Math.round(m.confidence * 100)}%`}
                       >
                         <span
@@ -192,13 +192,13 @@ export default function Models() {
                       </span>
                     </div>
                   </td>
-                  <td className="tnum px-4 py-2 text-right text-xs text-muted-foreground">
+                  <td className="tnum px-4 py-2 text-right text-xs text-ink-500">
                     {m.priceOutput === null ? "—" : `$${m.priceOutput}`}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Link
                       href={`/compare?a=${m.slug}`}
-                      className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-1 text-[10px] text-muted-foreground transition-colors duration-150 hover:border-primary/40 hover:text-primary"
+                      className="inline-flex items-center gap-1 rounded hair-all px-1.5 py-1 text-[10px] text-ink-500 transition-colors duration-150 hover:border-frost-qing/40 hover:text-frost-qing"
                     >
                       <GitCompareArrows className="size-3" />
                       对比

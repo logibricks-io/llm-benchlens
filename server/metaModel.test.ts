@@ -88,11 +88,27 @@ describe("normalizedScore", () => {
 
 describe("evidenceWeight", () => {
   it("ranks an independent frontier benchmark above a saturated self-reported one", () => {
-    expect(evidenceWeight(brutal, "third_party")).toBeGreaterThan(evidenceWeight(lenient, "self_reported"));
+    expect(evidenceWeight(brutal, "third_party_aggregator")).toBeGreaterThan(
+      evidenceWeight(lenient, "self_reported"),
+    );
   });
 
   it("discounts self-reported provenance relative to third-party", () => {
-    expect(evidenceWeight(brutal, "self_reported")).toBeLessThan(evidenceWeight(brutal, "third_party"));
+    /*
+     * Keyed on the normalised four-value vocabulary. This test used to pass
+     * "third_party" — a value that stopped existing after the source-type merge.
+     * It kept asserting a difference while production had silently collapsed
+     * every one of the 857 rows onto the self-reported discount, erasing the
+     * distinction between an independent re-run and a vendor's own number.
+     */
+    const independent = evidenceWeight(brutal, "third_party_aggregator");
+    const official = evidenceWeight(brutal, "official_leaderboard");
+    const vendor = evidenceWeight(brutal, "self_reported");
+
+    expect(vendor).toBeLessThan(official);
+    expect(official).toBeLessThan(independent);
+    // Guard against a future rename flattening the hierarchy again.
+    expect(new Set([independent, official, vendor]).size).toBe(3);
   });
 });
 
@@ -140,13 +156,21 @@ describe("scenarioWeight", () => {
   };
 
   it("gives zero weight to benchmarks outside the scenario", () => {
-    const w = scenarioWeight(coding, { ...base, slug: "omnidocbench", capabilityDomain: "multimodal" }, "third_party");
+    const w = scenarioWeight(
+      coding,
+      { ...base, slug: "omnidocbench", capabilityDomain: "multimodal" },
+      "third_party_aggregator",
+    );
     expect(w).toBe(0);
   });
 
   it("boosts benchmarks the scenario explicitly emphasises", () => {
-    const emphasised = scenarioWeight(coding, base, "third_party");
-    const plain = scenarioWeight(coding, { ...base, slug: "some-other-coding-bench" }, "third_party");
+    const emphasised = scenarioWeight(coding, base, "third_party_aggregator");
+    const plain = scenarioWeight(
+      coding,
+      { ...base, slug: "some-other-coding-bench" },
+      "third_party_aggregator",
+    );
     expect(emphasised).toBeGreaterThan(plain);
   });
 
@@ -159,8 +183,12 @@ describe("scenarioWeight", () => {
       isAgentic: true,
       hasNegativeAssertions: true,
     };
-    const withGuard = scenarioWeight(automation, bm, "third_party");
-    const withoutGuard = scenarioWeight(automation, { ...bm, hasNegativeAssertions: false }, "third_party");
+    const withGuard = scenarioWeight(automation, bm, "third_party_aggregator");
+    const withoutGuard = scenarioWeight(
+      automation,
+      { ...bm, hasNegativeAssertions: false },
+      "third_party_aggregator",
+    );
     expect(withGuard).toBeGreaterThan(withoutGuard);
   });
 });

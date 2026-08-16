@@ -36,8 +36,8 @@ export default function Decide() {
       <div className="grid gap-5 xl:grid-cols-[268px_1fr]">
         {/* Scenario picker + constraints */}
         <div className="space-y-4">
-          <div className="panel overflow-hidden">
-            <div className="border-b border-border px-3 py-2 text-[11px] tracking-wide text-muted-foreground uppercase">
+          <div className="hair-t">
+            <div className="hair-b px-3 py-2 text-[11px] tracking-wide text-ink-500 uppercase">
               落地场景
             </div>
             <div className="p-1.5">
@@ -46,21 +46,21 @@ export default function Decide() {
                   key={s.key}
                   onClick={() => setScenario(s.key)}
                   className={cn(
-                    "group flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors duration-150",
-                    scenario === s.key ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/50",
+                    "group flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left transition-colors duration-150",
+                    scenario === s.key ? "bg-frost-mist/60 text-ink-900" : "text-ink-500 hover:bg-frost-mist/50",
                   )}
                 >
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium">{s.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs">{s.title}</span>
                   <ChevronRight
-                    className={cn("size-3.5 shrink-0 transition-transform duration-150", scenario === s.key && "text-primary")}
+                    className={cn("size-3.5 shrink-0 transition-transform duration-150", scenario === s.key && "text-frost-qing")}
                   />
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="panel p-3">
-            <div className="mb-2.5 text-[11px] tracking-wide text-muted-foreground uppercase">部署约束</div>
+          <div className="hair-t p-3">
+            <div className="mb-2.5 text-[11px] tracking-wide text-ink-500 uppercase">部署约束</div>
             <div className="space-y-3">
               <label className="flex items-center justify-between gap-2">
                 <span className="text-xs">仅开放权重</span>
@@ -90,19 +90,19 @@ export default function Decide() {
         {/* Ranked recommendations */}
         <div className="min-w-0 space-y-4">
           {active && (
-            <div className="panel p-4">
+            <div className="hair-t p-4">
               <div className="flex items-start gap-2">
-                <Compass className="mt-0.5 size-4 shrink-0 text-primary" />
+                <Compass className="mt-0.5 size-4 shrink-0 text-frost-qing" />
                 <div className="min-w-0">
-                  <h3 className="text-[13px] font-semibold">{active.title}</h3>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{active.summary}</p>
+                  <h3 className="text-[13px]">{active.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-ink-500">{active.summary}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground">重点指标</span>
+                    <span className="text-[10px] text-ink-500">重点指标</span>
                     {active.emphasisSlugs.map(s => (
                       <Link
                         key={s}
                         href={`/benchmarks/${s}`}
-                        className="rounded border border-border bg-secondary/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground transition-colors duration-150 hover:border-primary/40 hover:text-primary"
+                        className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 font-mono text-[10px] text-ink-500 transition-colors duration-150 hover:border-frost-qing/40 hover:text-frost-qing"
                       >
                         {s}
                       </Link>
@@ -115,13 +115,13 @@ export default function Decide() {
 
           {rec.isLoading ? (
             <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[120px] w-full rounded-lg" />)}
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[120px] w-full rounded-sm" />)}
             </div>
           ) : results.length === 0 ? (
-            <div className="grid-canvas flex h-[280px] items-center justify-center rounded-lg border border-border">
-              <div className="panel max-w-sm px-6 py-5 text-center">
-                <p className="text-sm font-medium">没有模型满足当前约束</p>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            <div className="flex h-[280px] items-center justify-center rounded-sm hair-all">
+              <div className="hair-t max-w-sm px-6 py-5 text-center">
+                <p className="text-sm">没有模型满足当前约束</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-ink-500">
                   该场景要求至少 2 条相关指标证据。放宽价格上限或关闭「仅开放权重」再试。
                 </p>
               </div>
@@ -129,33 +129,33 @@ export default function Decide() {
           ) : (
             <div className="space-y-2.5">
               {results.map((r, idx) => (
-                <div key={r.modelSlug} className="panel overflow-hidden">
+                <div key={r.modelSlug} className="hair-t">
                   <div className="flex items-start gap-3 p-4">
                     <span
                       className={cn(
-                        "tnum mt-0.5 grid size-6 shrink-0 place-items-center rounded-md text-[11px] font-semibold",
+                        "tnum mt-0.5 grid size-6 shrink-0 place-items-center rounded-sm text-[11px]",
                         idx === 0
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-muted-foreground",
+                          ? "bg-frost-qing text-paper"
+                          : "bg-frost-mist/60 text-ink-500",
                       )}
                     >
                       {idx + 1}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-2">
-                        <span className="text-[13px] font-semibold">{r.modelName}</span>
-                        <span className="text-[11px] text-muted-foreground">{r.provider}</span>
+                        <span className="text-[13px]">{r.modelName}</span>
+                        <span className="text-[11px] text-ink-500">{r.provider}</span>
                         {r.license === "open" && (
-                          <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-[color:var(--signal-good)]">
+                          <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[9px] text-good">
                             开放权重
                           </span>
                         )}
                         {r.status === "superseded" && (
-                          <span className="text-[9px] text-muted-foreground/70">已被取代</span>
+                          <span className="text-[9px] text-ink-400">已被取代</span>
                         )}
                         <span className="ml-auto flex items-baseline gap-1">
-                          <span className="tnum text-lg leading-none font-semibold text-primary">{r.fitScore}</span>
-                          <span className="text-[10px] text-muted-foreground">契合度</span>
+                          <span className="tnum text-lg leading-none text-frost-qing">{r.fitScore}</span>
+                          <span className="text-[10px] text-ink-500">契合度</span>
                         </span>
                       </div>
 
@@ -165,18 +165,18 @@ export default function Decide() {
                           <div key={e.benchmarkSlug} className="flex items-center gap-2 text-[11px]">
                             <Link
                               href={`/benchmarks/${e.benchmarkSlug}`}
-                              className="w-[168px] shrink-0 truncate text-muted-foreground hover:text-primary"
+                              className="w-[168px] shrink-0 truncate text-ink-500 hover:text-frost-qing"
                             >
                               {e.benchmarkName}
                             </Link>
-                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-frost-mist/50">
                               <div
-                                className="h-full rounded-full bg-primary/60"
+                                className="h-full rounded-full bg-frost-qing/60"
                                 style={{ width: `${Math.max(2, Math.min(100, e.normalized))}%` }}
                               />
                             </div>
                             <span className="tnum w-9 shrink-0 text-right">{e.normalized}</span>
-                            <span className="tnum w-14 shrink-0 text-right text-muted-foreground/70">
+                            <span className="tnum w-14 shrink-0 text-right text-ink-400">
                               权重 {e.weight.toFixed(2)}
                             </span>
                             <SourceBadge sourceType={e.sourceType} className="shrink-0" />
@@ -185,7 +185,7 @@ export default function Decide() {
                                 href={e.sourceUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="shrink-0 text-muted-foreground transition-colors duration-150 hover:text-primary"
+                                className="shrink-0 text-ink-500 transition-colors duration-150 hover:text-frost-qing"
                               >
                                 <ExternalLink className="size-3" />
                               </a>
@@ -194,17 +194,17 @@ export default function Decide() {
                         ))}
                       </div>
 
-                      <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-border pt-2">
-                        <span className="tnum text-[10px] text-muted-foreground">
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2 hair-t pt-2">
+                        <span className="tnum text-[10px] text-ink-500">
                           共 {r.evidenceCount} 条相关证据
                         </span>
                         {r.priceOutput !== null && (
-                          <span className="tnum text-[10px] text-muted-foreground">输出 ${r.priceOutput}/M</span>
+                          <span className="tnum text-[10px] text-ink-500">输出 ${r.priceOutput}/M</span>
                         )}
                         {r.caveats.map(c => (
                           <span
                             key={c}
-                            className="inline-flex items-center gap-1 rounded border border-[color:var(--signal-caution)]/35 bg-[color:var(--signal-caution)]/10 px-1.5 py-0.5 text-[10px] text-[color:var(--signal-caution)]"
+                            className="inline-flex items-center gap-1 rounded border border-[color:var(--signal-caution)]/35 bg-[color:var(--signal-caution)]/10 px-1.5 py-0.5 text-[10px] text-caution"
                           >
                             <AlertTriangle className="size-2.5" />
                             {c}
@@ -218,7 +218,7 @@ export default function Decide() {
             </div>
           )}
 
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-[11px] leading-relaxed text-ink-500">
             契合度不是绝对能力分，而是「该模型在这个场景相关的、可信且未饱和的指标上，归一化后的加权表现」。
             权重会放大场景重点指标、智能体类任务与含负向断言的评测，并按出处强度打折——厂商自报数据的权重低于第三方复跑。
           </p>

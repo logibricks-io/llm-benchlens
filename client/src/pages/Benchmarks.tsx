@@ -11,6 +11,7 @@ import {
   UTILITY_EXPLAIN,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
+import { Ruler, parseLeadingNumber } from "@/components/Ruler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -96,16 +97,24 @@ export default function Benchmarks() {
               <SelectItem value="name">按名称</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex overflow-hidden rounded-md border border-border">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setView("grid")}
-              className={cn("px-2 py-1.5 transition-colors duration-150", view === "grid" ? "bg-secondary" : "hover:bg-secondary/50")}
+              className={cn(
+                "transition-colors duration-150",
+                view === "grid" ? "text-ink-900" : "text-ink-400 hover:text-ink-700",
+              )}
+              title="档案视图"
             >
               <LayoutGrid className="size-3.5" />
             </button>
             <button
               onClick={() => setView("list")}
-              className={cn("border-l border-border px-2 py-1.5 transition-colors duration-150", view === "list" ? "bg-secondary" : "hover:bg-secondary/50")}
+              className={cn(
+                "transition-colors duration-150",
+                view === "list" ? "text-ink-900" : "text-ink-400 hover:text-ink-700",
+              )}
+              title="表格视图"
             >
               <List className="size-3.5" />
             </button>
@@ -137,121 +146,179 @@ export default function Benchmarks() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-[188px] rounded-lg" />)}
+        <div className="space-y-5">
+          {Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-[74px] rounded" />)}
         </div>
       ) : view === "grid" ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        /*
+         * Archive entries rather than a card grid. Each benchmark is a numbered
+         * record: rank, name, its rule drawn at true difficulty length, then the
+         * caveats as marginal notes. Nothing is boxed.
+         */
+        <div>
           {filtered.map((b, i) => (
             <Link
               key={b.slug}
               href={`/benchmarks/${b.slug}`}
-              className="panel group block p-4 transition-[border-color,transform] duration-200 hover:border-primary/40"
-              style={{ transitionTimingFunction: "var(--ease-out)", animationDelay: `${Math.min(i, 12) * 30}ms` }}
+              className="group hair-b block py-4 first:pt-0"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="truncate text-[13px] font-semibold group-hover:text-primary">{b.name}</h3>
-                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                    {b.issuer ?? "未标注出题方"}
-                    {b.version ? ` · ${b.version}` : ""}
-                  </p>
+              <div className="grid gap-x-6 gap-y-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,3fr)]">
+                {/* identity */}
+                <div className="flex items-baseline gap-3">
+                  <span className="tnum text-ink-400 w-6 shrink-0 text-[10px]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-ink-900 truncate text-[15px] leading-snug">{b.name}</h3>
+                    <p className="ui text-ink-400 mt-1 truncate text-[10px]">
+                      {b.issuer ?? "未标注出题方"}
+                      {b.version ? ` · ${b.version}` : ""}
+                      {" · "}
+                      {CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <SaturationBadge status={b.saturationStatus} />
+                      <StrictnessBadge strictness={b.strictness} />
+                      <ContaminationBadge risk={b.contaminationRisk} />
+                    </div>
+                  </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <div className="tnum text-lg leading-none font-semibold text-primary">{b.utilityScore}</div>
-                  <div className="mt-0.5 text-[9px] text-muted-foreground">效用分</div>
-                </div>
-              </div>
 
-              <div className="mt-2.5 flex flex-wrap gap-1">
-                <SaturationBadge status={b.saturationStatus} />
-                <StrictnessBadge strictness={b.strictness} />
-                <ContaminationBadge risk={b.contaminationRisk} />
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <ScoreMeter value={b.trustScore} label="可信度" explain={TRUST_EXPLAIN} size="sm" />
-                <ScoreMeter value={b.discriminativePower} label="分辨力" explain={DISC_EXPLAIN} size="sm" tone="violet" />
-              </div>
-
-              <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[10px] text-muted-foreground">
-                <span>{CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}</span>
-                <span className="tnum">
-                  难度 ×{b.difficultyCoefficient.toFixed(2)}
-                  {b.scoreCount > 0 ? ` · ${b.scoreCount} 条记录` : ""}
-                </span>
-              </div>
-              {b.scoreCount === 0 && (
-                <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[color:var(--signal-caution)]">
-                  <AlertTriangle className="size-2.5" />
-                  暂无可追溯成绩，无法用于比较
+                {/* this benchmark's rule, drawn at its actual difficulty */}
+                <div className="lg:pt-1">
+                  {(() => {
+                    /* SOTA is free text ("42.7%", "1315 Elo", "12.6% (GPT-5)").
+                       Plot only the leading number, and only when it is on the
+                       0–100 scale — Elo readings do not belong on this rule. */
+                    const sota = parseLeadingNumber(b.currentSotaScore);
+                    const plottable = sota !== null && sota >= 0 && sota <= 100;
+                    return (
+                      <Ruler
+                        difficulty={b.difficultyCoefficient}
+                        height={26}
+                        ticks={10}
+                        labelBelow
+                        marks={
+                          plottable
+                            ? [
+                                {
+                                  value: sota,
+                                  label: `SOTA ${sota}`,
+                                  title: b.currentSotaScore ?? undefined,
+                                  tone: "ink",
+                                  emphasis: true,
+                                },
+                              ]
+                            : []
+                        }
+                      />
+                    );
+                  })()}
+                  <div className="ui text-ink-400 mt-1 flex items-center gap-3 text-[9.5px]">
+                    <span className="tnum">难度 ×{b.difficultyCoefficient.toFixed(2)}</span>
+                    <span className={cn("tnum", b.scoreCount === 0 && "text-caution")}>
+                      {b.scoreCount} 条证据
+                    </span>
+                    {parseLeadingNumber(b.currentSotaScore) !== null &&
+                      !(parseLeadingNumber(b.currentSotaScore)! <= 100) && (
+                        <span className="tnum">SOTA {b.currentSotaScore}</span>
+                      )}
+                  </div>
                 </div>
-              )}
-              {!b.ciDisclosed && (
-                <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[color:var(--signal-caution)]">
-                  <AlertTriangle className="size-2.5" />
-                  未披露置信区间
+
+                {/* figures + caveats */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <ScoreMeter value={b.trustScore} label="可信" explain={TRUST_EXPLAIN} size="sm" />
+                    <ScoreMeter
+                      value={b.discriminativePower}
+                      label="分辨"
+                      explain={DISC_EXPLAIN}
+                      size="sm"
+                      tone="violet"
+                    />
+                    {(b.scoreCount === 0 || !b.ciDisclosed) && (
+                      <div className="ui text-caution flex flex-wrap items-center gap-x-2.5 pt-0.5 text-[9.5px]">
+                        {b.scoreCount === 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <AlertTriangle className="size-2.5" />
+                            无可追溯成绩
+                          </span>
+                        )}
+                        {!b.ciDisclosed && (
+                          <span className="inline-flex items-center gap-1">
+                            <AlertTriangle className="size-2.5" />
+                            未披露 CI
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="tnum text-ink-900 text-[24px] leading-none">{b.utilityScore}</div>
+                    <div className="ui text-ink-400 mt-1 text-[9px]">效用分</div>
+                  </div>
                 </div>
-              )}
+              </div>
             </Link>
           ))}
         </div>
       ) : (
-        <div className="panel overflow-hidden">
+        <div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-[11px] tracking-wide text-muted-foreground uppercase">
-                <th className="px-4 py-2 text-left font-medium">评测</th>
-                <th className="px-3 py-2 text-left font-medium">能力域</th>
-                <th className="px-3 py-2 text-left font-medium">机制 / 严格度</th>
-                <th className="px-3 py-2 text-left font-medium">状态</th>
-                <th className="px-3 py-2 text-right font-medium">
+              <tr className="hair-b ui text-ink-400 text-[9px] tracking-[0.14em] uppercase">
+                <th className="px-1 py-2 text-left font-normal">评测</th>
+                <th className="px-3 py-2 text-left font-normal">能力域</th>
+                <th className="px-3 py-2 text-left font-normal">机制 / 严格度</th>
+                <th className="px-3 py-2 text-left font-normal">状态</th>
+                <th className="px-3 py-2 text-right font-normal">
                   <span className="inline-flex items-center gap-1">效用 <InfoHint>{UTILITY_EXPLAIN}</InfoHint></span>
                 </th>
-                <th className="px-3 py-2 text-right font-medium">
+                <th className="px-3 py-2 text-right font-normal">
                   <span className="inline-flex items-center gap-1">
                     证据
                     <InfoHint>该评测下已收录的可追溯成绩条数。为 0 时无法用于比较模型，效用分已被相应折减。</InfoHint>
                   </span>
                 </th>
-                <th className="px-3 py-2 text-right font-medium">可信</th>
-                <th className="px-3 py-2 text-right font-medium">分辨</th>
-                <th className="px-4 py-2 text-right font-medium">难度</th>
+                <th className="px-3 py-2 text-right font-normal">可信</th>
+                <th className="px-3 py-2 text-right font-normal">分辨</th>
+                <th className="px-1 py-2 text-right font-normal">难度</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(b => (
-                <tr key={b.slug} className="border-b border-border/60 transition-colors duration-150 last:border-0 hover:bg-secondary/40">
-                  <td className="px-4 py-2">
+                <tr key={b.slug} className="hair-row">
+                  <td className="px-1 py-2">
                     <Link href={`/benchmarks/${b.slug}`} className="block min-w-0">
-                      <div className="truncate text-[13px] font-medium hover:text-primary">{b.name}</div>
-                      <div className="truncate text-[10px] text-muted-foreground">{b.issuer ?? "—"}</div>
+                      <div className="text-ink-800 truncate text-[12.5px]">{b.name}</div>
+                      <div className="ui text-ink-400 truncate text-[9.5px]">{b.issuer ?? "—"}</div>
                     </Link>
                   </td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                  <td className="ui text-ink-500 px-3 py-2 text-[10px]">
                     {CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-x-2.5 gap-y-1">
                       <MechanismBadge mechanism={b.scoringMechanism} />
                       <StrictnessBadge strictness={b.strictness} />
                     </div>
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-x-2.5 gap-y-1">
                       <SaturationBadge status={b.saturationStatus} />
                       <StanceBadge stance={b.issuerStance} />
                     </div>
                   </td>
-                  <td className="tnum px-3 py-2 text-right font-semibold text-primary">{b.utilityScore}</td>
-                  <td className="tnum px-3 py-2 text-right text-xs">
-                    <span className={b.scoreCount === 0 ? "text-[color:var(--signal-caution)]" : "text-muted-foreground"}>
+                  <td className="tnum text-ink-900 px-3 py-2 text-right text-[12.5px]">{b.utilityScore}</td>
+                  <td className="tnum px-3 py-2 text-right text-[11px]">
+                    <span className={b.scoreCount === 0 ? "text-caution" : "text-ink-500"}>
                       {b.scoreCount}
                     </span>
                   </td>
-                  <td className="tnum px-3 py-2 text-right text-xs">{b.trustScore}</td>
-                  <td className="tnum px-3 py-2 text-right text-xs">{b.discriminativePower}</td>
-                  <td className="tnum px-4 py-2 text-right text-xs">×{b.difficultyCoefficient.toFixed(2)}</td>
+                  <td className="tnum text-ink-600 px-3 py-2 text-right text-[11px]">{b.trustScore}</td>
+                  <td className="tnum text-ink-600 px-3 py-2 text-right text-[11px]">{b.discriminativePower}</td>
+                  <td className="tnum text-ink-600 px-1 py-2 text-right text-[11px]">×{b.difficultyCoefficient.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>

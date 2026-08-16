@@ -20,8 +20,15 @@ import {
   type Strictness,
 } from "@shared/metaModel";
 import { AlertTriangle, CircleDot, Info, ShieldCheck, Sparkles } from "lucide-react";
+import { MiniRuler } from "@/components/Ruler";
 
-/** A small label + tooltip pair. Every credibility signal must be explainable. */
+/**
+ * A small label + tooltip pair. Every credibility signal must be explainable.
+ *
+ * Frost edition: no filled pill, no border box. A chip is a hairline-underlined
+ * word, so a row of five signals reads as annotation rather than as a row of
+ * competing buttons.
+ */
 function Chip({
   children,
   explain,
@@ -38,7 +45,8 @@ function Chip({
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "inline-flex cursor-help items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] leading-tight font-medium whitespace-nowrap",
+            "ui inline-flex cursor-help items-center gap-1 text-[10px] leading-tight whitespace-nowrap",
+            "decoration-dotted underline-offset-[3px] hover:underline",
             className,
           )}
         >
@@ -52,9 +60,9 @@ function Chip({
 }
 
 const SATURATION_STYLE: Record<SaturationStatus, string> = {
-  frontier: "border-[color:var(--signal-frontier)]/40 bg-[color:var(--signal-frontier)]/12 text-[color:var(--signal-frontier)]",
-  contested: "border-[color:var(--signal-contested)]/40 bg-[color:var(--signal-contested)]/12 text-[color:var(--signal-contested)]",
-  saturated: "border-border bg-muted/60 text-muted-foreground",
+  frontier: "text-frontier",
+  contested: "text-[color:var(--signal-contested)]",
+  saturated: "text-ink-400",
 };
 
 export function SaturationBadge({ status, className }: { status: string; className?: string }) {
@@ -62,8 +70,8 @@ export function SaturationBadge({ status, className }: { status: string; classNa
   return (
     <Chip
       explain={SATURATION_EXPLAIN[s] ?? status}
-      className={cn(SATURATION_STYLE[s] ?? "border-border bg-muted/60 text-muted-foreground", className)}
-      icon={s === "frontier" ? <Sparkles className="size-3" /> : <CircleDot className="size-3" />}
+      className={cn(SATURATION_STYLE[s] ?? "text-ink-400", className)}
+      icon={s === "frontier" ? <Sparkles className="size-2.5" /> : <CircleDot className="size-2.5" />}
     >
       {SATURATION_LABELS[s] ?? status}
     </Chip>
@@ -76,8 +84,8 @@ export function StrictnessBadge({ strictness }: { strictness: string }) {
     <Chip
       explain={STRICTNESS_EXPLAIN[s] ?? strictness}
       className={cn(
-        "border-border bg-secondary/60 text-secondary-foreground",
-        s === "all_or_nothing" && "border-[color:var(--signal-caution)]/35 text-[color:var(--signal-caution)]",
+        "text-ink-500",
+        s === "all_or_nothing" && "text-caution",
       )}
     >
       {STRICTNESS_LABELS[s] ?? strictness}
@@ -88,7 +96,7 @@ export function StrictnessBadge({ strictness }: { strictness: string }) {
 export function MechanismBadge({ mechanism }: { mechanism: string }) {
   const m = mechanism as ScoringMechanism;
   return (
-    <Chip explain={MECHANISM_EXPLAIN[m] ?? mechanism} className="border-border bg-secondary/60 text-secondary-foreground">
+    <Chip explain={MECHANISM_EXPLAIN[m] ?? mechanism} className="text-ink-500">
       {MECHANISM_LABELS[m] ?? mechanism}
     </Chip>
   );
@@ -100,11 +108,11 @@ export function StanceBadge({ stance }: { stance: string }) {
     <Chip
       explain={STANCE_EXPLAIN[s] ?? stance}
       className={cn(
-        "border-border bg-secondary/60 text-secondary-foreground",
-        s === "first_party" && "border-[color:var(--signal-caution)]/35 text-[color:var(--signal-caution)]",
-        s === "third_party_evaluator" && "border-[color:var(--signal-good)]/35 text-[color:var(--signal-good)]",
+        "text-ink-500",
+        s === "first_party" && "text-caution",
+        s === "third_party_evaluator" && "text-good",
       )}
-      icon={s === "third_party_evaluator" ? <ShieldCheck className="size-3" /> : undefined}
+      icon={s === "third_party_evaluator" ? <ShieldCheck className="size-2.5" /> : undefined}
     >
       {STANCE_LABELS[s] ?? stance}
     </Chip>
@@ -119,10 +127,10 @@ export function ContaminationBadge({ risk }: { risk: string }) {
       explain={CONTAMINATION_EXPLAIN[r] ?? risk}
       className={cn(
         r === "high"
-          ? "border-[color:var(--signal-danger)]/40 bg-[color:var(--signal-danger)]/12 text-[color:var(--signal-danger)]"
-          : "border-[color:var(--signal-caution)]/40 bg-[color:var(--signal-caution)]/12 text-[color:var(--signal-caution)]",
+          ? "text-danger"
+          : "text-caution",
       )}
-      icon={<AlertTriangle className="size-3" />}
+      icon={<AlertTriangle className="size-2.5" />}
     >
       {CONTAMINATION_LABELS[r] ?? risk}
     </Chip>
@@ -165,11 +173,11 @@ export function SourceBadge({ sourceType, className }: { sourceType: string; cla
     <Chip
       explain={SOURCE_EXPLAIN[sourceType] ?? sourceType}
       className={cn(
-        "border-border bg-transparent text-muted-foreground",
-        sourceType === "self_reported" && "text-[color:var(--signal-caution)]",
-        sourceType === "vendor" && "text-[color:var(--signal-caution)]",
+        "text-ink-400",
+        sourceType === "self_reported" && "text-caution",
+        sourceType === "vendor" && "text-caution",
         (sourceType === "third_party_aggregator" || sourceType === "third_party") &&
-          "text-[color:var(--signal-good)]",
+          "text-good",
         className,
       )}
     >
@@ -198,8 +206,8 @@ export function FreshnessDot({ freshness, withLabel }: { freshness: string; with
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="inline-flex cursor-help items-center gap-1.5">
-          <span className={cn("size-1.5 shrink-0 rounded-full", FRESHNESS_STYLE[f] ?? "bg-muted")} />
-          {withLabel && <span className="text-[11px] text-muted-foreground">{FRESHNESS_LABELS[f] ?? freshness}</span>}
+          <span className={cn("size-1.5 shrink-0 rounded-full", FRESHNESS_STYLE[f] ?? "bg-frost-mist/50")} />
+          {withLabel && <span className="ui text-ink-500 text-[10px]">{FRESHNESS_LABELS[f] ?? freshness}</span>}
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-[260px] text-xs leading-relaxed">{FRESHNESS_EXPLAIN[f] ?? freshness}</TooltipContent>
@@ -208,8 +216,9 @@ export function FreshnessDot({ freshness, withLabel }: { freshness: string; with
 }
 
 /**
- * Trust / discriminative power meter. Deliberately reads as an instrument
- * gauge rather than a progress bar: the number is the primary element.
+ * Trust / discriminative power meter, drawn as a graduated rule so it belongs
+ * to the same form language as everything else. The number stays primary; the
+ * rule only says roughly where that number sits.
  */
 export function ScoreMeter({
   value,
@@ -224,31 +233,22 @@ export function ScoreMeter({
   tone?: "primary" | "caution" | "violet";
   size?: "sm" | "md";
 }) {
-  const toneColor =
-    tone === "caution"
-      ? "var(--signal-caution)"
-      : tone === "violet"
-        ? "var(--signal-frontier)"
-        : "var(--signal-contested)";
+  const rulerTone = tone === "caution" ? "caution" : tone === "violet" ? "neutral" : "good";
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="w-full cursor-help">
-          <div className="mb-1 flex items-baseline justify-between gap-2">
-            <span className={cn("text-muted-foreground", size === "sm" ? "text-[10px]" : "text-[11px]")}>{label}</span>
-            <span
-              className={cn("tnum font-semibold", size === "sm" ? "text-xs" : "text-sm")}
-              style={{ color: toneColor }}
-            >
-              {value}
-            </span>
-          </div>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full transition-[width] duration-500"
-              style={{ width: `${Math.max(2, Math.min(100, value))}%`, background: toneColor, transitionTimingFunction: "var(--ease-out)" }}
-            />
-          </div>
+        <div className="flex w-full cursor-help items-baseline gap-2.5">
+          <span
+            className={cn("ui text-ink-500 shrink-0", size === "sm" ? "text-[9.5px]" : "text-[10px]")}
+          >
+            {label}
+          </span>
+          <MiniRuler value={value} tone={rulerTone} width={0} className="min-w-0 flex-1" />
+          <span
+            className={cn("tnum text-ink-800 shrink-0", size === "sm" ? "text-[11px]" : "text-[12.5px]")}
+          >
+            {value}
+          </span>
         </div>
       </TooltipTrigger>
       <TooltipContent className="max-w-[300px] text-xs leading-relaxed">{explain}</TooltipContent>
@@ -260,7 +260,7 @@ export function InfoHint({ children }: { children: React.ReactNode }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Info className="size-3.5 shrink-0 cursor-help text-muted-foreground/70" />
+        <Info className="text-ink-400 size-3 shrink-0 cursor-help" />
       </TooltipTrigger>
       <TooltipContent className="max-w-[320px] text-xs leading-relaxed">{children}</TooltipContent>
     </Tooltip>

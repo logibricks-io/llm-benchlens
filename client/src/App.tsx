@@ -41,7 +41,9 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      {/* Frost (light) is the stated design position; 夜霜 stays available
+          because this is a tool people read for long stretches. */}
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider delayDuration={200}>
           <Toaster />
           <Router />
