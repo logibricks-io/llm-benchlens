@@ -63,15 +63,22 @@ function BenchmarkHero({
   rows: Array<{ modelName: string; rawScore: number; normalized: number }>;
 }) {
   /*
-   * Top scores are usually within a point or two of each other, so three marks
-   * on one baseline collide into an unreadable smear. Keep a mark only if it is
-   * far enough along the rule to be legible beside the previous one.
+   * Three marks on one baseline collide into an unreadable smear when the models
+   * are close. What matters is distance *along this rule*, not the arithmetic
+   * score gap: on a hard benchmark every reading may sit below 13, where a gap
+   * of 9 points is still most of the visible span, while on a saturated one a
+   * 9-point gap is nothing. Space the marks by the rule's own extent.
    */
-  const MIN_GAP = 9;
+  const plottableAll = rows.filter(r => r.rawScore >= 0 && r.rawScore <= 100);
+  const span = plottableAll.length > 0
+    ? Math.max(...plottableAll.map(r => r.rawScore)) -
+      Math.min(...plottableAll.map(r => r.rawScore))
+    : 0;
+  /* Require a tenth of the drawn span, with a floor so near-ties still separate. */
+  const minGap = Math.max(span * 0.1, 1.5);
   const plottable: Array<{ modelName: string; rawScore: number; normalized: number }> = [];
-  for (const r of rows) {
-    if (r.rawScore < 0 || r.rawScore > 100) continue;
-    if (plottable.some(p => Math.abs(p.rawScore - r.rawScore) < MIN_GAP)) continue;
+  for (const r of plottableAll) {
+    if (plottable.some(p => Math.abs(p.rawScore - r.rawScore) < minGap)) continue;
     plottable.push(r);
     if (plottable.length === 3) break;
   }
@@ -176,6 +183,10 @@ export default function BenchmarkDetail() {
           {b.version && <><span className="text-ink-400">/</span><span>{b.version}</span></>}
         </span>
       }
+      readNext={[
+        { href: "/matrix", label: "指标矩阵", why: "把这把尺与其余的尺并排比较" },
+        { href: "/benchmarks", label: "指标库", why: "返回全部指标的元模型档案" },
+      ]}
       actions={
         <div className="flex items-center gap-2">
           {b.officialUrl && (

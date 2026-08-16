@@ -255,7 +255,8 @@ export default function Matrix() {
       }
     >
       {/* Filter bar */}
-      <div className="hair-b bg-background sticky top-0 z-20 flex flex-wrap items-center gap-2 px-7 py-2.5">
+      {/* Parks below the floating islet so the rotated headers never sit under it. */}
+      <div className="hair-b bg-background sticky top-[54px] z-20 flex flex-wrap items-center gap-2 px-7 py-2.5">
         <div className="ui text-ink-500 flex items-center gap-1.5 text-[11px]">
           <Filter className="size-3.5" />
           <span>筛选</span>

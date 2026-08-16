@@ -32,6 +32,10 @@ export default function Decide() {
     <WorkbenchLayout
       title="场景决策"
       subtitle="按落地场景加权指标证据，输出带依据的模型排序"
+      readNext={[
+        { href: "/compare", label: "对战台", why: "把候选模型放到同一把尺上细看" },
+        { href: "/benchmarks", label: "指标库", why: "查证这个场景倚重的几把尺是否可靠" },
+      ]}
     >
       <div className="grid gap-5 xl:grid-cols-[268px_1fr]">
         {/* Scenario picker + constraints */}

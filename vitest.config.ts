@@ -15,5 +15,15 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["server/**/*.test.ts", "server/**/*.spec.ts"],
+    /*
+     * Several suites assert against the real database (coverage, provenance,
+     * closed vocabularies) rather than fixtures, because the invariants worth
+     * protecting are properties of the corpus, not of a mock. A cold connection
+     * to the managed instance can exceed the 5s default and produce a failure
+     * that says nothing about correctness — which is worse than a slow test,
+     * since a flaky suite trains you to ignore it.
+     */
+    testTimeout: 20000,
+    hookTimeout: 20000,
   },
 });

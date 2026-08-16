@@ -11,6 +11,7 @@ import {
   UTILITY_EXPLAIN,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
+import { NoteBlock, NoteFigure } from "@/components/MarginNote";
 import { Ruler, parseLeadingNumber } from "@/components/Ruler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,10 +79,100 @@ export default function Benchmarks() {
   const mechanisms = Array.from(new Set(rows.map(b => b.scoringMechanism)));
   const activeFilters = [domain, saturation, stance, mechanism].filter(v => v !== ALL).length;
 
+  /*
+   * Group the archive into bands so a long scroll keeps its bearings. When the
+   * list is sorted by a score we band by that score's tier — the reader is then
+   * told *why* the run is ordered this way, not just that it is. Sorting by name
+   * bands alphabetically instead, since utility tiers would be meaningless there.
+   */
+  const bands = useMemo(() => {
+    type Entry = { item: BenchmarkRow; index: number };
+    const entries: Entry[] = filtered.map((item, index) => ({ item, index }));
+
+    if (sortBy === "name") {
+      return [
+        {
+          key: "all",
+          label: "按名称排列",
+          note: "字母顺序",
+          items: entries,
+        },
+      ];
+    }
+
+    const pick = (b: BenchmarkRow) =>
+      sortBy === "trust"
+        ? b.trustScore
+        : sortBy === "disc"
+          ? b.discriminativePower
+          : sortBy === "difficulty"
+            ? b.difficultyCoefficient
+            : b.utilityScore;
+
+    const defs =
+      sortBy === "difficulty"
+        ? [
+            { key: "hard", label: "最严的尺", note: "难度 ×1.60 以上", lo: 1.6, hi: Infinity },
+            { key: "mid", label: "中等严格", note: "×1.20 – ×1.60", lo: 1.2, hi: 1.6 },
+            { key: "loose", label: "宽松的尺", note: "×1.20 以下", lo: -Infinity, hi: 1.2 },
+          ]
+        : [
+            { key: "high", label: "现在最值得看", note: "60 分以上", lo: 60, hi: Infinity },
+            { key: "mid", label: "仍有参考价值", note: "40 – 60 分", lo: 40, hi: 60 },
+            { key: "low", label: "已难以分辨", note: "40 分以下", lo: -Infinity, hi: 40 },
+          ];
+
+    return defs
+      .map(d => ({
+        key: d.key,
+        label: d.label,
+        note: d.note,
+        /* Half-open bands [lo, hi) so every record lands in exactly one. */
+        items: entries.filter(e => {
+          const v = pick(e.item);
+          return v >= d.lo && v < d.hi;
+        }),
+      }))
+      .filter(b => b.items.length > 0);
+  }, [filtered, sortBy]);
+
   return (
     <WorkbenchLayout
       title="指标库"
       subtitle={`${filtered.length} / ${rows.length} 项评测的元模型档案`}
+      readNext={[
+        { href: "/matrix", label: "指标矩阵", why: "把这些尺并排，看模型在每把尺上的读数" },
+        { href: "/decide", label: "场景决策", why: "按落地场景挑出该看哪几把尺" },
+      ]}
+      aside={
+        <>
+          <NoteBlock label="怎么读这一页">
+            <p>
+              每条档案中间那把尺的
+              <strong className="text-ink-700">物理长度就是难度系数</strong>
+              ，全库区间 0.61–2.03。尺越长，同样的读数含义越重。
+            </p>
+            <p>SOTA 标记落在尺上的位置，是这把尺当前被推到的最远处。</p>
+          </NoteBlock>
+          <NoteBlock label="全库方法学缺口">
+            <NoteFigure
+              value={
+                rows.length > 0
+                  ? `${Math.round((rows.filter(b => b.ciDisclosed).length / rows.length) * 100)}%`
+                  : "—"
+              }
+              caption="披露置信区间的指标占比。其余指标的分差无法判断是否只是采样噪声。"
+            />
+          </NoteBlock>
+          <NoteBlock label="效用分的含义">
+            <p>
+              它不回答"这个指标好不好"，而是
+              <strong className="text-ink-700">现在还值不值得看</strong>
+              ：已饱和的尺分辨力低，零证据的尺无从比较，两者都会被折减。
+            </p>
+          </NoteBlock>
+        </>
+      }
       actions={
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
@@ -154,9 +245,24 @@ export default function Benchmarks() {
          * Archive entries rather than a card grid. Each benchmark is a numbered
          * record: rank, name, its rule drawn at true difficulty length, then the
          * caveats as marginal notes. Nothing is boxed.
+         *
+         * 95 records in one unbroken run leaves a reader with no idea where they
+         * are by the time they have scrolled a few screens. Group the run into
+         * utility bands with sticky headers: the band you are inside stays named
+         * at the top of the viewport, which is what a running head does in print.
          */
         <div>
-          {filtered.map((b, i) => (
+          {bands.map(band => (
+            <section key={band.key}>
+              <div className="bg-background hair-b sticky top-[52px] z-10 flex items-baseline justify-between py-2">
+                <h2 className="ui text-ink-500 text-[10px] tracking-[0.16em] uppercase">
+                  {band.label}
+                </h2>
+                <span className="ui text-ink-400 text-[10px]">
+                  <span className="tnum">{band.items.length}</span> 项 · {band.note}
+                </span>
+              </div>
+              {band.items.map(({ item: b, index: i }) => (
             <Link
               key={b.slug}
               href={`/benchmarks/${b.slug}`}
@@ -261,6 +367,8 @@ export default function Benchmarks() {
                 </div>
               </div>
             </Link>
+              ))}
+            </section>
           ))}
         </div>
       ) : (

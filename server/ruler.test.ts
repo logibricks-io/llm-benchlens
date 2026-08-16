@@ -141,3 +141,113 @@ describe("mark labels stay inside the drawn rule", () => {
     expect(anchorFor(96, 0.61)).toBe("-100%");
   });
 });
+
+/**
+ * Mirrors `assignLabelRows`. Spacing marks by dot position alone is not enough:
+ * the dots can clear each other while the labels beside them still collide,
+ * because label width depends on the model's name.
+ */
+function assignLabelRows(
+  marks: Array<{ value: number; label?: string }>,
+  frac: number,
+  ruleWidthPx: number,
+): number[] {
+  const PAD_PX = 10;
+  const labelWidth = (s: string) => {
+    let w = 0;
+    for (const ch of s) w += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 9.2 : 5.2;
+    return w;
+  };
+  const rows: Array<Array<[number, number]>> = [];
+  return marks.map(m => {
+    if (!m.label) return 0;
+    const centerPx = ((frac * m.value) / 100) * ruleWidthPx;
+    const halfPx = labelWidth(m.label) / 2 + PAD_PX;
+    const span: [number, number] = [centerPx - halfPx, centerPx + halfPx];
+    for (let r = 0; r < rows.length; r++) {
+      if (!rows[r].some(([lo, hi]) => span[0] < hi && span[1] > lo)) {
+        rows[r].push(span);
+        return r;
+      }
+    }
+    rows.push([span]);
+    return rows.length - 1;
+  });
+}
+
+describe("stacking labels that would collide", () => {
+  it("keeps well-separated labels on a single row", () => {
+    expect(
+      assignLabelRows(
+        [
+          { value: 10, label: "A 10" },
+          { value: 50, label: "B 50" },
+          { value: 90, label: "C 90" },
+        ],
+        1,
+        800,
+      ),
+    ).toEqual([0, 0, 0]);
+  });
+
+  it("stacks on a hard rule where every reading is a single digit", () => {
+    /* CritPt: readings 12.6 / 9.1 / 0.6. The arithmetic gaps look adequate but
+       the dots land within a few pixels of one another. */
+    const rows = assignLabelRows(
+      [
+        { value: 12.6, label: "GPT-5 12.6" },
+        { value: 9.1, label: "Gemini 3 Pro 9.1" },
+        { value: 0.6, label: "o4-mini (high) 0.6" },
+      ],
+      0.95,
+      760,
+    );
+    expect(rows[0]).toBe(0);
+    expect(rows[1]).toBeGreaterThan(0);
+  });
+
+  it("stacks on a saturated short rule where readings bunch near the end", () => {
+    /* MMLU-Pro: drawn at 30% of full measure, readings all in the 83–94 band. */
+    const rows = assignLabelRows(
+      [
+        { value: 93.9, label: "Claude Mythos 5 93.9" },
+        { value: 87.6, label: "Claude Opus 4.8 87.6" },
+        { value: 83.6, label: "GPT-5.6 Sol 83.6" },
+      ],
+      0.3,
+      760,
+    );
+    expect(new Set(rows).size).toBe(3);
+  });
+
+  it("measures CJK glyphs as wider than latin ones", () => {
+    /*
+     * The gap must fall between the two half-widths doubled: a 6-glyph latin
+     * label spans ±25.6px (needs >51.2px), the same count of CJK spans ±37.6px
+     * (needs >75.2px). 64px therefore clears latin and collides for CJK. Drop
+     * the script weighting and the CJK pair wrongly shares a row on screen.
+     */
+    const latin = assignLabelRows(
+      [
+        { value: 40, label: "aaaaaa" },
+        { value: 48, label: "aaaaaa" },
+      ],
+      1,
+      800,
+    );
+    const cjk = assignLabelRows(
+      [
+        { value: 40, label: "中文标签中文" },
+        { value: 48, label: "中文标签中文" },
+      ],
+      1,
+      800,
+    );
+    expect(latin).toEqual([0, 0]);
+    expect(cjk[1]).toBeGreaterThan(0);
+  });
+
+  it("leaves unlabelled marks on the base row", () => {
+    expect(assignLabelRows([{ value: 50 }, { value: 51 }], 1, 800)).toEqual([0, 0]);
+  });
+});

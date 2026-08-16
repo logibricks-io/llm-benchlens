@@ -1,7 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { FreshnessDot, InfoHint } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { startLogin } from "@/const";
@@ -71,17 +70,24 @@ export default function Admin() {
             </p>
             <div className="mt-5 flex items-center justify-center gap-2">
               {!user ? (
-                <Button size="sm" onClick={() => startLogin()}>
+                <button
+                  type="button"
+                  onClick={() => startLogin()}
+                  className="ui text-ink-700 hover:text-frost-qing hair-all px-3 py-1.5 text-[11px] transition-colors duration-150"
+                >
                   登录
-                </Button>
+                </button>
               ) : (
                 <span className="text-xs text-ink-500">
                   当前账号 {user.name ?? user.openId} 无管理员权限
                 </span>
               )}
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/">返回总览</Link>
-              </Button>
+              <Link
+                href="/"
+                className="ui text-ink-600 hover:text-frost-qing px-3 py-1.5 text-[11px] transition-colors duration-150"
+              >
+                返回总览 →
+              </Link>
             </div>
           </div>
         </div>
@@ -96,9 +102,12 @@ export default function Admin() {
       title="数据运维"
       subtitle="覆盖度审计、陈旧证据与刷新记录"
       actions={
-        <Button
-          size="sm"
-          className="h-8 gap-1.5 px-3 text-xs"
+        /* A filled dark block reads as a foreign object on a frost-white page,
+           and this is a maintenance action, not the page's purpose. Set it as a
+           quiet hairline affordance instead. */
+        <button
+          type="button"
+          className="ui text-ink-600 hover:text-frost-qing hair-all flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] transition-colors duration-150 disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -107,10 +116,10 @@ export default function Admin() {
         >
           <RefreshCw className={busy ? "size-3 animate-spin" : "size-3"} />
           全库复核
-        </Button>
+        </button>
       }
     >
-      <div className="space-y-4 p-6">
+      <div className="space-y-4">
         {/* Health tiles */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Tile

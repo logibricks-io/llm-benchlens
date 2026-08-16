@@ -12,6 +12,7 @@
  * One motif, one explanation, every surface.
  */
 import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 
 /** Widest difficulty coefficient in the corpus; sets the 100% rule length. */
 export const MAX_DIFFICULTY = 2.03;
@@ -58,6 +59,45 @@ type MarkPoint = {
 };
 
 /**
+ * Spacing marks by their *dot* positions is not enough: the dots can sit clear
+ * of each other while the labels beside them still collide, because label width
+ * depends on the model name. Estimate each label's span along the rule and drop
+ * a label to the next row when it would overlap one already placed on that row.
+ * Two rows are enough in practice, and stacking is honest — nothing is hidden.
+ */
+function assignLabelRows(
+  marks: MarkPoint[],
+  frac: number,
+  ruleWidthPx: number,
+): number[] {
+  /* At 9px, latin glyphs run ~5px and CJK ~9px. Counting every character as
+     latin under-measures any label with Chinese in it, so weight by script and
+     keep the padding generous — a false collision costs one stacked row, a
+     missed one costs legibility. */
+  const PAD_PX = 10;
+  const labelWidth = (s: string) => {
+    let w = 0;
+    for (const ch of s) w += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 9.2 : 5.2;
+    return w;
+  };
+  const rows: Array<Array<[number, number]>> = [];
+  return marks.map(m => {
+    if (!m.label) return 0;
+    const centerPx = (frac * m.value / 100) * ruleWidthPx;
+    const halfPx = labelWidth(m.label) / 2 + PAD_PX;
+    const span: [number, number] = [centerPx - halfPx, centerPx + halfPx];
+    for (let r = 0; r < rows.length; r++) {
+      if (!rows[r].some(([lo, hi]) => span[0] < hi && span[1] > lo)) {
+        rows[r].push(span);
+        return r;
+      }
+    }
+    rows.push([span]);
+    return rows.length - 1;
+  });
+}
+
+/**
  * A single rule with tick marks and optional readings on it.
  *
  * `difficulty` shrinks the drawn length: a lenient benchmark is visibly a
@@ -87,8 +127,29 @@ export function Ruler({
     difficulty == null ? 1 : Math.max(0.12, Math.min(1, difficulty / MAX_DIFFICULTY));
   const baseline = labelBelow ? height * 0.42 : height * 0.62;
 
+  /* Label collision depends on rendered width, so measure the actual element
+     rather than guessing. Before first measurement fall back to a typical
+     content width; the row assignment then corrects itself on layout. */
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [widthPx, setWidthPx] = useState(640);
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width;
+      if (w && Math.abs(w - widthPx) > 1) setWidthPx(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [widthPx]);
+
+  const labelRows = assignLabelRows(marks, frac, widthPx);
+  /* Stacked labels need vertical room, or they render outside the box. */
+  const extraRows = labelRows.length > 0 ? Math.max(...labelRows) : 0;
+  const boxHeight = height + (labelBelow ? extraRows * 11 : 0);
+
   return (
-    <div className={cn("relative w-full", className)} style={{ height }}>
+    <div ref={hostRef} className={cn("relative w-full", className)} style={{ height: boxHeight }}>
       {/* the rule itself, length ∝ difficulty */}
       <div
         className={cn("absolute left-0", animate && "anim-ruler")}
@@ -124,6 +185,7 @@ export function Ruler({
            the ends so it never runs back over the row's left-hand text. */
         const pos = frac * m.value;
         const anchor = pos < 12 ? "0%" : pos > frac * 100 - 12 ? "-100%" : "-50%";
+        const row = labelRows[i] ?? 0;
         return (
           <div key={i} title={m.title} className="absolute" style={{ left: `${frac * m.value}%` }}>
             <div
@@ -141,7 +203,7 @@ export function Ruler({
               <div
                 className="ui absolute whitespace-nowrap text-[9px] leading-none"
                 style={{
-                  top: labelBelow ? baseline + 7 : baseline - 16,
+                  top: labelBelow ? baseline + 7 + row * 11 : baseline - 16 - row * 11,
                   left: 0,
                   transform: `translateX(${anchor})`,
                   color: tone,
@@ -149,6 +211,21 @@ export function Ruler({
               >
                 {m.label}
               </div>
+            )}
+            {/* A leader line when the label has been pushed off its own row, so
+                the reader can still tell which mark it belongs to. */}
+            {m.label && row > 0 && (
+              <div
+                className="absolute"
+                style={{
+                  top: labelBelow ? baseline + 4 : baseline - 4 - row * 11,
+                  left: -0.5,
+                  width: 1,
+                  height: row * 11 - 1,
+                  background: tone,
+                  opacity: 0.3,
+                }}
+              />
             )}
           </div>
         );

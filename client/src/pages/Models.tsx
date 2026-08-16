@@ -1,4 +1,5 @@
 import { InfoHint } from "@/components/MetaBadges";
+import { NoteBlock } from "@/components/MarginNote";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,32 @@ export default function Models() {
     <WorkbenchLayout
       title="模型库"
       subtitle={`${filtered.length} / ${rows.length} 个模型 · 综合分按证据权重加权`}
+      readNext={[
+        { href: "/compare", label: "对战台", why: "选定两三个模型做同尺对比" },
+        { href: "/matrix", label: "指标矩阵", why: "逐格查看每个读数的出处与采集时间" },
+      ]}
+      aside={
+        <>
+          <NoteBlock label="综合分为何不是平均分">
+            <p>
+              观测均值按证据条数向全库中位收缩：n 条证据时，观测值只占
+              <span className="tnum"> n/(n+4) </span>
+              权重。
+            </p>
+            <p>
+              所以只测过一两项的模型不会靠一次高分冲到榜首——
+              <strong className="text-ink-700">少量证据本身就是不确定性</strong>。
+            </p>
+          </NoteBlock>
+          <NoteBlock label="缺格的含义">
+            <p>
+              空白不代表能力弱，只代表
+              <strong className="text-ink-700">没有可追溯的公开记录</strong>
+              。本库拒收无出处的分数。
+            </p>
+          </NoteBlock>
+        </>
+      }
       actions={
         <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
           <SelectTrigger className="h-8 w-[130px] text-xs">

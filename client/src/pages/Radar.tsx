@@ -1,4 +1,5 @@
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
+import { NoteBlock } from "@/components/MarginNote";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { ExternalLink, Radio } from "lucide-react";
@@ -8,7 +9,22 @@ export default function Radar() {
   const rows = data ?? [];
 
   return (
-    <WorkbenchLayout title="发布雷达" subtitle="新模型与新评测的事件流，按发布日期倒序">
+    <WorkbenchLayout
+      title="发布雷达"
+      subtitle="新模型与新评测的事件流，按发布日期倒序"
+      readNext={[
+        { href: "/models", label: "模型库", why: "查看这些新模型的综合分与证据量" },
+        { href: "/benchmarks", label: "指标库", why: "新指标往往比新模型更值得关注" },
+      ]}
+      aside={
+        <NoteBlock label="发布日期不等于可比">
+          <p>
+            新模型上榜初期证据常只有个位数，综合分会被向中位收缩。
+            <strong className="text-ink-700">先看证据条数，再看分数</strong>。
+          </p>
+        </NoteBlock>
+      }
+    >
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-sm" />)}
@@ -60,4 +76,3 @@ export default function Radar() {
     </WorkbenchLayout>
   );
 }
-

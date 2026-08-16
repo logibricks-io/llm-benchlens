@@ -6,6 +6,7 @@ import {
   SourceBadge,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
+import { NoteBlock } from "@/components/MarginNote";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -85,6 +86,24 @@ export default function Compare() {
           ? "选择 2–4 个模型进行同尺对比"
           : `${picked.length} 个模型 · ${table.length} 个可比指标`
       }
+      readNext={[
+        { href: "/decide", label: "场景决策", why: "不确定该比什么时，先给出场景" },
+        { href: "/benchmarks", label: "指标库", why: "查证这些尺各自的严格度与污染风险" },
+      ]}
+      aside={
+        <>
+          <NoteBlock label="为什么默认只看共同指标">
+            <p>
+              只有所有被选模型都测过的尺才构成对比。混入单方独有的记录，
+              <strong className="text-ink-700">看起来像差距，实际是覆盖差异</strong>。
+            </p>
+          </NoteBlock>
+          <NoteBlock label="每格都可追溯">
+            <p>悬停任一读数可看到原始分、归一化值、采集时间与出处链接。</p>
+            <p>无出处的分数不会进入本库。</p>
+          </NoteBlock>
+        </>
+      }
       actions={
         selected.length > 1 && (
           <Tooltip>
@@ -129,7 +148,11 @@ export default function Compare() {
         {selected.length < 4 && (
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-[52px] gap-1.5 border-dashed px-4 text-xs">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-[52px] gap-1.5 rounded-none border-dashed px-4 text-xs"
+              >
                 <Plus className="size-3.5" />
                 添加模型
               </Button>
@@ -166,10 +189,12 @@ export default function Compare() {
       </div>
 
       {selected.length === 0 ? (
-        <div className="flex h-[320px] items-center justify-center rounded-sm hair-all">
-          <div className="hair-t max-w-md px-6 py-5 text-center">
-            <p className="text-sm">从上方添加模型开始对比</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-ink-500">
+        <div className="hair-t py-16">
+          <div className="max-w-[46ch]">
+            <p className="display text-ink-800 text-[19px] leading-snug">
+              从上方添加模型开始对比
+            </p>
+            <p className="ui text-ink-500 mt-2.5 text-[12px] leading-relaxed">
               对战台只在共同测过的指标上做比较，并对每个数值标注出处与采集时间。
               跨指标的总分差异会用归一化口径消除量纲影响。
             </p>
