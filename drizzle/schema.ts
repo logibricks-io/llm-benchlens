@@ -1,4 +1,4 @@
-import { boolean, decimal, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, decimal, index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -98,6 +98,21 @@ export const models = mysqlTable(
     priceInput: decimal("priceInput", { precision: 10, scale: 3 }),
     priceOutput: decimal("priceOutput", { precision: 10, scale: 3 }),
     releasedAt: varchar("releasedAt", { length: 20 }),
+    /**
+     * Context window as a plain token count, so it can be sorted and plotted.
+     * `contextWindow` above stays as the human string ("200K", "1M").
+     */
+    contextTokens: int("contextTokens"),
+    /**
+     * Provenance for the commercial facts. The scores table has required
+     * per-row sourceUrl; price and context deserve the same treatment, or the
+     * quality×price chart would rest on unverifiable numbers.
+     */
+    priceSourceUrl: varchar("priceSourceUrl", { length: 500 }),
+    contextSourceUrl: varchar("contextSourceUrl", { length: 500 }),
+    releaseSourceUrl: varchar("releaseSourceUrl", { length: 500 }),
+    /** Caveats such as tiered pricing or gated access, surfaced in the UI. */
+    commercialNote: text("commercialNote"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
@@ -169,3 +184,31 @@ export const refreshLog = mysqlTable("refreshLog", {
 
 export type RefreshLog = typeof refreshLog.$inferSelect;
 
+/**
+ * Daily snapshot of each model's composite standing, so movement becomes
+ * observable over time. Nothing in the UI may claim a trend until there are at
+ * least two distinct snapshot days for the model in question.
+ */
+export const rankSnapshots = mysqlTable(
+  "rankSnapshots",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    modelId: int("modelId").notNull(),
+    /** UTC calendar day, YYYY-MM-DD. One row per model per day. */
+    snapshotDay: varchar("snapshotDay", { length: 10 }).notNull(),
+    compositeScore: decimal("compositeScore", { precision: 6, scale: 2 }),
+    rankOverall: int("rankOverall"),
+    evidenceCount: int("evidenceCount").default(0).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    dayIdx: index("rank_snapshots_day_idx").on(table.snapshotDay),
+    modelDayIdx: uniqueIndex("rank_snapshots_model_day_idx").on(
+      table.modelId,
+      table.snapshotDay,
+    ),
+  }),
+);
+
+export type RankSnapshot = typeof rankSnapshots.$inferSelect;
+export type InsertRankSnapshot = typeof rankSnapshots.$inferInsert;

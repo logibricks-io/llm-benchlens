@@ -15,6 +15,13 @@
       "when": 1786810066553,
       "tag": "0001_cooing_betty_brant",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786977485306,
+      "tag": "0002_lowly_princess_powerful",
+      "breakpoints": true
     }
   ]
 }
