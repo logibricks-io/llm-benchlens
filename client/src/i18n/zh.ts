@@ -224,6 +224,13 @@ export const zh: Dict = {
     self_reported: "厂商自报",
   },
 
+  caveat: {
+    all_self_reported: "全部证据来自厂商自报，缺少独立复跑",
+    mostly_saturated: "过半证据来自已饱和指标，区分力有限",
+    mostly_stale: "过半证据超过 8 个月未更新",
+    thin_evidence: "证据条数偏少，排名不确定性较高",
+  },
+
   sourceExplain: {
     official_leaderboard: "由评测方自己维护的官方榜单收录，运行环境统一，证据强度较高。",
     third_party_aggregator: "由独立第三方复跑或聚合得出，未经厂商筛选，证据强度高。",
@@ -281,7 +288,7 @@ export const zh: Dict = {
   },
 
   home: {
-    metaModel: "指标元模型 · Metric meta-model",
+    metaModel: "指标元模型",
     scoresNotComparable: "分数",
     scoresNotComparableHighlight: "不可比",
     scoresNotComparableP1: "全通过评分的法律指标只有个位数，已饱和的数学竞赛题接近满分。把它们并列在同一张表里，",
@@ -298,7 +305,7 @@ export const zh: Dict = {
     saturatedNote: "分辨力接近枯竭，排名差异多为噪声",
     saturatedHint: "顶级模型得分已超过 85% 的指标。它们仍频繁出现在发布材料中，但几乎无法再区分模型强弱。",
     demoMarker: "01",
-    demoLabel: "演示 · the same reading, two rules",
+    demoLabel: "同一个读数，两把尺",
     demoTitle1: "同一个 {n} 分",
     demoTitle2: "不是一回事",
     demoP1: "尺的长度就是这把评测的难度系数。宽松的评测是一把",
@@ -306,7 +313,7 @@ export const zh: Dict = {
     demoP1Suffix: "——同样的读数落在上面，实际含义弱得多。",
     demoP2: "归一化就是把读数投射到同一把中性尺上。这是跨指标比较的唯一合法口径。",
     evidenceMarker: "02",
-    evidenceLabel: "证据 · which rules still measure",
+    evidenceLabel: "哪些尺还量得出东西",
     marginalNotes: "边注",
     mostUseful: "最值得看",
     leastUseful: "最不值得看",
@@ -318,7 +325,7 @@ export const zh: Dict = {
     freshnessStats: "证据新鲜度：30 天内 {fresh} 条 · 90 天内 {recent} 条 · 8 个月内 {aging} 条 · 陈旧 {stale} 条。",
     domainCoverage: "能力域覆盖",
     doorsMarker: "03",
-    doorsLabel: "入口 · into the data",
+    doorsLabel: "进入数据",
     matrixNum: "01 / 全量对比",
     matrixTitle: "指标矩阵",
     matrixNote: "{b} 指标 × {m} 模型，每格可追溯到出处",
@@ -347,7 +354,7 @@ export const zh: Dict = {
     readNextLibraryWhy: "返回全部指标的元模型档案",
     officialLink: "官方",
     paperLink: "论文",
-    thisRule: "这把尺 · this rule",
+    thisRule: "这把尺",
     lengthPct: "长度为满尺的 {pct}%",
     difficultyHint: "（难度 ×{diff}，语料最严为 ×{max}）",
     currentSota: "当前最优",
@@ -705,7 +712,7 @@ export const zh: Dict = {
     title: "这一页不在本刊",
     p1: "地址可能拼写有误，或指向了一个已经改名的指标。",
     p2: "指标详情页的地址会随口径修订而变化，旧链接不保证长期有效。",
-    elsewhere: "换个去处 · Elsewhere",
+    elsewhere: "换个去处",
     shortcutHintPrefix: "也可以按",
     shortcutHintSuffix: "打开目录直接跳转。",
   },

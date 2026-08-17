@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
+  type CaveatCode,
   evidenceWeight,
   freshnessOf,
   normalizedScore,
@@ -386,7 +387,7 @@ export const appRouter = router({
             sourceUrl: string | null;
             measuredAt: string | null;
           }>;
-          caveats: string[];
+          caveats: CaveatCode[];
         }> = [];
 
         for (const [slug, mine] of Array.from(grouped.entries())) {
@@ -427,17 +428,18 @@ export const appRouter = router({
           const wsum = weighted.reduce((a: number, x: Weighted) => a + x.w, 0);
           const fit = weighted.reduce((a: number, x: Weighted) => a + x.w * x.r.normalized, 0) / wsum;
 
-          const caveats: string[] = [];
+          /* Codes only — display copy is dictionary data, see CaveatCode. */
+          const caveats: CaveatCode[] = [];
           const selfOnly = weighted.every((x: Weighted) => x.r.sourceType === "self_reported");
-          if (selfOnly) caveats.push("全部证据来自厂商自报，缺少独立复跑");
+          if (selfOnly) caveats.push("all_self_reported");
           const saturatedShare =
             weighted.filter((x: Weighted) => x.r.saturationStatus === "saturated").length / weighted.length;
-          if (saturatedShare > 0.6) caveats.push("过半证据来自已饱和指标，区分力有限");
+          if (saturatedShare > 0.6) caveats.push("mostly_saturated");
           const staleShare =
             weighted.filter((x: Weighted) => x.r.freshness === "stale" || x.r.freshness === "aging").length /
             weighted.length;
-          if (staleShare > 0.5) caveats.push("过半证据超过 8 个月未更新");
-          if (weighted.length < 4) caveats.push("证据条数偏少，排名不确定性较高");
+          if (staleShare > 0.5) caveats.push("mostly_stale");
+          if (weighted.length < 4) caveats.push("thin_evidence");
 
           results.push({
             modelSlug: slug,

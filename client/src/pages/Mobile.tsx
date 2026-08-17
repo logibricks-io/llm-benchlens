@@ -767,7 +767,7 @@ function DecideTab() {
                   <div className="mt-2 flex flex-wrap gap-1">
                     {r.caveats.map(c => (
                       <span key={c} className="rounded border border-[color:var(--signal-caution)]/30 px-1 py-0.5 text-[12px] text-caution">
-                        {c}
+                        {t.caveat[c]}
                       </span>
                     ))}
                   </div>

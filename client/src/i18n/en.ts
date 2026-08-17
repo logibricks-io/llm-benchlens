@@ -237,14 +237,24 @@ export const en = {
   },
 
   sourceType: {
+    /* Keyed exactly as the database stores it, so `t.sourceType[row.sourceType]`
+       resolves without an alias table. `self_reported` used to be spelled
+       `vendor_self_reported` here, which forced a special case in SourceBadge
+       and returned undefined for every other caller. */
     official_leaderboard: "Official leaderboard",
     third_party_aggregator: "Independent re-run",
     paper: "Paper",
-    /* Keyed exactly as the database stores it, so `t.sourceType[row.sourceType]`
-       resolves without an alias table. It used to read `vendor_self_reported`,
-       which forced a special case in SourceBadge and returned undefined for
-       every other caller. */
     self_reported: "Vendor self-reported",
+  },
+
+  /* Recommendation caveats. The server sends CaveatCode values, never prose —
+     it used to push finished Chinese sentences, which showed up untranslated
+     under an English UI and could not be caught by scanning client source. */
+  caveat: {
+    all_self_reported: "All evidence is vendor self-reported; no independent re-run",
+    mostly_saturated: "Most evidence comes from saturated benchmarks; limited resolution",
+    mostly_stale: "Most evidence is over 8 months old",
+    thin_evidence: "Thin evidence; ranking is highly uncertain",
   },
 
   sourceExplain: {

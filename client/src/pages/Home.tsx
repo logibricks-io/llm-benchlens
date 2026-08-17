@@ -122,7 +122,7 @@ export default function Home() {
               <h2 className="display text-ink-900 text-[54px] leading-[1.04] tracking-tight">
                 {t.home.scoresNotComparable}
                 <br />
-                <span className="text-frost-qing">{t.home.scoresNotComparableHighlight}</span>
+                <span className="text-frost-qing-display">{t.home.scoresNotComparableHighlight}</span>
               </h2>
               <p className="text-ink-600 mt-7 max-w-[46ch] text-[14px] leading-[1.95]">
                 {t.home.scoresNotComparableP1}

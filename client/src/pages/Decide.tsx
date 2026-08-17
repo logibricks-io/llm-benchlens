@@ -220,7 +220,7 @@ export default function Decide() {
                             className="inline-flex items-center gap-1 rounded border border-[color:var(--signal-caution)]/35 bg-[color:var(--signal-caution)]/10 px-1.5 py-0.5 text-[12px] text-caution"
                           >
                             <AlertTriangle className="size-2.5" />
-                            {c}
+                            {t.caveat[c]}
                           </span>
                         ))}
                       </div>

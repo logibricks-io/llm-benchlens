@@ -208,6 +208,21 @@ export function scenarioByKey(key: string): ScenarioDef | undefined {
 }
 
 /**
+ * Caveat codes attached to a recommendation.
+ *
+ * These are codes, not sentences. The recommender used to push ready-made
+ * Chinese strings into its response, so the scenario page showed Chinese
+ * warnings under an English UI — the same leak as the scenario titles, and one
+ * that a client-side scan cannot detect because the text never appears in the
+ * client source. Display copy lives in the i18n packs under `caveat.*`.
+ */
+export type CaveatCode =
+  | "all_self_reported"
+  | "mostly_saturated"
+  | "mostly_stale"
+  | "thin_evidence";
+
+/**
  * Per-measurement weight under a scenario. Combines the scenario's domain
  * priorities, an explicit emphasis boost, structural fit (agentic /
  * guardrail-aware benchmarks predict agentic deployments better), and the

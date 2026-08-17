@@ -17,7 +17,10 @@ import { zh } from "./zh";
 export type Lang = "en" | "zh";
 
 const PACKS: Record<Lang, Dict> = { en, zh };
-const STORAGE_KEY = "benchlens-lang";
+/* Namespaced with a dot to match `benchlens.theme`; the earlier
+   `benchlens-lang` spelling is still read so a stored choice survives. */
+const STORAGE_KEY = "benchlens.lang";
+const LEGACY_STORAGE_KEY = "benchlens-lang";
 
 type I18nValue = {
   lang: Lang;
@@ -37,7 +40,8 @@ const I18nContext = createContext<I18nValue | null>(null);
 
 function readStoredLang(): Lang {
   if (typeof window === "undefined") return "en";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  const stored =
+    window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
   return stored === "zh" || stored === "en" ? stored : "en";
 }
 

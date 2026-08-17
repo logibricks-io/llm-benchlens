@@ -137,6 +137,55 @@ describe("i18n packs", () => {
       .map(l => l.path);
     expect(untranslated).toEqual([]);
   });
+
+  it("does not leave the English source text sitting inside a zh entry", () => {
+    /*
+     * Caught on the rendered home page: eyebrows read
+     * "指标元模型 · Metric meta-model" and "演示 · the same reading, two rules",
+     * because the translation was appended to the English instead of replacing
+     * it. Invisible to the type checker (still a string) and to the test above
+     * (it does contain Chinese), so it needs its own assertion.
+     *
+     * Rule: a zh value containing Chinese must not also reproduce most of its
+     * English counterpart's words. Proper nouns are stripped first, and entries
+     * with placeholders are skipped — numbers and units survive translation.
+     */
+    const cjk = /[\u4e00-\u9fff]/;
+    const allowed = [
+      "BenchLens", "Elo", "elo", "SOTA", "Ctrl", "Cmd", "PWA", "API", "URL",
+      "LLM", "Rubric", "token", "Heartbeat", "Safari", "GitHub", "output",
+    ];
+    const strip = (s: string) => allowed.reduce((acc, tok) => acc.split(tok).join(""), s);
+
+    const offenders: string[] = [];
+    const walk = (e: unknown, z: unknown, path: string) => {
+      if (typeof e === "object" && e !== null) {
+        for (const k of Object.keys(e as Record<string, unknown>)) {
+          walk(
+            (e as Record<string, unknown>)[k],
+            (z as Record<string, unknown> | undefined)?.[k],
+            path ? `${path}.${k}` : k,
+          );
+        }
+        return;
+      }
+      if (typeof e !== "string" || typeof z !== "string") return;
+      if (!cjk.test(z)) return;
+      if (z.includes("{")) return;
+      const enWords = strip(e).match(/[A-Za-z]{4,}/g) ?? [];
+      if (enWords.length === 0) return;
+      const shared = enWords.filter(w => z.includes(w));
+      if (shared.length >= Math.ceil(enWords.length * 0.6)) {
+        offenders.push(`${path}\n    en: ${e}\n    zh: ${z}`);
+      }
+    };
+    walk(en, zh, "");
+
+    expect(
+      offenders,
+      `zh entries still carrying their English source:\n${offenders.join("\n")}`,
+    ).toEqual([]);
+  });
 });
 
 describe("vocabulary coverage against the meta-model enums", () => {
