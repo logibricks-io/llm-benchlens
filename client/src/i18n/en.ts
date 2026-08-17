@@ -423,6 +423,9 @@ export const en = {
     radarNote: "Recent frontier release events",
     trustAbbr: "T",
     discAbbr: "R",
+    byDomainTitle: "Leadership by capability domain",
+    byDomainNote:
+      "The composite ranking above hides what usually decides a choice: the model that leads on reasoning is rarely the one that leads on coding or agentic work. A model needs at least two results inside a domain to be ranked here; the figure on the right is how many qualify.",
   },
 
   benchmarkDetail: {
@@ -494,6 +497,8 @@ export const en = {
     measuredAt: "Measured",
     source: "Source",
     noSharedMetrics: "These models have no shared metrics",
+    thinIntersection:
+      "models share only {n} benchmark(s) measured on all of them. Each column added shrinks the intersection, and what survives is usually a widely-reported, already-saturated yardstick. Remove a model, or turn off \"Shared metrics only\" to read the one-sided records with their coverage gaps visible.",
     noSharedMetricsDesc: "Turn off \"Shared metrics only\" to see their individual records, but note they do not form a direct comparison.",
   },
 
@@ -663,6 +668,9 @@ export const en = {
     colCoverage: "Capability coverage",
     confidenceTooltip: "Confidence {n}%",
     compareAction: "Compare",
+    markForCompare: "Select for comparison",
+    markedCount: "selected",
+    compareMarked: "Compare selected",
   },
 
   admin: {
@@ -807,6 +815,51 @@ export const en = {
 
   ruler: {
     neutralRuler: "Neutral Ruler",
+  },
+
+  spread: {
+    title: "Score spread",
+    note: "Every result for this benchmark on one 0–100 axis, coloured by provider. The width of the cluster is the benchmark's remaining ability to tell models apart.",
+    modelsWithin: "models within",
+    pointsOf: "points —",
+    compressed: "the field no longer separates on this ruler",
+  },
+
+  modelDetail: {
+    eyebrow: "Model dossier",
+    backToLibrary: "Model library",
+    composite: "Composite",
+    coverage: "Evidence",
+    confidence: "Confidence",
+    inputPrice: "Input $/M",
+    outputPrice: "Output $/M",
+    context: "Context",
+    released: "Released",
+    license: "Weights",
+    status: "Generation",
+    profileTitle: "Capability profile",
+    profileNote:
+      "One bar per capability domain, each an evidence-weighted mean of that domain's normalized scores. Domains with fewer than three results are marked thin — the score is real but the interval around it is wide.",
+    thin: "thin",
+    bestIn: "best on",
+    peersTitle: "Nearest alternatives",
+    peersNote:
+      "Closest composite scores, capped at one model per provider. Same-lab variants cluster tightly and answer a different question than \"what else could I use\".",
+    peerGap: "gap",
+    scoresTitle: "All evidence",
+    scoresNote: "Every score with its benchmark, difficulty coefficient, provenance, and measurement date.",
+    colBenchmark: "Benchmark",
+    colDomain: "Domain",
+    colRaw: "Raw",
+    colNormalized: "Normalized",
+    colDifficulty: "Difficulty",
+    colSource: "Source",
+    colMeasured: "Measured",
+    noScores: "No traceable results for this model yet.",
+    commercialNote: "Pricing note",
+    priceUnavailable: "No public USD pricing",
+    compareWith: "Compare",
+    notFound: "No model with this identifier is in the library.",
   },
 };
 

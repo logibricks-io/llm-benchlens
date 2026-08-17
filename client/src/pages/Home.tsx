@@ -66,6 +66,9 @@ export default function Home() {
   const [, navigate] = useLocation();
   const overview = trpc.meta.overview.useQuery();
   const champions = trpc.meta.champions.useQuery();
+  /* Named domainRanks, not byDomain: this file already has a local `byDomain`
+     Map counting benchmarks per domain, and shadowing it broke that block. */
+  const domainRanks = trpc.meta.byDomain.useQuery();
   const models = trpc.models.list.useQuery();
   const benchmarks = trpc.benchmarks.list.useQuery();
 
@@ -410,6 +413,57 @@ export default function Home() {
               <span aria-hidden="true">→</span>
             </Link>
           </div>
+        </section>
+
+        {/* ───────────── leadership is domain-specific ───────────── */}
+        <section className="hair-t py-9">
+          <div className="mb-5">
+            <h3 className="ui text-ink-800 text-[15px] font-medium">{t.home.byDomainTitle}</h3>
+            <p className="text-ink-500 mt-1 max-w-[68ch] text-[14px] leading-relaxed">
+              {t.home.byDomainNote}
+            </p>
+          </div>
+          {domainRanks.isLoading || !domainRanks.data ? (
+            <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-[164px] w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              {domainRanks.data.groups.map((g, gi) => (
+                <div key={g.domain} className="anim-rise min-w-0" style={{ animationDelay: `${gi * 40}ms` }}>
+                  <div className="hair-b flex items-baseline justify-between pb-1.5">
+                    <h4 className="text-ink-900 truncate text-[14px] font-medium">
+                      {t.capability[g.domain as CapabilityDomain] ?? g.domain}
+                    </h4>
+                    <span className="tnum text-ink-500 shrink-0 pl-2 text-[13px] tabular-nums">
+                      {g.contenders}
+                    </span>
+                  </div>
+                  <ol className="mt-2 space-y-1.5">
+                    {g.leaders.map((m, i) => (
+                      <li key={m.slug} className="flex items-center gap-2">
+                        <span className="tnum text-ink-400 w-[13px] shrink-0 text-[13px] tabular-nums">
+                          {i + 1}
+                        </span>
+                        <Link
+                          href={`/models/${m.slug}`}
+                          className="text-ink-800 hover:text-ink-950 min-w-0 flex-1 truncate text-[14px] transition-colors duration-120"
+                          title={`${m.name} · ${m.provider}`}
+                        >
+                          {m.name}
+                        </Link>
+                        <span className="w-[76px] shrink-0">
+                          <ScoreBar value={m.score} provider={m.provider} delay={i} />
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* ───────────── then the argument ───────────── */}

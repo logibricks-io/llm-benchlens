@@ -11,6 +11,7 @@ import {
   useMetricExplain,
 } from "@/components/MetaBadges";
 import { ScoreBar, Rank, ProviderDot } from "@/components/ScoreBar";
+import { ScoreSpread } from "@/components/ScoreSpread";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { Ruler, MAX_DIFFICULTY, parseLeadingNumber, toneForScore } from "@/components/Ruler";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -340,6 +341,21 @@ export default function BenchmarkDetail() {
         <div className="grid gap-4 lg:grid-cols-[1fr_282px]">
           {/* Leaderboard */}
           <div className="hair-t min-w-0 overflow-hidden">
+            {/*
+             * Spread before ranking. A leaderboard invites the reader to compare
+             * row 1 with row 2; on a saturated ruler that difference is noise.
+             * Showing the cluster width first states plainly whether the ordering
+             * below carries any signal at all.
+             */}
+            {rows.length >= 2 && (
+              <div className="hair-b px-4 py-3.5">
+                <div className="mb-2 flex items-center gap-1.5">
+                  <h3 className="text-[14px] font-medium">{t.spread.title}</h3>
+                  <InfoHint>{t.spread.note}</InfoHint>
+                </div>
+                <ScoreSpread rows={rows} />
+              </div>
+            )}
             <div className="flex items-center justify-between hair-b px-4 py-2.5">
               <div className="flex items-center gap-1.5">
                 <Users className="size-3.5 text-ink-500" />

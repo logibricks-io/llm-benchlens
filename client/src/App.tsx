@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 import Matrix from "./pages/Matrix";
 import Mobile from "./pages/Mobile";
 import Models from "./pages/Models";
+import ModelDetail from "./pages/ModelDetail";
 import Radar from "./pages/Radar";
 import Admin from "./pages/Admin";
 
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/benchmarks" component={Benchmarks} />
       <Route path="/benchmarks/:slug" component={BenchmarkDetail} />
       <Route path="/models" component={Models} />
+      <Route path="/models/:slug" component={ModelDetail} />
       <Route path="/compare" component={Compare} />
       <Route path="/decide" component={Decide} />
       <Route path="/radar" component={Radar} />

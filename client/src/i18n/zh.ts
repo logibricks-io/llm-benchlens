@@ -375,6 +375,9 @@ export const zh: Dict = {
     radarNote: "最近的前沿发布事件",
     trustAbbr: "信",
     discAbbr: "辨",
+    byDomainTitle: "各能力域的领先者",
+    byDomainNote:
+      "上方的综合榜掩盖了通常真正决定选型的一点：推理最强的模型，很少同时是代码或智能体任务最强的那个。在某个域内至少要有两条成绩才会进入该域排名；右侧数字是符合条件的模型数。",
   },
 
   benchmarkDetail: {
@@ -446,6 +449,8 @@ export const zh: Dict = {
     measuredAt: "采集",
     source: "出处",
     noSharedMetrics: "这些模型没有共同测过的指标",
+    thinIntersection:
+      "个模型之间只有 {n} 项被全部测过的共同指标。每加一栏交集都会迅速收窄，剩下的往往是被普遍上报、且已经饱和的尺子。可以去掉一个模型，或关闭「仅共同指标」以查看单边记录及其覆盖缺口。",
     noSharedMetricsDesc: "关闭「仅共同指标」可查看各自的记录，但请注意那不构成直接对比。",
   },
 
@@ -615,6 +620,9 @@ export const zh: Dict = {
     colCoverage: "能力覆盖",
     confidenceTooltip: "置信度 {n}%",
     compareAction: "对比",
+    markForCompare: "勾选以进入对比",
+    markedCount: "已勾选",
+    compareMarked: "对比所选",
   },
 
   admin: {
@@ -759,5 +767,50 @@ export const zh: Dict = {
 
   ruler: {
     neutralRuler: "中性尺",
+  },
+
+  spread: {
+    title: "分数分布",
+    note: "该指标的全部成绩落在同一条 0–100 轴上，按厂商着色。点簇的宽度就是这把尺子剩余的区分能力。",
+    modelsWithin: "个模型集中在",
+    pointsOf: "分之内 —",
+    compressed: "· 这把尺子已经分不开它们",
+  },
+
+  modelDetail: {
+    eyebrow: "模型档案",
+    backToLibrary: "模型库",
+    composite: "综合分",
+    coverage: "证据",
+    confidence: "置信度",
+    inputPrice: "输入价 $/M",
+    outputPrice: "输出价 $/M",
+    context: "上下文",
+    released: "发布",
+    license: "权重",
+    status: "世代",
+    profileTitle: "能力画像",
+    profileNote:
+      "每个能力域一条，取该域归一化分的证据加权均值。不足三条证据的域标为「稀疏」——分数是真的，但它周围的区间很宽。",
+    thin: "稀疏",
+    bestIn: "最强项",
+    peersTitle: "最近的替代选项",
+    peersNote:
+      "综合分最接近的模型，每家厂商最多保留一个。同厂商的兄弟型号彼此聚集，回答的不是「我还能换用什么」。",
+    peerGap: "差距",
+    scoresTitle: "全部证据",
+    scoresNote: "每条成绩及其所属指标、难度系数、出处与采集时间。",
+    colBenchmark: "指标",
+    colDomain: "能力域",
+    colRaw: "原始分",
+    colNormalized: "归一化",
+    colDifficulty: "难度",
+    colSource: "出处",
+    colMeasured: "采集",
+    noScores: "该模型暂无可追溯的成绩记录。",
+    commercialNote: "定价说明",
+    priceUnavailable: "无公开美元定价",
+    compareWith: "对比",
+    notFound: "库中没有这个标识对应的模型。",
   },
 };

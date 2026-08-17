@@ -363,6 +363,68 @@ export const appRouter = router({
 
       return { minEvidence: MIN_EVIDENCE, eligibleCount: eligible.length, cards, medianPrice };
     }),
+
+    /**
+     * Per-domain mini rankings ("small multiples").
+     *
+     * A single composite ranking hides the thing buyers care about most: leadership
+     * is domain-specific. The model that tops knowledge & reasoning is often not
+     * the one that tops coding or agentic work. Seven short lists side by side make
+     * that visible without asking anyone to build a filter query.
+     *
+     * Each list is scored the same way as the composite — evidence-weighted mean of
+     * normalized scores — but restricted to one capability domain, and a model needs
+     * at least two results inside that domain to appear.
+     */
+    byDomain: publicProcedure.query(async () => {
+      const MIN_IN_DOMAIN = 2;
+      const TOP_N = 5;
+      const [ms, all] = await Promise.all([db.listModels(), db.listScores()]);
+      const modelBySlug = new Map(ms.map(m => [m.slug, m]));
+      const decorated = all.map(decorate);
+
+      const byDomain = new Map<string, Map<string, DecoratedScore[]>>();
+      for (const r of decorated) {
+        const domain = r.capabilityDomain;
+        const perModel = byDomain.get(domain) ?? new Map<string, DecoratedScore[]>();
+        const arr = perModel.get(r.modelSlug) ?? [];
+        arr.push(r);
+        perModel.set(r.modelSlug, arr);
+        byDomain.set(domain, perModel);
+      }
+
+      const groups = Array.from(byDomain.entries())
+        .map(([domain, perModel]) => {
+          const ranked = Array.from(perModel.entries())
+            .map(([slug, rows]) => {
+              if (rows.length < MIN_IN_DOMAIN) return null;
+              const agg = aggregate(rows, r => r.evidenceWeight);
+              const m = modelBySlug.get(slug);
+              if (!m || agg.score === null) return null;
+              return {
+                slug,
+                name: m.name,
+                provider: m.provider,
+                score: Math.round(agg.score * 10) / 10,
+                count: rows.length,
+              };
+            })
+            .filter((r): r is NonNullable<typeof r> => r !== null)
+            .sort((a, b) => b.score - a.score);
+
+          return {
+            domain,
+            /** Field size before the top-N cut, so the list can state its own base. */
+            contenders: ranked.length,
+            leaders: ranked.slice(0, TOP_N),
+          };
+        })
+        // Domains with almost no qualifying models would render as empty boxes.
+        .filter(g => g.leaders.length >= 3)
+        .sort((a, b) => b.contenders - a.contenders);
+
+      return { minInDomain: MIN_IN_DOMAIN, groups };
+    }),
   }),
 
   benchmarks: router({
@@ -475,6 +537,104 @@ export const appRouter = router({
       const rows = (await db.listScores()).map(decorate);
       return rows;
     }),
+
+    /**
+     * One model's full dossier: per-domain aggregates for the radar, every score
+     * with its provenance, and the models that sit nearest to it on the
+     * quality/price plane.
+     *
+     * Peers are picked by composite distance rather than by price bracket: the
+     * useful question on a model page is "what else performs like this", and
+     * bracketing by price answers a different question badly, since a $0.50 and
+     * a $0.60 model can be 20 composite points apart.
+     */
+    detail: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const [ms, all] = await Promise.all([db.listModels(), db.listScores()]);
+        const model = ms.find(m => m.slug === input.slug);
+        if (!model) throw new TRPCError({ code: "NOT_FOUND", message: "Model not found" });
+
+        const decorated = all.map(decorate);
+        const mine = decorated.filter(r => r.modelSlug === input.slug);
+        mine.sort((a, b) => b.normalized - a.normalized);
+
+        const agg = aggregate(mine, r => r.evidenceWeight);
+
+        // Per-capability-domain aggregates drive the radar. A domain with a
+        // single result is kept but flagged by `count` so the UI can mark it as
+        // thin rather than drawing it as if it were solid.
+        const byDomain = new Map<string, DecoratedScore[]>();
+        for (const r of mine) {
+          const arr = byDomain.get(r.capabilityDomain) ?? [];
+          arr.push(r);
+          byDomain.set(r.capabilityDomain, arr);
+        }
+        const domains = Array.from(byDomain.entries())
+          .map(([domain, rows]) => {
+            const a = aggregate(rows, r => r.evidenceWeight);
+            return {
+              domain,
+              score: a.score,
+              count: rows.length,
+              confidence: a.shrinkage,
+              best: rows.reduce((x, y) => (y.normalized > x.normalized ? y : x)).benchmarkSlug,
+            };
+          })
+          .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+        const composites = ms.map(m => {
+          const rows = decorated.filter(r => r.modelSlug === m.slug);
+          return { model: m, rows, agg: aggregate(rows, r => r.evidenceWeight) };
+        });
+        /*
+         * At most one sibling per provider. Ranking purely by composite distance
+         * filled the list with the subject's own stablemates — for Claude Opus 5
+         * three of the top four were other Anthropic models — because models from
+         * one lab cluster tightly. Someone reading a model page is weighing
+         * alternatives, so the same-lab variants are the least useful neighbours
+         * to show.
+         */
+        const ranked =
+          agg.score === null
+            ? []
+            : composites
+                .filter(c => c.model.slug !== input.slug && c.agg.score !== null && c.rows.length >= 3)
+                .map(c => ({
+                  slug: c.model.slug,
+                  name: c.model.name,
+                  provider: c.model.provider,
+                  compositeScore: c.agg.score,
+                  coverage: c.rows.length,
+                  priceOutput: c.model.priceOutput === null ? null : num(c.model.priceOutput),
+                  gap: Math.abs((c.agg.score ?? 0) - (agg.score ?? 0)),
+                }))
+                .sort((a, b) => a.gap - b.gap);
+
+        const seenProvider = new Set<string>();
+        const peers: typeof ranked = [];
+        for (const p of ranked) {
+          if (seenProvider.has(p.provider)) continue;
+          seenProvider.add(p.provider);
+          peers.push(p);
+          if (peers.length === 6) break;
+        }
+
+        return {
+          model: {
+            ...model,
+            priceInput: model.priceInput === null ? null : num(model.priceInput),
+            priceOutput: model.priceOutput === null ? null : num(model.priceOutput),
+          },
+          compositeScore: agg.score,
+          rawMean: agg.rawMean,
+          confidence: agg.shrinkage,
+          coverage: mine.length,
+          domains,
+          scores: mine,
+          peers,
+        };
+      }),
 
     /*
      * Normalised variant of the same matrix. The flat shape above repeats every

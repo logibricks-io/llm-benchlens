@@ -23,20 +23,48 @@ import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { type CapabilityDomain } from "@shared/metaModel";
 import { ExternalLink, Plus, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { providerColor, formatPrice } from "@/lib/series";
 import { ScoreBar, Rank, ProviderDot } from "@/components/ScoreBar";
 
 const PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
+/** Four colours, therefore four columns. */
+const MAX_COLUMNS = 4;
+
 export default function Compare() {
   const t = useT();
   const params = new URLSearchParams(window.location.search);
-  const initial = [params.get("a"), params.get("b")].filter((v): v is string => Boolean(v));
+  /*
+   * The page holds four columns, but the old URL contract carried only ?a= and ?b=,
+   * so a three- or four-way comparison could never be linked or shared. ?m= takes a
+   * comma-separated list; a/b are still honoured so existing links keep working.
+   */
+  const initial = (() => {
+    const list = (params.get("m") ?? "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+    const merged = list.length
+      ? list
+      : [params.get("a"), params.get("b")].filter((v): v is string => Boolean(v));
+    return Array.from(new Set(merged)).slice(0, MAX_COLUMNS);
+  })();
 
   const models = trpc.models.list.useQuery();
   const [selected, setSelected] = useState<string[]>(initial.length > 0 ? initial : []);
   const [sharedOnly, setSharedOnly] = useState(true);
+
+  /* Keep the address bar in step so any comparison can be copied out of it. */
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search);
+    next.delete("a");
+    next.delete("b");
+    if (selected.length) next.set("m", selected.join(","));
+    else next.delete("m");
+    const qs = next.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [selected]);
 
   const compare = trpc.models.compare.useQuery(
     { slugs: selected },
@@ -147,7 +175,7 @@ export default function Compare() {
             </div>
           );
         })}
-        {selected.length < 4 && (
+        {selected.length < MAX_COLUMNS && (
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -203,6 +231,28 @@ export default function Compare() {
         </div>
       ) : (
         <>
+          {/*
+           * Adding columns shrinks the intersection fast: four frontier models often
+           * share exactly one benchmark, and it tends to be a saturated one, because
+           * that is what everybody reports. Without a word of explanation the page
+           * looks broken. Say what happened and name the way out.
+           */}
+          {selected.length > 1 && sharedOnly && table.length > 0 && table.length < 3 && (
+            <div
+              className="mb-4 rounded-sm px-4 py-3"
+              style={{
+                background: "color-mix(in oklch, var(--signal-caution) 9%, transparent)",
+                border: "1px solid color-mix(in oklch, var(--signal-caution) 32%, transparent)",
+              }}
+            >
+              <p className="text-[14px] leading-relaxed text-ink-800">
+                <span className="tnum tabular-nums">{selected.length}</span>{" "}
+                {t.compare.thinIntersection
+                  .replace("{n}", String(table.length))}
+              </p>
+            </div>
+          )}
+
           {/* Composite summary */}
           <div className="mb-4 grid gap-3" style={{ gridTemplateColumns: `repeat(${picked.length}, minmax(0, 1fr))` }}>
             {picked.map((m, i) => (

@@ -26,6 +26,22 @@ export default function Models() {
   const [license, setLicense] = useState(ALL);
   const [status, setStatus] = useState(ALL);
   const [sortBy, setSortBy] = useState<"composite" | "coverage" | "price" | "name">("composite");
+  /*
+   * Comparison is a multi-model act, but the only way in was a per-row button
+   * that carried one slug and left the other three columns to be searched for
+   * by hand. Ticking rows here matches how the question actually arises: you
+   * are already scanning the table when you notice two candidates.
+   */
+  const MAX_COMPARE = 4;
+  const [marked, setMarked] = useState<string[]>([]);
+  const toggleMark = (slug: string) =>
+    setMarked(prev =>
+      prev.includes(slug)
+        ? prev.filter(s => s !== slug)
+        : prev.length >= MAX_COMPARE
+          ? prev
+          : [...prev, slug],
+    );
 
   const rows = data ?? [];
   type ModelRow = (typeof rows)[number];
@@ -136,6 +152,9 @@ export default function Models() {
           <table className="w-full text-[14px]">
             <thead>
               <tr className="hair-b">
+                <th className="w-8 pl-4 pr-1 py-2 text-left">
+                  <span className="sr-only">{t.models.markForCompare}</span>
+                </th>
                 <th className="px-4 py-2 text-left text-[14px] font-semibold text-ink-700">{t.models.colModel}</th>
                 <th className="px-3 py-2 text-left text-[14px] font-semibold text-ink-700">{t.models.colCoverage}</th>
                 <th className="px-3 py-2 text-right text-[14px] font-semibold text-ink-700">
@@ -159,10 +178,25 @@ export default function Models() {
             <tbody>
               {filtered.map((m, i) => (
                 <tr key={m.slug} className="hair-row hover:bg-surface transition-colors duration-120">
+                  <td className="w-8 pl-4 pr-1 py-2 align-middle">
+                    <input
+                      type="checkbox"
+                      checked={marked.includes(m.slug)}
+                      onChange={() => toggleMark(m.slug)}
+                      disabled={!marked.includes(m.slug) && marked.length >= MAX_COMPARE}
+                      aria-label={`${t.models.markForCompare}: ${m.name}`}
+                      className="size-3.5 cursor-pointer accent-[color:var(--chart-1)] disabled:cursor-not-allowed disabled:opacity-35"
+                    />
+                  </td>
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
                       <ProviderDot provider={m.provider} />
-                      <span className="text-[14px] text-ink-900">{m.name}</span>
+                      <Link
+                        href={`/models/${m.slug}`}
+                        className="text-[14px] text-ink-900 transition-colors hover:text-ink-950 hover:underline decoration-ink-300 underline-offset-2"
+                      >
+                        {m.name}
+                      </Link>
                       {m.license === "open" && (
                         <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[13px] text-good">{t.common.openWeights}</span>
                       )}
@@ -274,6 +308,43 @@ export default function Models() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/*
+       * Only appears once something is ticked, and sits above the fold of the
+       * viewport rather than at the end of 352 rows — the selection is made while
+       * scrolling, so the way out has to travel with the reader.
+       */}
+      {marked.length > 0 && (
+        <div className="fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
+          <div
+            className="flex items-center gap-3 rounded-full px-4 py-2.5 shadow-lg"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+          >
+            <span className="text-[14px] text-ink-700">
+              <span className="tnum text-ink-950 tabular-nums">{marked.length}</span>
+              {" / "}
+              <span className="tnum tabular-nums">{MAX_COMPARE}</span>{" "}
+              {t.models.markedCount}
+            </span>
+            <Link
+              href={`/compare?m=${marked.join(",")}`}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[14px] font-medium transition-colors duration-120"
+              style={{ background: "var(--chart-1)", color: "var(--canvas)" }}
+            >
+              <GitCompareArrows className="size-3.5" />
+              {t.models.compareMarked}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMarked([])}
+              className="rounded-full p-1 text-ink-500 transition-colors duration-120 hover:text-ink-900"
+              aria-label={t.common.clear}
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
         </div>
       )}
     </WorkbenchLayout>
