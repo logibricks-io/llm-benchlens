@@ -1,0 +1,46 @@
+<!doctype html>
+<!--
+  QA harness, not part of the product. Screenshot runs need a deterministic way
+  to land on a given language + theme. Driving that through localStorage from
+  two concurrent captures raced badly earlier: both shots came back light
+  because the second write lost. This page writes both keys and sets the theme
+  class before navigating, so each capture is self-contained.
+
+  Usage: /qa-preset.html?lang=zh&theme=light&to=/models
+-->
+<html>
+  <head><meta charset="utf-8" /><title>QA preset</title></head>
+  <body style="background:#15171a">
+    <script>
+      var p = new URLSearchParams(location.search);
+      var lang = p.get("lang") || "en";
+      var theme = p.get("theme") || "dark";
+      var to = p.get("to") || "/";
+      try {
+        localStorage.setItem("benchlens.lang", lang);
+        localStorage.setItem("benchlens.theme", theme);
+      } catch (e) {}
+      /*
+       * Read the values back before navigating. A bare write-then-replace let a
+       * deep route (/benchmarks/:slug) boot from the previous preference, which
+       * looked like the language and theme switches were broken when in fact the
+       * harness had raced itself.
+       */
+      function ready() {
+        try {
+          return (
+            localStorage.getItem("benchlens.lang") === lang &&
+            localStorage.getItem("benchlens.theme") === theme
+          );
+        } catch (e) {
+          return true;
+        }
+      }
+      document.documentElement.className = theme;
+      (function go(tries) {
+        if (ready() || tries > 20) location.replace(to);
+        else setTimeout(function () { go(tries + 1); }, 25);
+      })(0);
+    </script>
+  </body>
+</html>

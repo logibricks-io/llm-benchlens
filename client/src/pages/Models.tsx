@@ -182,17 +182,39 @@ export default function Models() {
                           : ""}
                     </div>
                   </td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      {m.domains.slice(0, 4).map(d => (
-                        <span key={d} className="rounded hair-all bg-surface-2 px-1.5 py-0.5 text-[13px] text-ink-500">
-                          {t.capability[d as CapabilityDomain] ?? d}
-                        </span>
-                      ))}
-                      {m.domains.length > 4 && (
-                        <span className="text-[13px] text-ink-400">+{m.domains.length - 4}</span>
+                  <td className="px-3 py-2 align-middle">
+                    {/*
+                     * Coverage is drawn, not spelled out. Text chips could not work
+                     * here: English domain names ("Knowledge & reasoning") are long
+                     * enough that four of them wrapped into a vertical stack and
+                     * pushed row height past 100px, and capping the width instead
+                     * just produced unreadable "Compos..." stubs while the widened
+                     * column shoved the margin notes into the action buttons.
+                     * A dot per covered domain reads at a glance, costs ~56px in
+                     * any language, and keeps the full list one hover away.
+                     */}
+                    <div
+                      className="flex w-[64px] flex-wrap items-center gap-[3px]"
+                      title={
+                        m.domains.length
+                          ? m.domains.map(d => t.capability[d as CapabilityDomain] ?? d).join(" · ")
+                          : undefined
+                      }
+                    >
+                      {m.domains.length === 0 ? (
+                        <span className="text-[13px] text-ink-400">—</span>
+                      ) : (
+                        <>
+                          {m.domains.slice(0, 8).map(d => (
+                            <span
+                              key={d}
+                              className="size-[7px] rounded-full"
+                              style={{ background: providerColor(m.provider), opacity: 0.85 }}
+                            />
+                          ))}
+                          <span className="tnum ml-0.5 text-[13px] text-ink-400">{m.domains.length}</span>
+                        </>
                       )}
-                      {m.domains.length === 0 && <span className="text-[13px] text-ink-400">—</span>}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -200,7 +222,13 @@ export default function Models() {
                       {m.compositeScore === null ? (
                         <span className="text-ink-400">—</span>
                       ) : (
-                        <div className="w-24">
+                        /*
+                         * ScoreBar needs 42px for the numeral plus a 80px minimum
+                         * track plus the gap; at w-24 (96px) the track won the
+                         * space and pushed the number out of the cell, where it
+                         * printed over the evidence column to its right.
+                         */
+                        <div className="w-[150px]">
                           <ScoreBar value={m.compositeScore} provider={m.provider} delay={i} />
                         </div>
                       )}

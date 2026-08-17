@@ -31,6 +31,15 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (!switchable) return defaultTheme;
+    /*
+     * `?theme=` beats the stored preference, mirroring `?lang=`: it makes a
+     * given rendering linkable and gives a fresh browser context a way to start
+     * in the requested theme without a write-then-navigate dance.
+     */
+    if (typeof window !== "undefined") {
+      const param = new URLSearchParams(window.location.search).get("theme");
+      if (param === "light" || param === "dark") return param;
+    }
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === "light" || stored === "dark") return stored;

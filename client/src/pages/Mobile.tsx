@@ -23,6 +23,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { ProviderDot } from "@/components/ScoreBar";
 import { providerColor } from "@/lib/series";
 import { useT } from "@/i18n";
+import { useProse } from "@/i18n/prose";
 import type { Dict } from "@/i18n/en";
 
 /** Horizontal swipe detection for card decks. */
@@ -431,6 +432,7 @@ function ModelsTab() {
 /** Bottom sheet detail — mobile's answer to the desktop detail page. */
 function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }) {
   const t = useT();
+  const prose = useProse();
   const { data, isLoading } = trpc.benchmarks.detail.useQuery({ slug });
 
   return (
@@ -490,18 +492,18 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
             <div className="mt-3 rounded-sm hair-all bg-background p-3">
               <div className="text-[13px] text-frost-qing">{t.mobile.whatItMeasures}</div>
               <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
-                {data.benchmark.scenarioMapping ??
+                {prose(data.benchmark, "scenarioMapping") ??
                   t.saturationExplain[data.benchmark.saturationStatus as keyof typeof t.saturationExplain]}
               </p>
             </div>
 
-            {data.benchmark.interpretationCaveat && (
+            {prose(data.benchmark, "interpretationCaveat") && (
               <div className="mt-2 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 p-3">
                 <div className="flex items-center gap-1 text-[13px] text-caution">
                   <AlertTriangle className="size-3" />{t.mobile.interpretationCaveat}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
-                  {data.benchmark.interpretationCaveat}
+                  {prose(data.benchmark, "interpretationCaveat")}
                 </p>
               </div>
             )}

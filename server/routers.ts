@@ -89,6 +89,14 @@ export type BenchmarkListItem = {
   scenarioMapping: string | null;
   interpretationCaveat: string | null;
   notes: string | null;
+  /*
+   * Both language variants ship in the same payload on purpose. If the server
+   * picked one by locale, the response would stop being cacheable and language
+   * logic would leak into the backend; instead the client picks at render time.
+   */
+  scenarioMappingEn: string | null;
+  interpretationCaveatEn: string | null;
+  notesEn: string | null;
   officialUrl: string | null;
   paperUrl: string | null;
   scoreCount: number;

@@ -66,6 +66,16 @@ export const benchmarks = mysqlTable(
     scenarioMapping: text("scenarioMapping"),
     interpretationCaveat: text("interpretationCaveat"),
     notes: text("notes"),
+    /*
+     * English variants of the three prose fields. These are *content*, not UI
+     * copy, so they cannot live in the i18n dictionary: each benchmark has its
+     * own caveat and scenario note. Without these columns an English reader hit
+     * Chinese paragraphs on the detail page even though every label around them
+     * had been translated.
+     */
+    scenarioMappingEn: text("scenarioMappingEn"),
+    interpretationCaveatEn: text("interpretationCaveatEn"),
+    notesEn: text("notesEn"),
     officialUrl: varchar("officialUrl", { length: 500 }),
     paperUrl: varchar("paperUrl", { length: 500 }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),

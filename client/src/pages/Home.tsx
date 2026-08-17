@@ -191,17 +191,19 @@ export default function Home() {
           <h2 className="display text-ink-950 max-w-[24ch] text-[38px] leading-[1.06] tracking-tight sm:text-[46px]">
             {t.home.heroTitle}
           </h2>
-          <p className="text-ink-600 mt-4 max-w-[80ch] text-[15px] leading-[1.75]">
-            {o
-              ? t.home.heroSub
-                  .replace("{models}", String(o.models))
-                  .replace("{benchmarks}", String(o.benchmarks))
-                  .replace("{scores}", String(o.scores))
-              : t.home.heroSub
-                  .replace("{models}", "—")
-                  .replace("{benchmarks}", "—")
-                  .replace("{scores}", "—")}
-          </p>
+          {/* While the counts are in flight, a skeleton bar rather than the
+              sentence with em-dashes punched into it — "— models, — benchmarks"
+              reads as a failure, not as loading. */}
+          {o ? (
+            <p className="text-ink-600 mt-4 max-w-[80ch] text-[15px] leading-[1.75]">
+              {t.home.heroSub
+                .replace("{models}", String(o.models))
+                .replace("{benchmarks}", String(o.benchmarks))
+                .replace("{scores}", String(o.scores))}
+            </p>
+          ) : (
+            <div className="mt-5 h-[15px] w-full max-w-[52ch] animate-pulse rounded bg-frost-mist/40" />
+          )}
         </section>
 
         {/* champion row */}

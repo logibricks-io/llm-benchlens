@@ -22,6 +22,13 @@
       "when": 1786977485306,
       "tag": "0002_lowly_princess_powerful",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786982078310,
+      "tag": "0003_serious_butterfly",
+      "breakpoints": true
     }
   ]
 }

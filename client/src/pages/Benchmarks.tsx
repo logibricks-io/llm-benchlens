@@ -450,7 +450,13 @@ function FilterSelect({
   const t = useT();
   if (options.length < 8) {
     return (
-      <div className="flex items-center gap-1.5">
+      /*
+       * `flex-wrap` belongs on this inner row too, not just on the parent. The
+       * scoring-mechanism group has seven chips whose combined width exceeds the
+       * text column; without wrapping here the group stayed one unbreakable line
+       * and pushed past the measure, printing over the margin notes.
+       */
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         <button type="button" className="chip" data-on={value === ALL} onClick={() => onChange(ALL)}>
           {placeholder}{t.benchmarks.allSuffix}
         </button>

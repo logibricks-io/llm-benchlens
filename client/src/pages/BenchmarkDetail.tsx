@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "wouter";
 import { useT } from "@/i18n";
+import { useProse } from "@/i18n/prose";
 import type { Dict } from "@/i18n";
 
 function Field({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
@@ -151,6 +152,7 @@ export default function BenchmarkDetail() {
   const { data, isLoading, error } = trpc.benchmarks.detail.useQuery({ slug });
   const t = useT();
   const metricExplain = useMetricExplain();
+  const prose = useProse();
 
   if (isLoading) {
     return (
@@ -178,6 +180,11 @@ export default function BenchmarkDetail() {
   }
 
   const b = data.benchmark;
+  // The three prose fields are content, not chrome, so they come from the row's
+  // language variant rather than the dictionary.
+  const caveat = prose(b, "interpretationCaveat");
+  const scenario = prose(b, "scenarioMapping");
+  const notes = prose(b, "notes");
   const rows = data.leaderboard;
   const top = rows[0]?.commonScale ?? 0;
 
@@ -300,33 +307,33 @@ export default function BenchmarkDetail() {
         </div>
 
         {/* Interpretation caveat — placed before the leaderboard on purpose. */}
-        {(b.interpretationCaveat || b.scenarioMapping) && (
+        {(caveat || scenario) && (
           <div className="grid gap-3 lg:grid-cols-2">
-            {b.interpretationCaveat && (
+            {caveat && (
               <div className="hair-t border-[color:var(--signal-caution)]/25 p-4">
                 <div className="mb-2 flex items-center gap-1.5">
                   <AlertTriangle className="size-3.5 text-caution" />
                   <h3 className="text-[14px] font-medium">{t.benchmarkDetail.caveat}</h3>
                 </div>
-                <p className="text-[14px] leading-relaxed text-ink-500">{b.interpretationCaveat}</p>
+                <p className="text-[14px] leading-relaxed text-ink-500">{caveat}</p>
               </div>
             )}
-            {b.scenarioMapping && (
+            {scenario && (
               <div className="hair-t p-4">
                 <div className="mb-2 flex items-center gap-1.5">
                   <Target className="size-3.5 text-frost-qing" />
                   <h3 className="text-[14px] font-medium">{t.benchmarkDetail.scenarioMapping}</h3>
                 </div>
-                <p className="text-[14px] leading-relaxed text-ink-500">{b.scenarioMapping}</p>
+                <p className="text-[14px] leading-relaxed text-ink-500">{scenario}</p>
               </div>
             )}
           </div>
         )}
 
-        {b.notes && (
+        {notes && (
           <div className="hair-t flex gap-2 p-4">
             <Info className="mt-0.5 size-3.5 shrink-0 text-ink-500" />
-            <p className="text-[14px] leading-relaxed text-ink-500">{b.notes}</p>
+            <p className="text-[14px] leading-relaxed text-ink-500">{notes}</p>
           </div>
         )}
 

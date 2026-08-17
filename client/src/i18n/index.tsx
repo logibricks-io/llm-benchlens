@@ -40,6 +40,15 @@ const I18nContext = createContext<I18nValue | null>(null);
 
 function readStoredLang(): Lang {
   if (typeof window === "undefined") return "en";
+  /*
+   * An explicit ?lang= wins over the stored choice. That makes a specific
+   * rendering shareable ("here is the English view of this benchmark") and lets
+   * a fresh browser context land in the right language without first having to
+   * write to localStorage and navigate — which is exactly what made the
+   * screenshot harness unreliable.
+   */
+  const param = new URLSearchParams(window.location.search).get("lang");
+  if (param === "zh" || param === "en") return param;
   const stored =
     window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
   return stored === "zh" || stored === "en" ? stored : "en";
