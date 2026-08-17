@@ -1,19 +1,20 @@
 import { cn } from "@/lib/utils";
-import { Navigation, ReadNext } from "./Contents";
+import { ReadNext } from "./Contents";
+import { TopBar, type DomainTab } from "./TopBar";
 
 /**
- * The page shell, journal edition — no persistent rail.
+ * The page shell.
  *
- * What used to be a 190px sidebar is gone entirely: the content column now runs
- * the full width of the frame. Navigation lives in a floating pill plus a
- * full-bleed contents page (see `Contents.tsx`), so it costs zero horizontal
- * pixels. The matrix, which is the widest surface in the product, gains roughly
- * four more visible benchmark columns as a direct result.
+ * v2 had a single floating island as the only permanent chrome, with all
+ * navigation behind a full-page contents overlay. That satisfied "no sidebar"
+ * but made every view switch cost a click — wrong for a leaderboard, where
+ * comparing views is the primary activity. v3 keeps the no-sidebar rule (nothing
+ * consumes horizontal space; the content column still spans the whole frame) but
+ * makes the nav horizontal and persistent, with an optional second tier for
+ * capability domains. The contents overlay survives as ⌘K search.
  *
- * Layout vocabulary here is print, not chrome:
- *  - `title` sits in a masthead with generous leading, not a toolbar
- *  - `aside` renders as a margin note that scrolls with the content, i.e. it is
- *    part of the text block rather than fixed furniture
+ * Layout vocabulary stays closer to print than to chrome:
+ *  - `aside` is a margin note that scrolls with the content, not fixed furniture
  *  - `readNext` closes each page with directed continuations
  */
 export function WorkbenchLayout({
@@ -21,13 +22,16 @@ export function WorkbenchLayout({
   title,
   subtitle,
   actions,
-  /** Margin note: caveats, provenance, method remarks. Scrolls with content. */
   aside,
   readNext,
   /** Full-bleed body: the page paints its own padding (dense tables). */
   wide,
   /** Bare mode: the page supplies its own masthead (scroll narratives). */
   bare,
+  /** Second-tier tabs, e.g. capability domains. */
+  tabs,
+  activeTab,
+  onTab,
 }: {
   children: React.ReactNode;
   title: string;
@@ -37,11 +41,14 @@ export function WorkbenchLayout({
   readNext?: Array<{ href: string; label: string; why: string }>;
   wide?: boolean;
   bare?: boolean;
+  tabs?: DomainTab[];
+  activeTab?: string;
+  onTab?: (key: string) => void;
 }) {
   if (bare) {
     return (
       <div className="bg-background min-h-screen">
-        <Navigation />
+        <TopBar tabs={tabs} activeTab={activeTab} onTab={onTab} />
         <main>{children}</main>
       </div>
     );
@@ -49,18 +56,16 @@ export function WorkbenchLayout({
 
   return (
     <div className="bg-background min-h-screen">
-      <Navigation />
+      <TopBar tabs={tabs} activeTab={activeTab} onTab={onTab} />
 
-      {/* Masthead. Clears the islet, then sets the page in type rather than
-          wrapping it in a toolbar. */}
-      <header className={cn("pt-[76px]", wide ? "px-6" : "px-7 sm:px-10")}>
+      <header className={cn("pt-7", wide ? "px-4 sm:px-6" : "px-6 sm:px-8")}>
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div className="min-w-0">
-            <h1 className="display text-ink-900 text-[34px] leading-[1.08] sm:text-[40px]">
+            <h1 className="display text-ink-950 text-[32px] leading-[1.08] sm:text-[38px]">
               {title}
             </h1>
             {subtitle && (
-              <p className="ui text-ink-500 mt-2 max-w-[62ch] text-[12px] leading-relaxed">
+              <p className="ui text-ink-600 mt-2 max-w-[74ch] text-[14px] leading-relaxed">
                 {subtitle}
               </p>
             )}
@@ -72,14 +77,11 @@ export function WorkbenchLayout({
         <div className="hair-b mt-5" />
       </header>
 
-      <main className={cn(wide ? "px-6 pt-5 pb-12" : "px-7 pt-6 pb-14 sm:px-10")}>
+      <main className={cn(wide ? "px-4 pt-5 pb-12 sm:px-6" : "px-6 pt-6 pb-14 sm:px-8")}>
         {aside ? (
-          /* Body + margin note. The note is narrow, right-hand, and scrolls
-             with the text; on narrow screens it folds beneath the body, which
-             is precisely what a fixed second sidebar could never do. */
           <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
             <div className="min-w-0 flex-1">{children}</div>
-            <aside className="w-full shrink-0 lg:w-[228px]">
+            <aside className="w-full shrink-0 lg:w-[248px]">
               <div className="hair-t pt-4 lg:border-t-0 lg:pt-0">{aside}</div>
             </aside>
           </div>

@@ -188,6 +188,173 @@ export const appRouter = router({
        */
       SCENARIOS.map(s => ({ key: s.key, emphasisSlugs: s.emphasisSlugs })),
     ),
+    /**
+     * Headline answers for the landing page.
+     *
+     * Every reference leaderboard opens with a row of one-line verdicts — best
+     * overall, cheapest, longest context, best open-weight — so a visitor gets an
+     * answer within seconds instead of reading an argument first.
+     *
+     * Two rules keep these honest:
+     *  - a model needs MIN_EVIDENCE scores to be eligible, otherwise a model with
+     *    one lucky result would take the crown
+     *  - each card returns the figure it won on, so the claim is auditable
+     *
+     * Returns keys and numbers only; the card copy lives in the dictionaries.
+     */
+    champions: publicProcedure.query(async () => {
+      const MIN_EVIDENCE = 5;
+      const [ms, all] = await Promise.all([db.listModels(), db.listScores()]);
+      const decorated = all.map(decorate);
+      const bySlug = new Map<string, DecoratedScore[]>();
+      for (const r of decorated) {
+        const arr = bySlug.get(r.modelSlug) ?? [];
+        arr.push(r);
+        bySlug.set(r.modelSlug, arr);
+      }
+
+      const rows = ms.map(m => {
+        const mine = bySlug.get(m.slug) ?? [];
+        const agg = aggregate(mine, r => r.evidenceWeight);
+        return {
+          slug: m.slug,
+          name: m.name,
+          provider: m.provider,
+          license: m.license,
+          isReasoning: m.isReasoning,
+          coverage: mine.length,
+          composite: agg.score,
+          priceInput: m.priceInput === null ? null : num(m.priceInput),
+          priceOutput: m.priceOutput === null ? null : num(m.priceOutput),
+          contextTokens: m.contextTokens ?? null,
+          releasedAt: m.releasedAt ?? null,
+        };
+      });
+
+      const eligible = rows.filter(r => r.coverage >= MIN_EVIDENCE);
+
+      const best = <T,>(list: T[], score: (x: T) => number | null) => {
+        let top: T | null = null;
+        let topV = -Infinity;
+        for (const x of list) {
+          const v = score(x);
+          if (v === null || !Number.isFinite(v)) continue;
+          if (v > topV) {
+            topV = v;
+            top = x;
+          }
+        }
+        return top;
+      };
+
+      const card = (
+        kind: string,
+        m: (typeof rows)[number] | null,
+        metric: number | null,
+        unit: string,
+      ) =>
+        m
+          ? {
+              kind,
+              slug: m.slug,
+              name: m.name,
+              provider: m.provider,
+              composite: m.composite,
+              coverage: m.coverage,
+              metric,
+              unit,
+            }
+          : null;
+
+      const priced = eligible.filter(r => r.priceOutput !== null && r.priceOutput > 0);
+      const sortedPrices = priced.map(r => r.priceOutput as number).sort((a, b) => a - b);
+      const medianPrice = sortedPrices.length
+        ? sortedPrices[Math.floor(sortedPrices.length / 2)]
+        : null;
+
+      /*
+       * Six cards must give six different answers, otherwise a slot is wasted.
+       * Two earlier attempts were both wrong:
+       *   - ranking a "cheapest" card by absolute price picked the same model as
+       *     the value card, so the row named one model twice;
+       *   - dropping any duplicate left only five cards, which is worse — "best
+       *     open-weight model" is a question people actually ask, and silence is
+       *     not a better answer than second place.
+       *
+       * So each dimension is resolved in order against the models still unclaimed.
+       * A card therefore reads "best on this axis among models not already shown",
+       * which is both non-repeating and always populated.
+       */
+      const claimed = new Set<string>();
+      const pickers: Array<{
+        kind: string;
+        pool: () => typeof rows;
+        rank: (r: (typeof rows)[number]) => number | null;
+        metric: (r: (typeof rows)[number]) => number | null;
+        unit: string;
+      }> = [
+        {
+          kind: "overall",
+          pool: () => eligible,
+          rank: r => r.composite,
+          metric: r => r.composite,
+          unit: "score",
+        },
+        {
+          // Composite per dollar of output price: output dominates real spend.
+          kind: "value",
+          pool: () => priced,
+          rank: r => (r.composite === null ? null : r.composite / (r.priceOutput as number)),
+          metric: r =>
+            r.composite === null
+              ? null
+              : Math.round((r.composite / (r.priceOutput as number)) * 10) / 10,
+          unit: "perDollar",
+        },
+        {
+          kind: "openWeight",
+          pool: () => eligible.filter(r => r.license && /open|apache|mit|llama|gemma/i.test(r.license)),
+          rank: r => r.composite,
+          metric: r => r.composite,
+          unit: "score",
+        },
+        {
+          kind: "longContext",
+          pool: () => eligible,
+          rank: r => r.contextTokens,
+          metric: r => r.contextTokens,
+          unit: "tokens",
+        },
+        {
+          // Holds budget fixed and asks what capability it buys.
+          kind: "budget",
+          pool: () =>
+            medianPrice === null ? [] : priced.filter(r => (r.priceOutput as number) <= medianPrice),
+          rank: r => r.composite,
+          metric: r => r.priceOutput,
+          unit: "usdPerM",
+        },
+        {
+          kind: "newest",
+          pool: () => eligible.filter(r => r.releasedAt),
+          rank: r => (r.releasedAt ? new Date(r.releasedAt).getTime() : null),
+          metric: r => (r.releasedAt ? new Date(r.releasedAt).getTime() : null),
+          unit: "date",
+        },
+      ];
+
+      const cards = pickers
+        .map(p => {
+          const pool = p.pool().filter(r => !claimed.has(r.slug));
+          const winner = best(pool, p.rank);
+          if (!winner) return null;
+          claimed.add(winner.slug);
+          return card(p.kind, winner, p.metric(winner), p.unit);
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null);
+
+      return { minEvidence: MIN_EVIDENCE, eligibleCount: eligible.length, cards, medianPrice };
+    }),
   }),
 
   benchmarks: router({

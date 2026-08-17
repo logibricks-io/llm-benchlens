@@ -335,6 +335,39 @@ export const en = {
 
   home: {
     metaModel: "Metric meta-model",
+    /* v3 landing: answers first, argument second. The methodology narrative that
+       used to open the page still exists below the fold, keyed as before. */
+    heroTitle: "Which model, for what, at what cost",
+    heroSub:
+      "{models} models across {benchmarks} benchmarks and {scores} sourced scores. Every score is renormalised by benchmark difficulty before anything is ranked.",
+    championsTitle: "Right now",
+    championsNote: "Eligible models need at least {min} scores — {n} qualify.",
+    champOverall: "Best overall",
+    champValue: "Best value",
+    champOpenWeight: "Best open weight",
+    champLongContext: "Longest context",
+    champBudget: "Best under ${price}/M",
+    champNewest: "Newest release",
+    champPerDollar: "pts per $/M out",
+    champEvidence: "{n} scores",
+    leaderboardTitle: "Leaderboard",
+    leaderboardNote:
+      "Composite score: difficulty-normalised, weighted by benchmark trust and provenance, then shrunk toward the library median by evidence count.",
+    viewTable: "Table",
+    viewScatter: "Quality vs cost",
+    viewBars: "Bars",
+    colRank: "#",
+    colModel: "Model",
+    colScore: "Composite",
+    colEvidence: "Scores",
+    colPriceOut: "Output $/M",
+    colContext: "Context",
+    scatterX: "Output price $/M",
+    scatterY: "Composite score",
+    scatterNote:
+      "{n} of {total} models publish a price and carry enough evidence to place. Log axis by default — published prices span two orders of magnitude.",
+    seeAll: "All {n} models",
+    methodTitle: "Why these are not the published numbers",
     scoresNotComparable: "Scores",
     scoresNotComparableHighlight: "are not comparable",
     scoresNotComparableP1: "Only a handful of legal benchmarks use all-or-nothing scoring, while saturated math competitions approach perfect scores. Putting them side-by-side in the same table ",

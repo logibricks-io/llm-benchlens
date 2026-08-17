@@ -5,83 +5,96 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * BenchLens design language — v2, recalibrated for legibility.
+ * BenchLens design language — v3.
  *
- * v1 took 霜色 #e8eff5 literally: frost-white canvas, an ink ramp topping out
- * near 8:1, and 12–13px serif body text. Measured against a reference release
- * page (pure black on pure white, 17px sans, 14px table cells) the failure was
- * not subtle — three effects compounding:
+ * v2 fixed legibility (numerically solved ink ramp, sans body, dark default) but
+ * two of its decisions were wrong for a leaderboard, and measuring five
+ * reference sites made that explicit:
  *
- *   1. the canvas already spent contrast headroom before any text was drawn
- *   2. the ramp's body tier sat around 5–6:1
- *   3. 12px serif has ~1px stems, so antialiasing renders them as grey fog
+ *   1. It demoted 霜色 to "graphics only, ~6:1", so every chart came out grey.
+ *      A leaderboard must separate 6-7 providers at a glance; low-chroma
+ *      traditional pigments cannot do that. v3 introduces a proper categorical
+ *      series palette, solved per theme (llm-stats does the same: --chart-1 is
+ *      `220 70% 36%` on light and `220 75% 68%` on dark, not one value for both).
  *
- * So this ramp is solved numerically rather than picked by eye: state a target
- * ratio per role, then search OKLCH lightness for the value that hits it
- * (scripts/../design/calibrate.py). Body is 11:1, table numerals 15:1 — far
- * past AA's 4.5:1, because a page of 350×94 small figures is a harder job than
- * a paragraph of prose.
+ *   2. It treated 12px as the floor and used small-caps 12px table headers. The
+ *      references simply do not use small text in tables — llm-stats measures
+ *      16px cells and 16px/700 headers with no letter-spacing. v3 raises tables
+ *      to 14px minimum and drops small-caps entirely.
  *
- * 霜色 is NOT abandoned; it is demoted. The palette no longer carries the canvas
- * or the body text — it survives as accents (rules, marks, state dots) which
- * were themselves recalibrated to ≥6:1 so they may now carry small text, which
- * the originals never could.
+ * Also: the canvas lifts from #0c0f12 to #15171a. A near-black page with
+ * near-black cards has no separation; lifting the page lets surfaces read.
+ *
+ * Every ratio below is solved, not chosen: design/palette_v3_final.py states a
+ * target per role and searches OKLCH lightness for it.
+ *
+ * 霜色 is retained as the brand identity layer (the island, the ruler motif, the
+ * brand mark), no longer as the data-encoding layer.
  */
 
-/* ---- DARK is the default. This is a tool people read for hours, and the
-   recalibrated dark canvas is where the type is sharpest. ---- */
+/* ---- DARK is the default. ---- */
 :root {
   --radius: 0.25rem;
 
-  --canvas: oklch(0.165 0.008 252); /* #0c0f12 near-black, faint frost cast */
-  --surface: oklch(0.2088 0.0092 252); /* lifted region */
-  --surface-2: oklch(0.2536 0.0104 252); /* recessed / hover */
+  --canvas: oklch(0.205 0.006 252); /* #15171a */
+  --surface: oklch(0.248 0.007 252); /* cards, lifted regions */
+  --surface-2: oklch(0.292 0.008 252); /* hover, recessed, chips */
+  --surface-3: oklch(0.336 0.009 252); /* active chip, table header band */
 
-  /* Text ramp — solved for contrast against --canvas */
-  --ink-950: oklch(0.9569 0.004 252); /* 17.0:1 display numerals */
-  --ink-900: oklch(0.9155 0.006 252); /* 15.0:1 table numerals */
-  --ink-800: oklch(0.8698 0.008 252); /* 13.0:1 headings */
-  --ink-700: oklch(0.8188 0.01 252); /* 11.0:1 BODY */
-  --ink-600: oklch(0.7606 0.012 252); /*  9.0:1 secondary body */
-  --ink-500: oklch(0.6723 0.014 252); /*  6.5:1 annotation */
-  --ink-400: oklch(0.5851 0.016 252); /*  4.6:1 faint label (still AA) */
-  --ink-300: oklch(0.4838 0.018 252); /*  3.0:1 GRAPHICS ONLY, never text */
+  /* Text ramp — solved against --canvas */
+  --ink-950: oklch(0.9801 0.004 252); /* 17.0:1 display */
+  --ink-900: oklch(0.9378 0.006 252); /* 15.0:1 table numerals, headings */
+  --ink-800: oklch(0.8913 0.008 252); /* 13.0:1 subheads */
+  --ink-700: oklch(0.8391 0.01 252); /* 11.0:1 BODY */
+  --ink-600: oklch(0.7789 0.012 252); /*  9.0:1 secondary */
+  --ink-500: oklch(0.6909 0.014 252); /*  6.5:1 annotation */
+  --ink-400: oklch(0.6016 0.016 252); /*  4.6:1 faint label, still AA */
+  --ink-300: oklch(0.5 0.018 252); /*  3.0:1 GRAPHICS ONLY, never text */
 
-  /* 霜色 accents, recalibrated to 6:1 — legible enough to label things */
-  --acc-qing: oklch(0.6511 0.0471 252.8); /* 霜青 */
   /*
-   * Display-weight frost, same hue, solved for 11:1 on the canvas.
-   * `--acc-qing` sits at 5.97:1 — correct for chips, ticks and small labels,
-   * but the home-page claim ("...are not comparable") is set at 54px next to
-   * ink-900 at 14.9:1, so the frost half of the sentence read as the faintest
-   * thing on screen while carrying the entire argument. Emphasis must not cost
-   * legibility, so the claim gets a lighter frost rather than plain white.
+   * Categorical series palette — seven hues, each at ~6:1 on this canvas, so
+   * they may carry small labels as well as fills. Assign by provider so a reader
+   * can track one vendor across table, bars and scatter.
    */
-  --acc-qing-display: oklch(0.8198 0.0471 252.8); /* 11.0:1 */
-  --acc-ouhe: oklch(0.6535 0.0258 290.7); /* 藕荷 */
-  --acc-zhuqing: oklch(0.6456 0.0912 122.8); /* 竹青 */
-  --acc-taoju: oklch(0.6561 0.1022 73); /* 陶橘 */
-  --acc-taohe: oklch(0.6549 0.0278 26.6); /* 陶褐 */
-  --acc-danzhu: oklch(0.6663 0.1283 28.9); /* 丹朱 */
+  --series-1: oklch(0.6693 0.15 252); /* blue    #4798ee */
+  --series-2: oklch(0.6848 0.15 28); /* coral   #e87164 */
+  --series-3: oklch(0.6538 0.12 182); /* teal    #00a896 */
+  --series-4: oklch(0.6764 0.14 72); /* amber   #cb8715 */
+  --series-5: oklch(0.682 0.14 300); /* violet  #a783e2 */
+  --series-6: oklch(0.6561 0.13 145); /* green   #59a65d */
+  --series-7: oklch(0.6684 0.04 240); /* slate   #7f99ab */
 
-  --sig-good: var(--acc-zhuqing);
-  --sig-caution: var(--acc-taoju);
-  --sig-danger: var(--acc-danzhu);
-  --sig-neutral: var(--acc-ouhe);
+  /* Semantic signals reuse series hues so the page has one colour vocabulary. */
+  --sig-good: var(--series-6);
+  --sig-caution: var(--series-4);
+  --sig-danger: var(--series-2);
+  --sig-neutral: var(--series-7);
+  --sig-info: var(--series-1);
 
-  --signal-frontier: var(--acc-zhuqing);
-  --signal-contested: var(--acc-qing);
-  --signal-saturated: var(--acc-danzhu);
-  --signal-caution: var(--acc-taoju);
-  --signal-danger: var(--acc-danzhu);
-  --signal-good: var(--acc-zhuqing);
+  --signal-frontier: var(--series-6);
+  --signal-contested: var(--series-1);
+  --signal-saturated: var(--series-2);
+  --signal-caution: var(--series-4);
+  --signal-danger: var(--series-2);
+  --signal-good: var(--series-6);
 
-  /* Rules are visible now. v1's hairlines were so faint that structure
-     disappeared, which read as blur rather than restraint. */
+  /*
+   * 霜色 survives as brand identity: the floating island, the ruler motif, the
+   * wordmark. Solved for legibility, but no longer used to encode data.
+   */
+  --brand-qing: oklch(0.6511 0.0471 252.8); /* 霜青 */
+  --brand-qing-display: oklch(0.8198 0.0471 252.8); /* 11:1, for large claims */
+  --brand-ouhe: oklch(0.6535 0.0258 290.7); /* 藕荷 */
+
+  /* Bar fills sit behind numerals, so they must stay under the text. */
+  --bar-fill: oklch(0.6693 0.15 252 / 0.28);
+  --bar-fill-strong: oklch(0.6693 0.15 252 / 0.45);
+  --bar-track: oklch(0.292 0.008 252);
+
   --border: oklch(0.42 0.012 252);
-  --hair-faint: oklch(0.32 0.01 252);
+  --hair-faint: oklch(0.33 0.01 252);
   --input: oklch(0.48 0.014 252);
-  --ring: var(--acc-qing);
+  --ring: var(--series-1);
   --grain-dot: oklch(0.45 0.012 252 / 0.5);
 
   --background: var(--canvas);
@@ -96,63 +109,62 @@
   --secondary-foreground: var(--ink-700);
   --muted: var(--surface-2);
   --muted-foreground: var(--ink-500);
-  --accent: oklch(0.6511 0.0471 252.8 / 0.18);
-  --accent-foreground: var(--ink-900);
+  --accent: oklch(0.6693 0.15 252 / 0.18);
+  --accent-foreground: var(--ink-950);
   --destructive: var(--sig-danger);
   --destructive-foreground: var(--canvas);
 
-  --chart-1: var(--acc-qing);
-  --chart-2: var(--acc-zhuqing);
-  --chart-3: var(--acc-ouhe);
-  --chart-4: var(--acc-taoju);
-  --chart-5: var(--acc-danzhu);
+  --chart-1: var(--series-1);
+  --chart-2: var(--series-2);
+  --chart-3: var(--series-3);
+  --chart-4: var(--series-4);
+  --chart-5: var(--series-5);
 
   --sidebar: var(--surface);
   --sidebar-foreground: var(--ink-700);
   --sidebar-primary: var(--ink-900);
   --sidebar-primary-foreground: var(--canvas);
-  --sidebar-accent: oklch(0.6511 0.0471 252.8 / 0.18);
-  --sidebar-accent-foreground: var(--ink-900);
+  --sidebar-accent: oklch(0.6693 0.15 252 / 0.18);
+  --sidebar-accent-foreground: var(--ink-950);
   --sidebar-border: var(--border);
-  --sidebar-ring: var(--acc-qing);
+  --sidebar-ring: var(--series-1);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
-/*
- * LIGHT variant — canvas is pure white, not 霜色. Starting from #e8eff5 gave
- * away contrast headroom before a single glyph was drawn; the frost tint now
- * lives in accents and surfaces instead of under the text.
- */
+/* ---- LIGHT variant: series colours re-solved for a white canvas. ---- */
 .light {
   --canvas: oklch(1 0 0);
   --surface: oklch(0.9847 0.0016 248);
   --surface-2: oklch(0.9605 0.0043 248);
+  --surface-3: oklch(0.934 0.006 248);
 
-  --ink-950: oklch(0.2026 0.006 252); /* 18.0:1 */
-  --ink-900: oklch(0.2713 0.008 252); /* 15.0:1 */
-  --ink-800: oklch(0.3131 0.01 252); /* 13.0:1 */
-  --ink-700: oklch(0.3566 0.012 252); /* 11.0:1 BODY */
-  --ink-600: oklch(0.4052 0.014 252); /*  9.0:1 */
-  --ink-500: oklch(0.481 0.016 252); /*  6.5:1 */
-  --ink-400: oklch(0.5624 0.018 252); /*  4.6:1 */
-  --ink-300: oklch(0.669 0.02 252); /*  3.0:1 graphics only */
+  --ink-950: oklch(0.2259 0.004 252); /* 17.0:1 */
+  --ink-900: oklch(0.271 0.006 252); /* 15.0:1 */
+  --ink-800: oklch(0.3138 0.008 252); /* 13.0:1 */
+  --ink-700: oklch(0.3561 0.01 252); /* 11.0:1 BODY */
+  --ink-600: oklch(0.405 0.012 252); /*  9.0:1 */
+  --ink-500: oklch(0.4812 0.014 252); /*  6.5:1 */
+  --ink-400: oklch(0.5626 0.016 252); /*  4.6:1 */
+  --ink-300: oklch(0.6679 0.018 252); /*  3.0:1 graphics only */
 
-  --acc-qing: oklch(0.5519 0.0471 252.8);
-  --acc-qing-display: oklch(0.3564 0.0471 252.8); /* 11.0:1 on white */
-  --acc-ouhe: oklch(0.5542 0.0258 290.7);
-  --acc-zhuqing: oklch(0.5465 0.0912 122.8);
-  --acc-taoju: oklch(0.5571 0.1022 73);
-  --acc-taohe: oklch(0.5557 0.0278 26.6);
-  /*
-   * Light-mode 丹朱, chroma pulled back from 0.1283 to 0.085 and lightness
-   * solved for 5.5:1 (up from 4.8:1). The `tone="danger"` on the CI-disclosure
-   * and saturation figures is intentional — those two numbers ARE the
-   * methodology argument, not decoration — but at full chroma on white the red
-   * reads as an error state rather than a finding. Same meaning, calmer ink.
-   */
-  --acc-danzhu: oklch(0.5298 0.085 28.9); /* 5.5:1 on white */
+  /* Same seven hues, lightness re-solved for ~5:1 on white. */
+  --series-1: oklch(0.5447 0.15 252); /* #1a71c4 */
+  --series-2: oklch(0.5602 0.15 28); /* #bc4a40 */
+  --series-3: oklch(0.5179 0.12 182); /* #007e6d */
+  --series-4: oklch(0.548 0.14 72); /* #a26000 */
+  --series-5: oklch(0.5574 0.14 300); /* #815db9 */
+  --series-6: oklch(0.5296 0.13 145); /* #317f38 */
+  --series-7: oklch(0.5414 0.04 240); /* #5a7384 */
+
+  --brand-qing: oklch(0.5519 0.0471 252.8);
+  --brand-qing-display: oklch(0.3564 0.0471 252.8); /* 11:1 on white */
+  --brand-ouhe: oklch(0.5542 0.0258 290.7);
+
+  --bar-fill: oklch(0.5447 0.15 252 / 0.16);
+  --bar-fill-strong: oklch(0.5447 0.15 252 / 0.3);
+  --bar-track: oklch(0.9605 0.0043 248);
 
   --border: oklch(0.82 0.008 252);
   --hair-faint: oklch(0.9 0.006 252);
@@ -171,8 +183,8 @@
   --secondary-foreground: var(--ink-700);
   --muted: var(--surface-2);
   --muted-foreground: var(--ink-500);
-  --accent: oklch(0.5519 0.0471 252.8 / 0.12);
-  --accent-foreground: var(--ink-900);
+  --accent: oklch(0.5447 0.15 252 / 0.1);
+  --accent-foreground: var(--ink-950);
   --sidebar: var(--surface);
   --sidebar-border: var(--border);
 }
@@ -215,11 +227,13 @@
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-paper: var(--surface);
   --color-frost-canvas: var(--canvas);
   --color-frost-paper: var(--surface);
   --color-frost-mist: var(--surface-2);
   --color-rule: var(--border);
+  --color-hair-faint: var(--hair-faint);
 
   /* Text ramp */
   --color-ink-950: var(--ink-950);
@@ -231,19 +245,39 @@
   --color-ink-400: var(--ink-400);
   --color-ink-300: var(--ink-300);
 
-  /* 霜色 accents — now legible enough to label things */
-  --color-frost-qing: var(--acc-qing);
-  --color-frost-qing-display: var(--acc-qing-display);
-  --color-frost-ouhe: var(--acc-ouhe);
-  --color-frost-nenzhu: var(--acc-zhuqing);
-  --color-frost-zhuqing: var(--acc-zhuqing);
-  --color-frost-taoju: var(--acc-taoju);
-  --color-frost-taohe: var(--acc-taohe);
-  --color-acc-qing: var(--acc-qing);
-  --color-acc-ouhe: var(--acc-ouhe);
-  --color-acc-zhuqing: var(--acc-zhuqing);
-  --color-acc-taoju: var(--acc-taoju);
-  --color-acc-danzhu: var(--acc-danzhu);
+  /* Categorical series */
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+
+  /* Bars */
+  --color-bar-fill: var(--bar-fill);
+  --color-bar-fill-strong: var(--bar-fill-strong);
+  --color-bar-track: var(--bar-track);
+
+  /* Brand (霜色) — identity only, not data encoding */
+  --color-brand-qing: var(--brand-qing);
+  --color-brand-qing-display: var(--brand-qing-display);
+  --color-brand-ouhe: var(--brand-ouhe);
+
+  /* Back-compat aliases so existing markup keeps rendering while pages are
+     migrated page by page. These intentionally point at the new tokens. */
+  --color-frost-qing: var(--brand-qing);
+  --color-frost-qing-display: var(--brand-qing-display);
+  --color-frost-ouhe: var(--brand-ouhe);
+  --color-frost-nenzhu: var(--series-6);
+  --color-frost-zhuqing: var(--series-6);
+  --color-frost-taoju: var(--series-4);
+  --color-frost-taohe: var(--series-7);
+  --color-acc-qing: var(--series-1);
+  --color-acc-ouhe: var(--series-5);
+  --color-acc-zhuqing: var(--series-6);
+  --color-acc-taoju: var(--series-4);
+  --color-acc-danzhu: var(--series-2);
 
   --color-frontier: var(--signal-frontier);
   --color-contested: var(--signal-contested);
@@ -252,23 +286,17 @@
   --color-danger: var(--signal-danger);
   --color-good: var(--signal-good);
   --color-neutral-signal: var(--sig-neutral);
+  --color-info: var(--sig-info);
 
   --radius-sm: calc(var(--radius) - 1px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /*
-   * Body is a grotesque now. v1 set body in Noto Serif SC, and below ~14px its
-   * stems fall under one device pixel — the reason the page read as blurry.
-   * The serif survives where it is actually legible: display sizes ≥28px.
-   */
   --font-sans:
     "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif,
     system-ui, sans-serif;
   --font-ui: var(--font-sans);
-  /* Display serif. CJK gets Noto Serif SC only at these sizes; below ~28px the
-     Latin face falls back to the sans stack rather than a hairline serif. */
   --font-display:
     "Instrument Serif", "Noto Serif SC", "Songti SC", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -280,16 +308,18 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    /* 15px base: the reference sets 17px for prose, but this page is a dense
-       comparison table, so 15px with a 14px table tier is the honest middle. */
-    font-size: 15px;
-    line-height: 1.6;
+    /* 16px base. The references run 16px for both prose and table cells; v2's
+       15px base with a 13px table tier was still fighting the wrong battle. */
+    font-size: 16px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-  /* Tabular figures wherever numbers are compared down a column. Weight 500
-     because a column of 13px numerals at 400 is the first thing to go soft. */
+  /*
+   * Tabular figures for anything compared down a column. 14px is the floor for
+   * table numerals now (was 13px), and weight 500 keeps stems solid.
+   */
   .tnum {
     font-variant-numeric: tabular-nums;
     font-family: var(--font-mono);
@@ -299,8 +329,22 @@
   .ui {
     font-family: var(--font-ui);
   }
-  /* Serif is reserved for display sizes. Negative tracking only up here —
-     the reference page tightens 59px headings by -1.78px and leaves prose alone. */
+  /*
+   * Table header convention, copied from the references: same size as the cells,
+   * separated by weight alone. No small-caps, no letter-spacing, no 12px.
+   */
+  .th {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-800);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .td {
+    font-size: 14px;
+    color: var(--ink-700);
+  }
+  /* Serif is reserved for display sizes ≥28px. */
   .display {
     font-family: var(--font-display);
     font-weight: 400;
@@ -362,6 +406,47 @@
   .hair-row {
     border-bottom: 1px solid var(--hair-faint);
   }
+
+  /* Leaderboard row: 44px tall, generous enough to scan without crowding. */
+  .lb-row {
+    height: 44px;
+  }
+  .lb-row:hover {
+    background: var(--surface-2);
+  }
+
+  /* Filter chip, borrowed from the reference sites' one-tap facet row. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 30px;
+    padding: 0 0.625rem;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--ink-600);
+    white-space: nowrap;
+    transition:
+      background 120ms var(--ease-out),
+      color 120ms var(--ease-out),
+      border-color 120ms var(--ease-out);
+  }
+  .chip:hover {
+    background: var(--surface-2);
+    color: var(--ink-800);
+  }
+  .chip[data-on="true"] {
+    background: var(--surface-3);
+    border-color: var(--ink-400);
+    color: var(--ink-950);
+  }
+  .chip:active {
+    transform: scale(0.97);
+  }
+
   .islet {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -393,6 +478,14 @@
 }
 
 @keyframes rulerGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes barGrow {
   from {
     transform: scaleX(0);
   }
@@ -444,6 +537,16 @@
     opacity: 1;
   }
 }
+@keyframes viewFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   .animate-contents-in {
     animation: contentsIn 200ms var(--ease-out) both;
@@ -455,11 +558,35 @@
     transform-origin: left center;
     animation: rulerGrow 280ms var(--ease-out) both;
   }
+  /* Bars grow from the left on first paint; stagger is set per row inline. */
+  .anim-bar {
+    transform-origin: left center;
+    animation: barGrow 240ms var(--ease-out) both;
+  }
   .anim-projection {
     animation: projectionDraw 420ms var(--ease-out) both;
   }
   .anim-install {
     animation: installIn 240ms var(--ease-out) both;
+  }
+  /* View switching (table / bar / scatter) — 180ms, per the motion budget. */
+  .anim-view {
+    animation: viewFade 180ms var(--ease-out) both;
+  }
+  /* Card entrance for the champion row. Never from scale(0) — a card that grows
+     out of nothing has no physical analogue; 0.98 plus opacity reads as arriving. */
+  .anim-rise {
+    animation: riseIn 220ms var(--ease-out) both;
+  }
+}
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 @media (prefers-reduced-motion: reduce) {

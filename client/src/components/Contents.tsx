@@ -116,7 +116,7 @@ function LanguageToggle() {
  * The full-bleed table of contents. Not a drawer: a drawer is a sidebar with a
  * timer. This is its own page moment, with its own typographic breathing room.
  */
-function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const items = useNavItems();
   const [location, navigate] = useLocation();
   const [query, setQuery] = useState("");
