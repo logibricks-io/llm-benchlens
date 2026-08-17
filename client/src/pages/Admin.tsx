@@ -65,27 +65,26 @@ export default function Admin() {
           <div className="hair-t max-w-md p-8 text-center">
             <Lock className="mx-auto size-8 text-ink-500" />
             <h2 className="mt-4 text-base">{t.admin.auth.title}</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-ink-500">
+            <p className="mt-2 text-[14px] leading-relaxed text-ink-500">
               {t.admin.auth.desc}
-              
             </p>
             <div className="mt-5 flex items-center justify-center gap-2">
               {!user ? (
                 <button
                   type="button"
                   onClick={() => startLogin()}
-                  className="ui text-ink-700 hover:text-frost-qing hair-all px-3 py-1.5 text-[12px] transition-colors duration-150"
+                  className="ui text-ink-700 hover:text-brand-qing hair-all px-3 py-1.5 text-[14px] transition-colors duration-120"
                 >
                   {t.admin.auth.login}
                 </button>
               ) : (
-                <span className="text-xs text-ink-500">
+                <span className="text-[14px] text-ink-500">
                   {t.admin.auth.noAccess.replace("{name}", user.name ?? user.openId)}
                 </span>
               )}
               <Link
                 href="/"
-                className="ui text-ink-600 hover:text-frost-qing px-3 py-1.5 text-[12px] transition-colors duration-150"
+                className="ui text-ink-600 hover:text-brand-qing px-3 py-1.5 text-[14px] transition-colors duration-120"
               >
                 {t.admin.auth.back}
               </Link>
@@ -113,7 +112,7 @@ export default function Admin() {
            quiet hairline affordance instead. */
         <button
           type="button"
-          className="ui text-ink-600 hover:text-frost-qing hair-all flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] transition-colors duration-150 disabled:opacity-50"
+          className="ui text-ink-600 hover:text-brand-qing hair-all flex items-center gap-1.5 px-2.5 py-1.5 text-[14px] transition-colors duration-120 disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -130,7 +129,7 @@ export default function Admin() {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Tile
             label={t.admin.tiles.coverage}
-            value={stats ? `${stats.coverageRate}%` : "—"}
+            value={stats ? `${stats.coverageRate}%` : <span className="text-ink-400">—</span>}
             note={
               stats
                 ? t.admin.tiles.coverageNote
@@ -142,12 +141,12 @@ export default function Admin() {
           />
           <Tile
             label={t.admin.tiles.scores}
-            value={stats ? String(stats.scoreRows) : "—"}
+            value={stats ? String(stats.scoreRows) : <span className="text-ink-400">—</span>}
             note={t.admin.tiles.scoresNote}
           />
           <Tile
             label={t.admin.tiles.missingProv}
-            value={stats ? String(stats.missingProvenance) : "—"}
+            value={stats ? String(stats.missingProvenance) : <span className="text-ink-400">—</span>}
             note={
               stats?.missingProvenance === 0
                 ? t.admin.tiles.missingProvZero
@@ -157,7 +156,7 @@ export default function Admin() {
           />
           <Tile
             label={t.admin.tiles.ci}
-            value={stats ? `${stats.ciDisclosed} / ${stats.benchmarks}` : "—"}
+            value={stats ? `${stats.ciDisclosed} / ${stats.benchmarks}` : <span className="text-ink-400">—</span>}
             note={t.admin.tiles.ciNote}
             tone="danger"
           />
@@ -167,7 +166,7 @@ export default function Admin() {
         <div className="hair-t p-4">
           <div className="mb-3 flex items-center gap-1.5">
             <Database className="size-3.5 text-ink-500" />
-            <h3 className="text-[13px]">{t.admin.source.title}</h3>
+            <h3 className="text-[14px]">{t.admin.source.title}</h3>
             <InfoHint>
               {t.admin.source.desc}
             </InfoHint>
@@ -182,13 +181,13 @@ export default function Admin() {
                   const total = stats?.scoreRows ?? 1;
                   return (
                     <div key={k} className="flex items-center gap-2.5">
-                      <span className="w-24 shrink-0 text-[12px] text-ink-500">
+                      <span className="w-24 shrink-0 text-[14px] text-ink-500">
                         {getSourceLabel(t, k)}
                       </span>
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-frost-mist/50">
-                        <div className="h-full rounded-full bg-frost-qing/60" style={{ width: `${(v / total) * 100}%` }} />
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                        <div className="h-full rounded-full bg-brand-qing/60" style={{ width: `${(v / total) * 100}%` }} />
                       </div>
-                      <span className="tnum w-12 shrink-0 text-right text-[12px]">{v}</span>
+                      <span className="tnum w-12 shrink-0 text-right text-[14px]">{v}</span>
                     </div>
                   );
                 })}
@@ -200,13 +199,12 @@ export default function Admin() {
         <div className="hair-t p-4">
           <div className="mb-2 flex items-center gap-1.5">
             <Clock className="size-3.5 text-ink-500" />
-            <h3 className="text-[13px]">{t.admin.audit.title}</h3>
+            <h3 className="text-[14px]">{t.admin.audit.title}</h3>
             <InfoHint>
               {t.admin.audit.desc}
-              
             </InfoHint>
           </div>
-          <p className="text-[12px] leading-relaxed text-ink-500">
+          <p className="text-[14px] leading-relaxed text-ink-500">
             {t.admin.audit.philosophy1}
             {t.admin.audit.philosophy2}
             {t.admin.audit.philosophy3}
@@ -219,13 +217,13 @@ export default function Admin() {
           {/* Gaps */}
           <div className="hair-t p-4">
             <div className="mb-3 flex items-center gap-1.5">
-              <AlertTriangle className="size-3.5 text-[color:var(--signal-caution)]" />
-              <h3 className="text-[13px]">{t.admin.gaps.title}</h3>
+              <AlertTriangle className="size-3.5 text-caution" />
+              <h3 className="text-[14px]">{t.admin.gaps.title}</h3>
             </div>
             {audit.isLoading ? (
               <Skeleton className="h-32 w-full" />
             ) : (audit.data?.uncovered.length ?? 0) === 0 && (audit.data?.thin.length ?? 0) === 0 ? (
-              <div className="flex items-center gap-2 py-6 text-[13px] text-ink-500">
+              <div className="flex items-center gap-2 py-6 text-[14px] text-ink-500">
                 <CheckCircle2 className="size-4 text-good" />
                 {t.admin.gaps.allCovered}
               </div>
@@ -233,7 +231,7 @@ export default function Admin() {
               <div className="space-y-3">
                 {(audit.data?.uncovered.length ?? 0) > 0 && (
                   <div>
-                    <p className="mb-1.5 text-[12px] text-ink-500">
+                    <p className="mb-1.5 text-[14px] text-ink-500">
                       {t.admin.gaps.uncovered.replace("{n}", String(audit.data?.uncovered.length))}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -241,7 +239,7 @@ export default function Admin() {
                         <Link
                           key={u.slug}
                           href={`/benchmarks/${u.slug}`}
-                          className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px] transition-colors hover:border-frost-qing/40"
+                          className="rounded hair-all bg-surface-2 px-1.5 py-0.5 text-[14px] transition-colors hover:border-brand-qing/40"
                         >
                           {u.name}
                         </Link>
@@ -251,7 +249,7 @@ export default function Admin() {
                 )}
                 {(audit.data?.thin.length ?? 0) > 0 && (
                   <div>
-                    <p className="mb-1.5 text-[12px] text-ink-500">
+                    <p className="mb-1.5 text-[14px] text-ink-500">
                       {t.admin.gaps.thin.replace("{n}", String(audit.data?.thin.length))}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -259,7 +257,7 @@ export default function Admin() {
                         <Link
                           key={u.slug}
                           href={`/benchmarks/${u.slug}`}
-                          className="flex items-center gap-1 rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px] transition-colors hover:border-frost-qing/40"
+                          className="flex items-center gap-1 rounded hair-all bg-surface-2 px-1.5 py-0.5 text-[14px] transition-colors hover:border-brand-qing/40"
                         >
                           {u.name}
                           <span className="tnum text-ink-500">{u.scoreCount}</span>
@@ -276,20 +274,19 @@ export default function Admin() {
           <div className="hair-t p-4">
             <div className="mb-3 flex items-center gap-1.5">
               <RefreshCw className="size-3.5 text-ink-500" />
-              <h3 className="text-[13px]">{t.admin.logs.title}</h3>
+              <h3 className="text-[14px]">{t.admin.logs.title}</h3>
               <InfoHint>
                 {t.admin.logs.desc}
-                
               </InfoHint>
             </div>
             {log.isLoading ? (
               <Skeleton className="h-32 w-full" />
             ) : (log.data?.length ?? 0) === 0 ? (
-              <p className="py-6 text-[13px] text-ink-500">{t.admin.logs.empty}</p>
+              <p className="py-6 text-[14px] text-ink-500">{t.admin.logs.empty}</p>
             ) : (
               <div className="space-y-1.5">
                 {log.data?.map(l => (
-                  <div key={l.id} className="flex items-baseline justify-between gap-2 hair-b pb-1.5 text-[12px] last:border-0">
+                  <div key={l.id} className="flex items-baseline justify-between gap-2 hair-b pb-1.5 text-[14px] last:border-0">
                     <span className="min-w-0 flex-1 truncate">
                       <span className="text-ink-900">{l.triggeredBy}</span>
                       <span className="text-ink-500"> · {l.scope}</span>
@@ -309,18 +306,18 @@ export default function Admin() {
         {/* Stalest evidence */}
         <div className="hair-t p-4">
           <div className="mb-3 flex items-center gap-1.5">
-            <h3 className="text-[13px]">{t.admin.stale.title}</h3>
+            <h3 className="text-[14px]">{t.admin.stale.title}</h3>
             <InfoHint>{t.admin.stale.desc}</InfoHint>
           </div>
           {audit.isLoading ? (
             <Skeleton className="h-32 w-full" />
           ) : (audit.data?.stalest.length ?? 0) === 0 ? (
-            <p className="py-4 text-[13px] text-ink-500">{t.admin.stale.empty}</p>
+            <p className="py-4 text-[14px] text-ink-500">{t.admin.stale.empty}</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[12px]">
+              <table className="w-full text-[14px]">
                 <thead>
-                  <tr className="hair-b text-left text-ink-500">
+                  <tr className="hair-b text-left text-ink-700 font-semibold">
                     <th className="pb-1.5">{t.admin.stale.columns.benchmark}</th>
                     <th className="pb-1.5">{t.admin.stale.columns.model}</th>
                     <th className="pb-1.5">{t.admin.stale.columns.measuredAt}</th>
@@ -329,30 +326,36 @@ export default function Admin() {
                 </thead>
                 <tbody>
                   {audit.data?.stalest.map((s, i) => (
-                    <tr key={i} className="hair-b last:border-0">
+                    <tr key={i} className="hair-row hover:bg-surface transition-colors duration-120">
                       <td className="py-1.5">
-                        <Link href={`/benchmarks/${s.benchmarkSlug}`} className="hover:text-frost-qing">
+                        <Link href={`/benchmarks/${s.benchmarkSlug}`} className="hover:text-brand-qing">
                           {s.benchmarkName}
                         </Link>
                       </td>
-                      <td className="py-1.5 text-ink-500">{s.modelName}</td>
+                      <td className="py-1.5 text-ink-900">
+                        {/* The stale-evidence row shape carries no provider, so
+                            no vendor dot here — it is keyed by model name only. */}
+                        {s.modelName}
+                      </td>
                       <td className="py-1.5">
                         <span className="flex items-center gap-1.5">
                           <FreshnessDot freshness={s.freshness} />
-                          <span className="tnum text-ink-500">{s.measuredAt ?? t.admin.stale.unmarked}</span>
+                          <span className="tnum text-ink-500">{s.measuredAt ?? <span className="text-ink-400">—</span>}</span>
                         </span>
                       </td>
                       <td className="py-1.5">
-                        {s.sourceUrl && (
+                        {s.sourceUrl ? (
                           <a
                             href={s.sourceUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-frost-qing hover:underline"
+                            className="inline-flex items-center gap-0.5 text-brand-qing hover:underline"
                           >
                             {t.admin.stale.sourceLink}
                             <ExternalLink className="size-2.5" />
                           </a>
+                        ) : (
+                          <span className="text-ink-400">—</span>
                         )}
                       </td>
                     </tr>
@@ -374,7 +377,7 @@ function Tile({
   tone = "neutral",
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   note: string;
   tone?: "neutral" | "good" | "warn" | "danger";
 }) {
@@ -388,11 +391,11 @@ function Tile({
           : undefined;
   return (
     <div className="hair-t p-4">
-      <p className="text-[12px] text-ink-500">{label}</p>
+      <p className="text-[14px] text-ink-500">{label}</p>
       <p className="tnum mt-1 text-2xl" style={color ? { color } : undefined}>
         {value}
       </p>
-      {note && <p className="mt-1 text-[12px] leading-relaxed text-ink-400">{note}</p>}
+      {note && <p className="mt-1 text-[14px] leading-relaxed text-ink-400">{note}</p>}
     </div>
   );
 }

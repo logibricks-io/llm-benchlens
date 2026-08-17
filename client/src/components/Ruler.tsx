@@ -202,7 +202,7 @@ export function Ruler({
             />
             {m.label && (
               <div
-                className="ui absolute whitespace-nowrap text-[12px] leading-none"
+                className="ui absolute whitespace-nowrap text-[13px] leading-none"
                 style={{
                   top: labelBelow ? baseline + 7 + row * 11 : baseline - 16 - row * 11,
                   left: 0,
@@ -312,7 +312,7 @@ export function ProjectionRuler({
         return (
           <div key={r.label}>
             <div
-              className="ui absolute text-[12px] leading-tight"
+              className="ui absolute text-[13px] leading-tight"
               style={{ top: y - 15, left: 0, color: "var(--ink-600)" }}
             >
               {r.label}
@@ -358,7 +358,7 @@ export function ProjectionRuler({
       })}
 
       <div
-        className="ui absolute text-[12px]"
+        className="ui absolute text-[13px]"
         style={{ top: neutralY - 15, left: 0, color: "var(--ink-800)" }}
       >
         {t.ruler.neutralRuler}

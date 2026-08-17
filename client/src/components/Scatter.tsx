@@ -90,7 +90,24 @@ export function Scatter({
     const yTicks: number[] = [];
     for (let v = Math.ceil(dy0 / yStep) * yStep; v <= dy1; v += yStep) yTicks.push(v);
 
-    return { valid, sx, sy, xTicks, yTicks };
+    /*
+     * Pareto frontier: the models for which nothing is both cheaper and better.
+     * This is the only genuinely actionable reading of a quality-versus-cost
+     * plot — the other ~50 points are dominated and a buyer can ignore them —
+     * so the frontier gets a connecting line and permanent labels while the
+     * rest stay unlabelled until hovered.
+     */
+    const byPrice = [...valid].sort((a, b) => a.x - b.x || b.y - a.y);
+    const frontier: typeof valid = [];
+    let best = -Infinity;
+    for (const p of byPrice) {
+      if (p.y > best) {
+        frontier.push(p);
+        best = p.y;
+      }
+    }
+
+    return { valid, sx, sy, xTicks, yTicks, frontier };
   }, [points, log, H]);
 
   if (!geom) {
@@ -101,8 +118,9 @@ export function Scatter({
     );
   }
 
-  const { valid, sx, sy, xTicks, yTicks } = geom;
+  const { valid, sx, sy, xTicks, yTicks, frontier } = geom;
   const active = valid.find(p => p.slug === hover);
+  const onFrontier = new Set(frontier.map(p => p.slug));
 
   return (
     <div className="relative">
@@ -191,23 +209,60 @@ export function Scatter({
         </text>
 
         {/* points */}
+        {/* frontier line first, so points sit on top of it */}
+        {frontier.length > 1 && (
+          <polyline
+            points={frontier.map(p => `${sx(p.x)},${sy(p.y)}`).join(" ")}
+            fill="none"
+            stroke="var(--ink-400)"
+            strokeWidth="1.25"
+            strokeDasharray="4 3"
+            pointerEvents="none"
+          />
+        )}
         {valid.map(p => {
           const on = hover === p.slug;
+          const front = onFrontier.has(p.slug);
           return (
             <circle
               key={p.slug}
               cx={sx(p.x)}
               cy={sy(p.y)}
-              r={on ? 7 : 4.5}
+              r={on ? 7.5 : front ? 5.5 : 4}
               fill={providerColor(p.provider)}
-              fillOpacity={on ? 1 : 0.82}
-              stroke={on ? "var(--ink-950)" : "transparent"}
+              fillOpacity={on ? 1 : front ? 0.95 : 0.5}
+              stroke={on ? "var(--ink-950)" : front ? "var(--canvas)" : "transparent"}
               strokeWidth="1.5"
               style={{ cursor: onPick ? "pointer" : "default", transition: "r 120ms var(--ease-out)" }}
               onMouseEnter={() => setHover(p.slug)}
               onMouseLeave={() => setHover(null)}
               onClick={() => onPick?.(p.slug)}
             />
+          );
+        })}
+
+        {/* permanent labels for the frontier only */}
+        {frontier.map((p, i) => {
+          if (hover === p.slug) return null;
+          const x = sx(p.x);
+          const y = sy(p.y);
+          /* Alternate side when two frontier points are close in x, so labels
+             do not overprint each other on the cheap end of the axis. */
+          const prev = frontier[i - 1];
+          const tight = prev ? Math.abs(sx(prev.x) - x) < 90 : false;
+          const flip = tight && i % 2 === 1;
+          return (
+            <text
+              key={`fl-${p.slug}`}
+              x={x + (flip ? -9 : 9)}
+              y={y + (flip ? 14 : -8)}
+              textAnchor={flip ? "end" : "start"}
+              fontSize="12.5"
+              fill="var(--ink-700)"
+              pointerEvents="none"
+            >
+              {p.label.length > 20 ? p.label.slice(0, 19) + "…" : p.label}
+            </text>
           );
         })}
 

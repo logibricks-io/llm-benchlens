@@ -83,7 +83,7 @@ function ThemeToggle({ compact }: { compact?: boolean }) {
   return (
     <button
       onClick={toggleTheme}
-      className="ui text-ink-500 hover:text-ink-800 flex items-center gap-1.5 text-[12px] transition-colors duration-150"
+      className="ui text-ink-500 hover:text-ink-800 flex items-center gap-1.5 text-[13px] transition-colors duration-150"
       title={theme === "dark" ? t.contents.switchToLight : t.contents.switchToDark}
     >
       {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
@@ -101,7 +101,7 @@ function LanguageToggle() {
   return (
     <button
       onClick={toggleLang}
-      className="ui text-ink-500 hover:text-ink-800 flex items-center gap-1.5 text-[12px] transition-colors duration-150"
+      className="ui text-ink-500 hover:text-ink-800 flex items-center gap-1.5 text-[13px] transition-colors duration-150"
       title={lang === "en" ? t.contents.switchToChinese : t.contents.switchToEnglish}
     >
       <Languages className="size-3.5" />
@@ -190,10 +190,10 @@ export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () 
       <div className="animate-contents-in relative flex min-h-0 flex-1 flex-col">
         <div className="mx-auto flex min-h-0 w-full max-w-[1080px] flex-1 flex-col px-7 pt-10 pb-8">
           <div className="flex items-baseline justify-between gap-4">
-            <div className="ui text-ink-400 text-[12px] tracking-[0.18em] uppercase">
+            <div className="ui text-ink-400 text-[13px] tracking-[0.18em] uppercase">
               {t.contents.eyebrow}
             </div>
-            <div className="ui text-ink-400 flex items-center gap-3 text-[12px]">
+            <div className="ui text-ink-400 flex items-center gap-3 text-[13px]">
               <span>{t.contents.typeToFilter}</span>
               <span className="text-ink-400">·</span>
               <span>{t.contents.escToExit}</span>
@@ -211,7 +211,7 @@ export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () 
 
           <div className="mt-6 min-h-0 flex-1 overflow-auto">
             {matches.length === 0 ? (
-              <p className="ui text-ink-400 py-8 text-[12px]">{t.contents.noMatch}</p>
+              <p className="ui text-ink-400 py-8 text-[13px]">{t.contents.noMatch}</p>
             ) : (
               <div className="grid gap-x-12 sm:grid-cols-2">
                 {columns.map((col, ci) => (
@@ -238,7 +238,7 @@ export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () 
                           <div className="flex items-baseline gap-3">
                             <span
                               className={cn(
-                                "tnum shrink-0 text-[12px]",
+                                "tnum shrink-0 text-[13px]",
                                 focused ? "text-caution" : "text-ink-400",
                               )}
                             >
@@ -253,7 +253,7 @@ export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () 
                               {t.nav[item.key]}
                             </span>
                             {here && (
-                              <span className="ui text-frost-qing ml-auto shrink-0 text-[12px]">
+                              <span className="ui text-frost-qing ml-auto shrink-0 text-[13px]">
                                 {t.contents.current}
                               </span>
                             )}
@@ -261,7 +261,7 @@ export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () 
                               <CornerDownLeft className="text-ink-400 ml-auto size-3 shrink-0" />
                             )}
                           </div>
-                          <div className="ui text-ink-500 mt-1 pl-[26px] text-[12px] leading-relaxed">
+                          <div className="ui text-ink-500 mt-1 pl-[26px] text-[13px] leading-relaxed">
                             {t.navHint[item.key]}
                           </div>
                         </button>
@@ -288,8 +288,8 @@ export function ContentsOverlay({ open, onClose }: { open: boolean; onClose: () 
               ] as Array<[string, string, boolean]>
             ).map(([k, v, warn]) => (
               <div key={k} className="flex items-baseline gap-1.5">
-                <span className="ui text-ink-400 text-[12px]">{k}</span>
-                <span className={cn("tnum text-[12px]", warn ? "text-danger" : "text-ink-700")}>{v}</span>
+                <span className="ui text-ink-400 text-[13px]">{k}</span>
+                <span className={cn("tnum text-[13px]", warn ? "text-danger" : "text-ink-700")}>{v}</span>
               </div>
             ))}
             <div className="ml-auto flex items-center gap-5">
@@ -347,10 +347,10 @@ function Islet({ onOpen }: { onOpen: () => void }) {
           {t.brand.name}
         </span>
         <span className="bg-rule h-3 w-px shrink-0" />
-        <span className="text-frost-qing max-w-[160px] truncate text-[12px] leading-none">
+        <span className="text-frost-qing max-w-[160px] truncate text-[13px] leading-none">
           {current ? t.nav[current.key] : t.nav.contents}
         </span>
-        <span className="ui text-ink-400 shrink-0 text-[12px] leading-none">
+        <span className="ui text-ink-400 shrink-0 text-[13px] leading-none">
           {mac ? "⌘K" : "Ctrl K"}
         </span>
       </button>
@@ -413,7 +413,7 @@ export function ReadNext({
   if (!items.length) return null;
   return (
     <div className="hair-t mt-14 pt-6">
-      <div className="ui text-ink-400 mb-4 text-[12px] tracking-[0.18em] uppercase">
+      <div className="ui text-ink-400 mb-4 text-[13px] tracking-[0.18em] uppercase">
         {t.nav.readNext}
       </div>
       <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -425,7 +425,7 @@ export function ReadNext({
                 →
               </span>
             </div>
-            <p className="ui text-ink-500 mt-1 text-[12px] leading-relaxed">{item.why}</p>
+            <p className="ui text-ink-500 mt-1 text-[13px] leading-relaxed">{item.why}</p>
           </Link>
         ))}
       </div>

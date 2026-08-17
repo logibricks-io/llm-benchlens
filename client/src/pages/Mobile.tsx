@@ -20,6 +20,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ProviderDot } from "@/components/ScoreBar";
+import { providerColor } from "@/lib/series";
 import { useT } from "@/i18n";
 import type { Dict } from "@/i18n/en";
 
@@ -129,11 +131,11 @@ export default function Mobile() {
           </div>
           <span className="text-[15px] tracking-tight">BenchLens</span>
         </div>
-        <a href="/" className="text-[12px] text-ink-500">{t.mobile.desktopVersion}</a>
+        <a href="/" className="text-[13px] text-ink-500">{t.mobile.desktopVersion}</a>
       </header>
 
       {offline && (
-        <div className="shrink-0 border-b border-[color:var(--signal-caution)]/30 bg-[color:var(--signal-caution)]/10 px-4 py-1.5 text-[12px] leading-relaxed text-caution">
+        <div className="shrink-0 border-b border-[color:var(--signal-caution)]/30 bg-[color:var(--signal-caution)]/10 px-4 py-1.5 text-[13px] leading-relaxed text-caution">
           {t.mobile.offlineWarning}
         </div>
       )}
@@ -161,7 +163,7 @@ export default function Mobile() {
               style={{ transitionTimingFunction: "var(--ease-out)" }}
             >
               <Icon className="size-[18px]" />
-              <span className="text-[12px]">{tabItem.label}</span>
+              <span className="text-[13px]">{tabItem.label}</span>
             </button>
           );
         })}
@@ -184,45 +186,45 @@ function RadarTab() {
       <div className="relative mb-4 overflow-hidden rounded-sm hair-all p-4">
         <div className="absolute inset-0 bg-gradient-to-br from-card via-card/90 to-card/50" />
         <div className="relative">
-          <div className="text-[12px] tracking-wide text-frost-qing uppercase">{t.mobile.dataFoundation}</div>
+          <div className="text-[13px] tracking-wide text-frost-qing uppercase">{t.mobile.dataFoundation}</div>
           <div className="mt-2 flex items-baseline gap-4">
             <div>
               <div className="tnum text-2xl leading-none">{o?.benchmarks ?? "—"}</div>
-              <div className="mt-0.5 text-[12px] text-ink-500">{t.common.benchmarks}</div>
+              <div className="mt-0.5 text-[13px] text-ink-500">{t.common.benchmarks}</div>
             </div>
             <div>
               <div className="tnum text-2xl leading-none">{o?.models ?? "—"}</div>
-              <div className="mt-0.5 text-[12px] text-ink-500">{t.common.models}</div>
+              <div className="mt-0.5 text-[13px] text-ink-500">{t.common.models}</div>
             </div>
             <div>
               <div className="tnum text-2xl leading-none">{o?.scores ?? "—"}</div>
-              <div className="mt-0.5 text-[12px] text-ink-500">{t.common.records}</div>
+              <div className="mt-0.5 text-[13px] text-ink-500">{t.common.records}</div>
             </div>
           </div>
           <div className="mt-3 flex items-start gap-1.5 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 px-2.5 py-2">
             <AlertTriangle className="mt-0.5 size-3 shrink-0 text-caution" />
-            <p className="text-[12px] leading-relaxed text-ink-500">
+            <p className="text-[13px] leading-relaxed text-ink-500">
               {t.mobile.ciWarning.replace("{ci}", String(o?.ciDisclosureRate ?? 0)).replace("{sat}", String(o?.saturated ?? 0))}
             </p>
           </div>
         </div>
       </div>
 
-      <h2 className="mb-2 px-0.5 text-[13px]">{t.nav.radar}</h2>
+      <h2 className="mb-2 px-0.5 text-[15px]">{t.nav.radar}</h2>
       <div className="space-y-2">
         {(releases.data ?? []).map(r => (
           <div key={r.id} className="rounded-sm hair-all bg-paper p-3.5">
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate text-[14px]">{r.modelName}</span>
-              <span className="tnum shrink-0 text-[12px] text-ink-500">{r.releasedAt}</span>
+              <span className="tnum shrink-0 text-[13px] text-ink-500">{r.releasedAt}</span>
             </div>
-            <div className="mt-0.5 text-[12px] text-ink-500">{r.provider}</div>
+            <div className="mt-0.5 text-[13px] text-ink-500">{r.provider}</div>
             {r.headline && (
-              <p className="mt-2 text-[12px] leading-relaxed text-ink-500">{r.headline}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-500">{r.headline}</p>
             )}
             {r.sourceUrl && (
               <a href={r.sourceUrl} target="_blank" rel="noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-[12px] text-frost-qing">
+                className="mt-2 inline-flex items-center gap-1 text-[13px] text-frost-qing">
                 <ExternalLink className="size-3" />{t.common.source}
               </a>
             )}
@@ -264,7 +266,7 @@ function BrowseTab() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t.mobile.searchBenchmarks}
-          className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[13px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
+          className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[15px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
         />
       </div>
 
@@ -279,7 +281,7 @@ function BrowseTab() {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="truncate text-[14px]">{b.name}</div>
-                <div className="mt-0.5 truncate text-[12px] text-ink-500">
+                <div className="mt-0.5 truncate text-[13px] text-ink-500">
                   {t.capability[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                   {b.issuer ? ` · ${b.issuer}` : ""}
                 </div>
@@ -287,7 +289,7 @@ function BrowseTab() {
               <div className="flex shrink-0 items-center gap-1">
                 <div className="text-right">
                   <div className="tnum text-lg leading-none text-frost-qing">{b.utilityScore}</div>
-                  <div className="mt-0.5 text-[12px] text-ink-500">{t.common.utility}</div>
+                  <div className="mt-0.5 text-[13px] text-ink-500">{t.common.utility}</div>
                 </div>
                 <ChevronRight className="size-4 text-ink-500/50" />
               </div>
@@ -297,7 +299,7 @@ function BrowseTab() {
               <MiniBar label={t.mobile.discShort} value={b.discriminativePower} color="var(--signal-frontier)" />
               <span
                 className={cn(
-                  "ml-auto shrink-0 rounded px-1.5 py-0.5 text-[12px]",
+                  "ml-auto shrink-0 rounded px-1.5 py-0.5 text-[13px]",
                   b.saturationStatus === "saturated"
                     ? "bg-frost-mist/50 text-ink-500"
                     : b.saturationStatus === "frontier"
@@ -320,11 +322,11 @@ function BrowseTab() {
 function MiniBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1.5">
-      <span className="shrink-0 text-[12px] text-ink-500">{label}</span>
+      <span className="shrink-0 text-[13px] text-ink-500">{label}</span>
       <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-frost-mist/50">
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, value)}%`, background: color }} />
       </div>
-      <span className="tnum shrink-0 text-[12px]" style={{ color }}>{value}</span>
+      <span className="tnum shrink-0 text-[13px]" style={{ color }}>{value}</span>
     </div>
   );
 }
@@ -355,13 +357,13 @@ function ModelsTab() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t.mobile.searchModels}
-          className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[13px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
+          className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[15px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
         />
       </div>
       <button
         onClick={() => setOpenOnly(!openOnly)}
         className={cn(
-          "mb-3 rounded-full border px-3 py-1.5 text-[12px] transition-colors duration-150",
+          "mb-3 rounded-full border px-3 py-1.5 text-[13px] transition-colors duration-150",
           openOnly
             ? "border-[color:var(--signal-good)]/40 bg-[color:var(--signal-good)]/12 text-good"
             : "border-rule bg-paper text-ink-500",
@@ -374,16 +376,19 @@ function ModelsTab() {
         {filtered.map((m, i) => (
           <div key={m.slug} className="rounded-sm hair-all bg-paper p-3.5">
             <div className="flex items-start gap-2.5">
-              <span className="tnum mt-0.5 w-4 shrink-0 text-[12px] text-ink-500">{i + 1}</span>
+              <span className="tnum mt-0.5 w-5 shrink-0 text-[13px] text-ink-400">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[14px]">{m.name}</span>
-                  <span className="tnum shrink-0 text-[15px] text-frost-qing">{m.compositeScore}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <ProviderDot provider={m.provider} />
+                    <span className="truncate text-[14px]">{m.name}</span>
+                  </span>
+                  <span className="tnum shrink-0 text-[15px] text-ink-900">{m.compositeScore}</span>
                 </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-500">
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[13px] text-ink-500">
                   <span>{m.provider}</span>
                   {m.license === "open" && (
-                    <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[12px] text-good">
+                    <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[13px] text-good">
                       {t.common.openWeights}
                     </span>
                   )}
@@ -393,19 +398,24 @@ function ModelsTab() {
                 </div>
                 <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-frost-mist/50">
                   <div
-                    className="h-full rounded-full bg-frost-qing/70"
-                    style={{ width: `${((m.compositeScore ?? 0) / Math.max(top, 1)) * 100}%` }}
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${((m.compositeScore ?? 0) / Math.max(top, 1)) * 100}%`,
+                      /* Same vendor hue as the dot above, so a reader scanning
+                         the list can follow one maker down the page. */
+                      background: providerColor(m.provider),
+                    }}
                   />
                 </div>
                 {m.domains.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {m.domains.slice(0, 3).map(d => (
-                      <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px] text-ink-500">
+                      <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[13px] text-ink-500">
                         {t.capability[d as CapabilityDomain] ?? d}
                       </span>
                     ))}
                     {m.domains.length > 3 && (
-                      <span className="text-[12px] text-ink-400">+{m.domains.length - 3}</span>
+                      <span className="text-[13px] text-ink-400">+{m.domains.length - 3}</span>
                     )}
                   </div>
                 )}
@@ -447,7 +457,7 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
         ) : (
           <div className="p-4">
             <h2 className="text-[17px] leading-tight">{data.benchmark.name}</h2>
-            <p className="mt-1 text-[12px] text-ink-500">
+            <p className="mt-1 text-[13px] text-ink-500">
               {data.benchmark.issuer ?? t.mobile.noIssuer}
               {data.benchmark.version ? ` · ${data.benchmark.version}` : ""}
             </p>
@@ -460,7 +470,7 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
               ].map(m => (
                 <div key={m.label} className="rounded-sm hair-all bg-background p-2.5 text-center">
                   <div className="tnum text-xl leading-none" style={{ color: m.color }}>{m.value}</div>
-                  <div className="mt-1 text-[12px] text-ink-500">{m.label}</div>
+                  <div className="mt-1 text-[13px] text-ink-500">{m.label}</div>
                 </div>
               ))}
             </div>
@@ -478,8 +488,8 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
             </div>
 
             <div className="mt-3 rounded-sm hair-all bg-background p-3">
-              <div className="text-[12px] text-frost-qing">{t.mobile.whatItMeasures}</div>
-              <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
+              <div className="text-[13px] text-frost-qing">{t.mobile.whatItMeasures}</div>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
                 {data.benchmark.scenarioMapping ??
                   t.saturationExplain[data.benchmark.saturationStatus as keyof typeof t.saturationExplain]}
               </p>
@@ -487,10 +497,10 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
 
             {data.benchmark.interpretationCaveat && (
               <div className="mt-2 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 p-3">
-                <div className="flex items-center gap-1 text-[12px] text-caution">
+                <div className="flex items-center gap-1 text-[13px] text-caution">
                   <AlertTriangle className="size-3" />{t.mobile.interpretationCaveat}
                 </div>
-                <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
                   {data.benchmark.interpretationCaveat}
                 </p>
               </div>
@@ -498,13 +508,13 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
 
             {data.leaderboard.length > 0 && (
               <div className="mt-3">
-                <div className="mb-1.5 text-[12px] text-ink-500">{t.mobile.scoreRecords}</div>
+                <div className="mb-1.5 text-[13px] text-ink-500">{t.mobile.scoreRecords}</div>
                 <div className="space-y-1">
                   {data.leaderboard.slice(0, 12).map((r, i) => (
                     <div key={r.id} className="flex items-center gap-2 rounded-sm bg-background px-2.5 py-2">
-                      <span className="tnum w-4 shrink-0 text-[12px] text-ink-500">{i + 1}</span>
-                      <span className="min-w-0 flex-1 truncate text-[12px]">{r.modelName}</span>
-                      <span className="tnum shrink-0 text-[12px]">{r.rawScore}</span>
+                      <span className="tnum w-4 shrink-0 text-[13px] text-ink-500">{i + 1}</span>
+                      <span className="min-w-0 flex-1 truncate text-[13px]">{r.modelName}</span>
+                      <span className="tnum shrink-0 text-[13px]">{r.rawScore}</span>
                       {r.sourceUrl && (
                         <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 text-ink-500">
                           <ExternalLink className="size-3" />
@@ -526,7 +536,7 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "caution" }
   return (
     <span
       className={cn(
-        "rounded-sm border px-1.5 py-0.5 text-[12px]",
+        "rounded-sm border px-1.5 py-0.5 text-[13px]",
         tone === "caution"
           ? "border-[color:var(--signal-caution)]/35 bg-[color:var(--signal-caution)]/10 text-caution"
           : "border-rule bg-frost-mist/50 text-ink-500",
@@ -583,14 +593,14 @@ function DuelTab() {
 
       {slugs.length < 2 ? (
         <div className="flex h-[300px] items-center justify-center rounded-sm hair-all">
-          <p className="px-8 text-center text-[12px] leading-relaxed text-ink-500">
+          <p className="px-8 text-center text-[13px] leading-relaxed text-ink-500">
             {t.mobile.duelEmptyState}
           </p>
         </div>
       ) : cards.length === 0 ? (
         <div className="rounded-sm hair-all bg-paper p-6 text-center">
-          <p className="text-[13px]">{t.mobile.noSharedBenchmarks}</p>
-          <p className="mt-1 text-[12px] text-ink-500">{t.mobile.tryAnotherPair}</p>
+          <p className="text-[15px]">{t.mobile.noSharedBenchmarks}</p>
+          <p className="mt-1 text-[13px] text-ink-500">{t.mobile.tryAnotherPair}</p>
         </div>
       ) : (
         <>
@@ -603,15 +613,15 @@ function DuelTab() {
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[12px] text-ink-500">
+              <span className="text-[13px] text-ink-500">
                 {t.capability[card.domain as CapabilityDomain] ?? card.domain}
               </span>
-              <span className="tnum text-[12px] text-ink-500">
+              <span className="tnum text-[13px] text-ink-500">
                 {idx + 1} / {cards.length}
               </span>
             </div>
             <h3 className="mt-1.5 text-[16px] leading-tight">{card.name}</h3>
-            <div className="tnum mt-0.5 text-[12px] text-ink-500">{t.mobile.difficultyMultiplier.replace("{n}", card.difficulty.toFixed(2))}</div>
+            <div className="tnum mt-0.5 text-[13px] text-ink-500">{t.mobile.difficultyMultiplier.replace("{n}", card.difficulty.toFixed(2))}</div>
 
             <div className="mt-4 space-y-3">
               <DuelBar name={nameA} raw={card.ar} value={card.av} color="var(--chart-1)" win={(card.av ?? 0) >= (card.bv ?? 0)} />
@@ -622,7 +632,7 @@ function DuelTab() {
               <button
                 onClick={prev}
                 disabled={idx === 0}
-                className="rounded-sm hair-all px-3 py-2 text-[12px] transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
+                className="rounded-sm hair-all px-3 py-2 text-[13px] transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
               >
                 <ArrowLeft className="size-3.5" />
               </button>
@@ -637,13 +647,13 @@ function DuelTab() {
               <button
                 onClick={next}
                 disabled={idx >= cards.length - 1}
-                className="rounded-sm bg-frost-qing px-4 py-2 text-[12px] text-paper transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
+                className="rounded-sm bg-frost-qing px-4 py-2 text-[13px] text-paper transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
               >
                 {t.mobile.nextItem}
               </button>
             </div>
           </div>
-          <p className="mt-3 px-1 text-[12px] leading-relaxed text-ink-500">
+          <p className="mt-3 px-1 text-[13px] leading-relaxed text-ink-500">
             {t.mobile.duelHint}
           </p>
         </>
@@ -656,10 +666,10 @@ function DuelBar({ name, raw, value, color, win }: { name: string; raw: number |
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className={cn("truncate text-[12px]", win && "")} style={win ? { color } : undefined}>{name}</span>
-        <span className="tnum shrink-0 text-[12px]">
+        <span className={cn("truncate text-[13px]", win && "")} style={win ? { color } : undefined}>{name}</span>
+        <span className="tnum shrink-0 text-[13px]">
           {value ?? "—"}
-          {raw !== null && <span className="ml-1 text-[12px] text-ink-500">({raw})</span>}
+          {raw !== null && <span className="ml-1 text-[13px] text-ink-500">({raw})</span>}
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-frost-mist/50">
@@ -683,12 +693,12 @@ function ModelPicker({
     <div className="rounded-sm hair-all bg-paper p-2.5" style={{ borderColor: `color-mix(in oklch, ${color} 30%, transparent)` }}>
       <div className="mb-1 flex items-center gap-1.5">
         <span className="size-1.5 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-[12px] text-ink-500">{t.mobile.modelLabel.replace("{label}", label)}</span>
+        <span className="text-[13px] text-ink-500">{t.mobile.modelLabel.replace("{label}", label)}</span>
       </div>
       <select
         value={value ?? ""}
         onChange={e => onChange(e.target.value)}
-        className="w-full bg-transparent text-[12px] outline-none"
+        className="w-full bg-transparent text-[13px] outline-none"
       >
         <option value="" disabled>{t.mobile.pleaseSelect}</option>
         {options.filter(o => o.slug !== exclude).map(o => (
@@ -714,7 +724,7 @@ function DecideTab() {
             key={s.key}
             onClick={() => setScenario(s.key)}
             className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-[12px] whitespace-nowrap transition-colors duration-150",
+              "shrink-0 rounded-full border px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors duration-150",
               scenario === s.key
                 ? "border-frost-qing/40 bg-frost-qing/12 text-frost-qing"
                 : "border-rule bg-paper text-ink-500",
@@ -726,7 +736,7 @@ function DecideTab() {
       </div>
 
       {rec.data?.scenario && (
-        <p className="mb-3 px-0.5 text-[12px] leading-relaxed text-ink-500">
+        <p className="mb-3 px-0.5 text-[13px] leading-relaxed text-ink-500">
           {t.scenarioSummary[rec.data.scenario.key as ScenarioKey] ?? ""}
         </p>
       )}
@@ -737,7 +747,7 @@ function DecideTab() {
             <div className="flex items-start gap-2.5">
               <span
                 className={cn(
-                  "tnum mt-0.5 grid size-5 shrink-0 place-items-center rounded text-[12px]",
+                  "tnum mt-0.5 grid size-5 shrink-0 place-items-center rounded text-[13px]",
                   i === 0 ? "bg-frost-qing text-paper" : "bg-frost-mist/60 text-ink-500",
                 )}
               >
@@ -745,28 +755,28 @@ function DecideTab() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px]">{r.modelName}</span>
+                  <span className="truncate text-[15px]">{r.modelName}</span>
                   <span className="tnum shrink-0 text-[15px] text-frost-qing">{r.fitScore}</span>
                 </div>
-                <div className="mt-0.5 text-[12px] text-ink-500">
+                <div className="mt-0.5 text-[13px] text-ink-500">
                   {r.provider} · {t.mobile.evidenceCount.replace("{n}", String(r.evidenceCount))}
                   {r.priceOutput !== null && ` · $${r.priceOutput}/M`}
                 </div>
                 <div className="mt-2 space-y-1">
                   {r.evidence.slice(0, 3).map(e => (
                     <div key={e.benchmarkSlug} className="flex items-center gap-2">
-                      <span className="w-[104px] shrink-0 truncate text-[12px] text-ink-500">{e.benchmarkName}</span>
+                      <span className="w-[104px] shrink-0 truncate text-[13px] text-ink-500">{e.benchmarkName}</span>
                       <div className="h-1 flex-1 overflow-hidden rounded-full bg-frost-mist/50">
                         <div className="h-full rounded-full bg-frost-qing/60" style={{ width: `${Math.min(100, e.normalized)}%` }} />
                       </div>
-                      <span className="tnum w-7 shrink-0 text-right text-[12px]">{e.normalized}</span>
+                      <span className="tnum w-7 shrink-0 text-right text-[13px]">{e.normalized}</span>
                     </div>
                   ))}
                 </div>
                 {r.caveats.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {r.caveats.map(c => (
-                      <span key={c} className="rounded border border-[color:var(--signal-caution)]/30 px-1 py-0.5 text-[12px] text-caution">
+                      <span key={c} className="rounded border border-[color:var(--signal-caution)]/30 px-1 py-0.5 text-[13px] text-caution">
                         {t.caveat[c]}
                       </span>
                     ))}

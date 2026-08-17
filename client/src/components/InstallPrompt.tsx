@@ -96,7 +96,7 @@ export function InstallPrompt() {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="anim-install fixed right-3 z-50 flex items-center gap-1.5 rounded-full hair-all bg-paper px-3 py-1.5 text-[12px] text-ink-600 shadow-frost"
+        className="anim-install fixed right-3 z-50 flex items-center gap-1.5 rounded-full hair-all bg-paper px-3 py-1.5 text-[13px] text-ink-600 shadow-frost"
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 68px)" }}
       >
         <Download className="size-3 text-frost-qing" />
@@ -117,11 +117,11 @@ export function InstallPrompt() {
         <div className="min-w-0 flex-1">
           <p className="text-[13px]">{t.installPrompt.addToHomeScreen}</p>
           {deferred ? (
-            <p className="mt-0.5 text-[12px] leading-relaxed text-ink-500">
+            <p className="mt-0.5 text-[13px] leading-relaxed text-ink-500">
               {t.installPrompt.offlineDesc}
             </p>
           ) : (
-            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] leading-relaxed text-ink-500">
+            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[13px] leading-relaxed text-ink-500">
               {t.installPrompt.safariStep1}
               <Share className="inline size-3 text-ink-900" />
               {t.installPrompt.safariStep2}
@@ -130,7 +130,7 @@ export function InstallPrompt() {
           {deferred && (
             <Button
               size="sm"
-              className="mt-2 h-7 gap-1 px-2.5 text-[12px]"
+              className="mt-2 h-7 gap-1 px-2.5 text-[13px]"
               onClick={async () => {
                 await deferred.prompt();
                 const choice = await deferred.userChoice;

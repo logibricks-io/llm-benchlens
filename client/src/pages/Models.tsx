@@ -12,6 +12,9 @@ import { ArrowUpDown, GitCompareArrows, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useT } from "@/i18n";
+import { providerColor, formatPrice } from "@/lib/series";
+import { ScoreBar, Rank, ProviderDot } from "@/components/ScoreBar";
+import { formatContextWindow } from "@shared/formatContext";
 
 const ALL = "__all__";
 
@@ -81,7 +84,7 @@ export default function Models() {
       }
       actions={
         <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
-          <SelectTrigger className="h-8 w-[130px] text-xs">
+          <SelectTrigger className="h-8 w-[130px] text-[14px]">
             <ArrowUpDown className="size-3" />
             <SelectValue />
           </SelectTrigger>
@@ -95,32 +98,29 @@ export default function Models() {
       }
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t.models.searchPlaceholder} className="h-8 w-[180px] text-xs" />
+        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t.models.searchPlaceholder} className="h-8 w-[180px] text-[14px]" />
         <Select value={provider} onValueChange={setProvider}>
-          <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder={t.common.provider} /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[140px] text-[14px]"><SelectValue placeholder={t.common.provider} /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t.models.providerAll}</SelectItem>
             {providers.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={license} onValueChange={setLicense}>
-          <SelectTrigger className="h-8 w-[124px] text-xs"><SelectValue placeholder={t.models.licensePlaceholder} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t.models.licenseAll}</SelectItem>
-            <SelectItem value="open">{t.common.openWeights}</SelectItem>
-            <SelectItem value="closed">{t.common.closedWeights}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-8 w-[124px] text-xs"><SelectValue placeholder={t.models.statusPlaceholder} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t.models.statusAll}</SelectItem>
-            <SelectItem value="current">{t.common.currentGen}</SelectItem>
-            <SelectItem value="superseded">{t.common.superseded}</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        <div className="flex items-center gap-1">
+          <button type="button" className="chip" data-on={license === ALL} onClick={() => setLicense(ALL)}>{t.models.licenseAll}</button>
+          <button type="button" className="chip" data-on={license === "open"} onClick={() => setLicense("open")}>{t.common.openWeights}</button>
+          <button type="button" className="chip" data-on={license === "closed"} onClick={() => setLicense("closed")}>{t.common.closedWeights}</button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button type="button" className="chip" data-on={status === ALL} onClick={() => setStatus(ALL)}>{t.models.statusAll}</button>
+          <button type="button" className="chip" data-on={status === "current"} onClick={() => setStatus("current")}>{t.common.currentGen}</button>
+          <button type="button" className="chip" data-on={status === "superseded"} onClick={() => setStatus("superseded")}>{t.common.superseded}</button>
+        </div>
+
         {(activeFilters > 0 || query) && (
-          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs"
+          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[14px]"
             onClick={() => { setProvider(ALL); setLicense(ALL); setStatus(ALL); setQuery(""); }}>
             <X className="size-3" />{t.common.clear}
           </Button>
@@ -133,12 +133,12 @@ export default function Models() {
         </div>
       ) : (
         <div className="hair-t">
-          <table className="w-full text-sm">
+          <table className="w-full text-[14px]">
             <thead>
-              <tr className="hair-b text-[12px] tracking-wide text-ink-500 uppercase">
-                <th className="px-4 py-2 text-left">{t.models.colModel}</th>
-                <th className="px-3 py-2 text-left">{t.models.colCoverage}</th>
-                <th className="px-3 py-2 text-right">
+              <tr className="hair-b">
+                <th className="px-4 py-2 text-left text-[14px] font-semibold text-ink-700">{t.models.colModel}</th>
+                <th className="px-3 py-2 text-left text-[14px] font-semibold text-ink-700">{t.models.colCoverage}</th>
+                <th className="px-3 py-2 text-right text-[14px] font-semibold text-ink-700">
                   <span className="inline-flex items-center gap-1">
                     {t.common.composite}
                     <InfoHint>
@@ -146,63 +146,74 @@ export default function Models() {
                     </InfoHint>
                   </span>
                 </th>
-                <th className="px-3 py-2 text-right">
+                <th className="px-3 py-2 text-right text-[14px] font-semibold text-ink-700">
                   <span className="inline-flex items-center gap-1">
                     {t.common.evidence}
                     <InfoHint>{t.metricExplain.evidence}</InfoHint>
                   </span>
                 </th>
-                <th className="px-4 py-2 text-right">{t.common.outputPrice}</th>
-                <th className="px-4 py-2 text-right"></th>
+                <th className="px-4 py-2 text-right text-[14px] font-semibold text-ink-700">{t.common.outputPrice}</th>
+                <th className="px-4 py-2 text-right text-[14px] font-semibold text-ink-700"></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(m => (
-                <tr key={m.slug} className="hair-b transition-colors duration-150 last:border-0 hover:bg-frost-mist/40">
+              {filtered.map((m, i) => (
+                <tr key={m.slug} className="hair-row hover:bg-surface transition-colors duration-120">
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[13px]">{m.name}</span>
+                      <ProviderDot provider={m.provider} />
+                      <span className="text-[14px] text-ink-900">{m.name}</span>
                       {m.license === "open" && (
-                        <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[12px] text-good">{t.common.openWeights}</span>
+                        <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[13px] text-good">{t.common.openWeights}</span>
                       )}
-                      {m.status === "superseded" && <span className="text-[12px] text-ink-400">{t.common.superseded}</span>}
+                      {m.status === "superseded" && <span className="text-[13px] text-ink-400">{t.common.superseded}</span>}
                       {m.isReasoning && (
-                        <span className="rounded hair-all px-1 text-[12px] text-ink-500">{t.common.reasoning}</span>
+                        <span className="rounded hair-all px-1 text-[13px] text-ink-500">{t.common.reasoning}</span>
                       )}
                     </div>
-                    <div className="text-[12px] text-ink-500">
+                    <div className="text-[13px] text-ink-400 pl-3.5">
                       {m.provider}
-                      {m.contextWindow ? ` · ${t.common.context} ${m.contextWindow}` : ""}
+                      {/* contextWindow is the vendor's own string ("128K");
+                          contextTokens is the number the formatter needs. */}
+                      {m.contextTokens
+                        ? ` · ${t.common.context} ${formatContextWindow(m.contextTokens)}`
+                        : m.contextWindow
+                          ? ` · ${t.common.context} ${m.contextWindow}`
+                          : ""}
                     </div>
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-1">
                       {m.domains.slice(0, 4).map(d => (
-                        <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px] text-ink-500">
+                        <span key={d} className="rounded hair-all bg-surface-2 px-1.5 py-0.5 text-[13px] text-ink-500">
                           {t.capability[d as CapabilityDomain] ?? d}
                         </span>
                       ))}
                       {m.domains.length > 4 && (
-                        <span className="text-[12px] text-ink-400">+{m.domains.length - 4}</span>
+                        <span className="text-[13px] text-ink-400">+{m.domains.length - 4}</span>
                       )}
-                      {m.domains.length === 0 && <span className="text-[12px] text-ink-500/50">{t.common.noPublicRecord}</span>}
+                      {m.domains.length === 0 && <span className="text-[13px] text-ink-400">—</span>}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex flex-col items-end">
-                      <span className={cn("tnum text-[13px]", m.compositeScore === null && "text-ink-400")}>
-                        {m.compositeScore ?? "—"}
-                      </span>
+                      {m.compositeScore === null ? (
+                        <span className="text-ink-400">—</span>
+                      ) : (
+                        <div className="w-24">
+                          <ScoreBar value={m.compositeScore} provider={m.provider} delay={i} />
+                        </div>
+                      )}
                       {m.rawMean !== null && m.confidence < 0.8 && (
-                        <span className="tnum text-[12px] text-ink-400">{t.common.observed} {m.rawMean}</span>
+                        <span className="tnum text-[13px] text-ink-400">{t.common.observed} {m.rawMean}</span>
                       )}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <span className="tnum text-xs text-ink-500">{m.coverage}</span>
+                      <span className="tnum text-[14px] text-ink-500">{m.coverage}</span>
                       <span
-                        className="h-1 w-8 shrink-0 overflow-hidden rounded-full bg-frost-mist/50"
+                        className="h-1 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2"
                         title={t.models.confidenceTooltip.replace("{n}", String(Math.round(m.confidence * 100)))}
                       >
                         <span
@@ -219,13 +230,13 @@ export default function Models() {
                       </span>
                     </div>
                   </td>
-                  <td className="tnum px-4 py-2 text-right text-xs text-ink-500">
-                    {m.priceOutput === null ? "—" : `$${m.priceOutput}`}
+                  <td className="tnum px-4 py-2 text-right text-[14px] text-ink-500">
+                    {m.priceOutput === null ? <span className="text-ink-400">—</span> : formatPrice(m.priceOutput)}
                   </td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
                     <Link
                       href={`/compare?a=${m.slug}`}
-                      className="inline-flex items-center gap-1 rounded hair-all px-2 py-1 text-[12px] whitespace-nowrap text-ink-500 transition-colors duration-150 hover:border-frost-qing/40 hover:text-frost-qing"
+                      className="inline-flex items-center gap-1 rounded hair-all px-2 py-1 text-[13px] whitespace-nowrap text-ink-500 transition-colors duration-120 hover:border-brand-qing/40 hover:text-brand-qing"
                     >
                       <GitCompareArrows className="size-3" />
                       {t.models.compareAction}

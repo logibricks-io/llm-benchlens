@@ -4,6 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { ExternalLink, Radio } from "lucide-react";
 import { useT } from "@/i18n";
+import { providerColor } from "@/lib/series";
+import { ProviderDot } from "@/components/ScoreBar";
 
 export default function Radar() {
   const t = useT();
@@ -20,9 +22,9 @@ export default function Radar() {
       ]}
       aside={
         <NoteBlock label={t.radar.noteLabel}>
-          <p>
+          <p className="text-[15px] leading-[1.75] text-ink-700">
             {t.radar.noteText1}
-            <strong className="text-ink-700">{t.radar.noteText2}</strong>
+            <strong className="text-ink-900 font-semibold">{t.radar.noteText2}</strong>
           </p>
         </NoteBlock>
       }
@@ -35,7 +37,7 @@ export default function Radar() {
         <div className="flex h-[280px] items-center justify-center">
           <div className="hair-t px-6 py-5 text-center">
             <Radio className="mx-auto size-5 text-ink-500" />
-            <p className="mt-2 text-sm">{t.radar.emptyFeed}</p>
+            <p className="mt-2 text-[14px] text-ink-700">{t.radar.emptyFeed}</p>
           </div>
         </div>
       ) : (
@@ -45,25 +47,29 @@ export default function Radar() {
             {rows.map((r, i) => (
               <div
                 key={r.id}
-                className="relative flex gap-4 rounded-sm py-2.5 pl-6 pr-3 transition-colors duration-150 hover:bg-frost-mist/40"
+                className="relative flex gap-4 rounded-sm py-2.5 pl-6 pr-3 transition-colors duration-120 hover:bg-surface-2"
                 style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
               >
-                <span className="absolute top-[18px] left-0 size-[15px] rounded-full border-2 border-background bg-frost-qing/70" />
+                <span 
+                  className="absolute top-[18px] left-0 size-[15px] rounded-full border-2 border-background" 
+                  style={{ backgroundColor: providerColor(r.provider) }}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-[13px]">{r.modelName}</span>
-                    <span className="text-[12px] text-ink-500">{r.provider}</span>
-                    <span className="tnum ml-auto text-[12px] text-ink-500">{r.releasedAt}</span>
+                    <ProviderDot provider={r.provider} />
+                    <span className="text-[14px] text-ink-900">{r.modelName}</span>
+                    <span className="text-[13px] text-ink-400">{r.provider}</span>
+                    <span className="tnum ml-auto text-[14px] text-ink-500">{r.releasedAt}</span>
                   </div>
                   {r.headline && (
-                    <p className="mt-1 text-xs leading-relaxed text-ink-500">{r.headline}</p>
+                    <p className="mt-1 text-[14px] leading-[1.75] text-ink-600">{r.headline}</p>
                   )}
                   {r.sourceUrl && (
                     <a
                       href={r.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-frost-qing hover:underline"
+                      className="mt-1.5 inline-flex items-center gap-1 text-[14px] text-brand-qing hover:underline"
                     >
                       <ExternalLink className="size-3" />
                       {t.common.viewSource}

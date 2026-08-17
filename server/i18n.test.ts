@@ -129,6 +129,9 @@ describe("i18n packs", () => {
       "home.radarNum",
       // A difficulty-coefficient range, identical in both languages.
       "benchmarks.difficultyMidNote",
+      // Rank column header: "#" is a numeric ordinal sign, not prose, and
+      // Chinese leaderboards use the same glyph.
+      "home.colRank",
     ]);
     const cjk = /[\u4e00-\u9fff]/;
     const untranslated = zhLeaves

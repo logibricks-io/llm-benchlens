@@ -2,6 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { type CapabilityDomain } from "@shared/metaModel";
 import { useT } from "@/i18n";
+import { providerColor } from "@/lib/series";
 import {
   Activity,
   AlertTriangle,
@@ -56,7 +57,7 @@ export default function Desktop() {
             <span className="size-[9px] rounded-full bg-[#febc2e]" />
             <span className="size-[9px] rounded-full bg-[#28c840]" />
           </div>
-          <span className="ml-1 text-[12px] tracking-tight text-ink-500">BenchLens</span>
+          <span className="ml-1 text-[13px] tracking-tight text-ink-500">BenchLens</span>
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => setCollapsed(!collapsed)}
@@ -84,7 +85,7 @@ export default function Desktop() {
                 key={tab.key}
                 onClick={() => setPanel(tab.key)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-1 rounded-sm py-1 text-[12px] transition-colors duration-150",
+                  "flex flex-1 items-center justify-center gap-1 rounded-sm py-1 text-[13px] transition-colors duration-150",
                   panel === tab.key
                     ? "bg-frost-mist/60 text-ink-900"
                     : "text-ink-500 hover:bg-frost-mist/50",
@@ -130,7 +131,7 @@ function LeaderboardPanel({ domain, setDomain }: { domain: string; setDomain: (v
         <select
           value={domain}
           onChange={e => setDomain(e.target.value)}
-          className="w-full bg-transparent text-[12px] text-ink-500 outline-none"
+          className="w-full bg-transparent text-[13px] text-ink-500 outline-none"
         >
           <option value="__all__" className="bg-paper">{t.desktop.allDomains}</option>
           {domains.map(d => (
@@ -148,27 +149,32 @@ function LeaderboardPanel({ domain, setDomain }: { domain: string; setDomain: (v
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="px-3 py-8 text-center text-[12px] text-ink-500">{t.desktop.noRecordsInDomain}</div>
+        <div className="px-3 py-8 text-center text-[13px] text-ink-500">{t.desktop.noRecordsInDomain}</div>
       ) : (
         <div className="py-1">
           {rows.map((m, i) => (
             <div key={m.slug} className="group flex items-center gap-2 px-3 py-[5px] hover:bg-frost-mist/40">
-              <span className="tnum w-3.5 shrink-0 text-right text-[12px] text-ink-500">{i + 1}</span>
+              <span className="tnum w-3.5 shrink-0 text-right text-[13px] text-ink-400">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
-                  <span className="truncate text-[11.5px] leading-tight">{m.name}</span>
+                  {/* The widget is too narrow for a name plus a separate dot, so
+                      the vendor hue rides on the bar below instead. */}
+                  <span className="truncate text-[13px] leading-tight">{m.name}</span>
                   {m.license === "open" && (
                     <Circle className="size-1.5 shrink-0 fill-[color:var(--signal-good)] text-good" />
                   )}
                 </div>
                 <div className="mt-0.5 h-[3px] w-full overflow-hidden rounded-full bg-frost-mist/50">
                   <div
-                    className="h-full rounded-full bg-frost-qing/70"
-                    style={{ width: `${((m.compositeScore ?? 0) / Math.max(top, 1)) * 100}%` }}
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${((m.compositeScore ?? 0) / Math.max(top, 1)) * 100}%`,
+                      background: providerColor(m.provider),
+                    }}
                   />
                 </div>
               </div>
-              <span className="tnum w-8 shrink-0 text-right text-[11.5px]">{m.compositeScore}</span>
+              <span className="tnum w-8 shrink-0 text-right text-[13px] text-ink-900">{m.compositeScore}</span>
             </div>
           ))}
         </div>
@@ -187,7 +193,7 @@ function RadarPanel() {
       {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded bg-frost-mist/50/30" />)}
     </div>
   ) : rows.length === 0 ? (
-    <div className="px-3 py-8 text-center text-[12px] text-ink-500">{t.desktop.noReleaseEvents}</div>
+    <div className="px-3 py-8 text-center text-[13px] text-ink-500">{t.desktop.noReleaseEvents}</div>
   ) : (
     <div className="py-1">
       {rows.map(r => (
@@ -199,10 +205,10 @@ function RadarPanel() {
           className="block px-3 py-2 hover:bg-frost-mist/40"
         >
           <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-[11.5px]">{r.modelName}</span>
-            <span className="tnum shrink-0 text-[12px] text-ink-500">{r.releasedAt}</span>
+            <span className="truncate text-[13px]">{r.modelName}</span>
+            <span className="tnum shrink-0 text-[13px] text-ink-500">{r.releasedAt}</span>
           </div>
-          <div className="truncate text-[12px] text-ink-500">
+          <div className="truncate text-[13px] text-ink-500">
             {r.provider}
             {r.headline ? ` · ${r.headline}` : ""}
           </div>
@@ -231,27 +237,27 @@ function HealthPanel() {
             <div className={cn("tnum text-base leading-none", s.danger && "text-danger")}>
               {s.value}
             </div>
-            <div className="mt-1 text-[12px] text-ink-500">{s.label}</div>
+            <div className="mt-1 text-[13px] text-ink-500">{s.label}</div>
           </div>
         ))}
       </div>
 
       <div className="mt-3 flex items-start gap-1.5 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 px-2.5 py-2">
         <AlertTriangle className="mt-0.5 size-3 shrink-0 text-caution" />
-        <p className="text-[10.5px] leading-relaxed text-ink-500">
+        <p className="text-[13px] leading-relaxed text-ink-500">
           {t.desktop.saturationWarning.replace("{saturated}", String(data?.saturated ?? 0)).replace("{frontier}", String(data?.frontier ?? 0))}
         </p>
       </div>
 
       <div className="mt-3">
-        <div className="mb-1.5 text-[12px] tracking-wide text-ink-500 uppercase">{t.desktop.lowestUtility}</div>
+        <div className="mb-1.5 text-[13px] tracking-wide text-ink-500 uppercase">{t.desktop.lowestUtility}</div>
         <div className="space-y-0.5">
           {low.map(b => (
             <div key={b.slug} className="flex items-center gap-2 rounded px-1 py-1 hover:bg-frost-mist/40">
-              <span className="tnum w-6 shrink-0 text-[12px] text-danger">
+              <span className="tnum w-6 shrink-0 text-[13px] text-danger">
                 {b.utilityScore}
               </span>
-              <span className="min-w-0 flex-1 truncate text-[12px]">{b.name}</span>
+              <span className="min-w-0 flex-1 truncate text-[13px]">{b.name}</span>
             </div>
           ))}
         </div>
@@ -260,11 +266,11 @@ function HealthPanel() {
       <div className="mt-3 grid grid-cols-2 gap-2 hair-t/70 pt-2.5">
         <div>
           <div className="tnum text-sm">{data?.avgTrust ?? "—"}</div>
-          <div className="text-[12px] text-ink-500">{t.desktop.avgTrust}</div>
+          <div className="text-[13px] text-ink-500">{t.desktop.avgTrust}</div>
         </div>
         <div>
           <div className="tnum text-sm">{data?.avgDiscriminative ?? "—"}</div>
-          <div className="text-[12px] text-ink-500">{t.desktop.avgDiscriminative}</div>
+          <div className="text-[13px] text-ink-500">{t.desktop.avgDiscriminative}</div>
         </div>
       </div>
     </div>
@@ -280,13 +286,13 @@ function StatusBar() {
     <div className="flex items-center gap-2 hair-t/70 bg-background px-3 py-1.5">
       <span className="flex items-center gap-1">
         <span className="size-1.5 rounded-full bg-[color:var(--signal-good)]" />
-        <span className="tnum text-[12px] text-ink-500">{fresh} {t.desktop.fresh}</span>
+        <span className="tnum text-[13px] text-ink-500">{fresh} {t.desktop.fresh}</span>
       </span>
       <span className="flex items-center gap-1">
         <span className="size-1.5 rounded-full bg-[color:var(--signal-danger)]" />
-        <span className="tnum text-[12px] text-ink-500">{stale} {t.desktop.stale}</span>
+        <span className="tnum text-[13px] text-ink-500">{stale} {t.desktop.stale}</span>
       </span>
-      <a href="/matrix" className="ml-auto text-[12px] text-frost-qing hover:underline">
+      <a href="/matrix" className="ml-auto text-[13px] text-frost-qing hover:underline">
         {t.desktop.fullMatrix}
       </a>
     </div>

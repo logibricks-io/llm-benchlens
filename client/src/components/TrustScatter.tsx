@@ -72,13 +72,13 @@ export function TrustScatter({ points }: { points: Point[] }) {
            * named with small corner marks instead.
            */}
           <div
-            className="ui absolute text-[12px]"
+            className="ui absolute text-[13px]"
             style={{ right: 6, top: 5, color: "var(--sig-good)", opacity: 0.85 }}
           >
             {t.trustScatter.quadrantGood}
           </div>
           <div
-            className="ui absolute text-[12px]"
+            className="ui absolute text-[13px]"
             style={{ left: 6, bottom: 5, color: "var(--sig-danger)", opacity: 0.85 }}
           >
             {t.trustScatter.quadrantBad}
@@ -164,9 +164,9 @@ export function TrustScatter({ points }: { points: Point[] }) {
           ))}
         </div>
 
-        <div className="ui text-ink-400 absolute bottom-0 left-6 text-[12px]">{t.trustScatter.axisDiscriminative}</div>
+        <div className="ui text-ink-400 absolute bottom-0 left-6 text-[13px]">{t.trustScatter.axisDiscriminative}</div>
         <div
-          className="ui text-ink-400 absolute top-0 left-0 text-[12px]"
+          className="ui text-ink-400 absolute top-0 left-0 text-[13px]"
           style={{ writingMode: "vertical-rl" }}
         >
           {t.trustScatter.axisTrust}
@@ -178,11 +178,11 @@ export function TrustScatter({ points }: { points: Point[] }) {
           {(["frontier", "contested", "saturated"] as SaturationStatus[]).map(s => (
             <span key={s} className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full" style={{ background: DOT_COLOR[s] }} />
-              <span className="ui text-ink-500 text-[9.5px]">{t.saturation[s]}</span>
+              <span className="ui text-ink-500 text-[13px]">{t.saturation[s]}</span>
             </span>
           ))}
         </div>
-        <span className="ui text-ink-400 text-[9.5px]">{t.trustScatter.legendSize}</span>
+        <span className="ui text-ink-400 text-[13px]">{t.trustScatter.legendSize}</span>
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ function Chip({
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "ui inline-flex cursor-help items-center gap-1 text-[12px] leading-tight whitespace-nowrap",
+            "ui inline-flex cursor-help items-center gap-1 text-[13px] leading-tight whitespace-nowrap",
             "decoration-dotted underline-offset-[3px] hover:underline",
             className,
           )}
@@ -184,7 +184,7 @@ export function FreshnessDot({ freshness, withLabel }: { freshness: string; with
       <TooltipTrigger asChild>
         <span className="inline-flex cursor-help items-center gap-1.5">
           <span className={cn("size-1.5 shrink-0 rounded-full", FRESHNESS_STYLE[f] ?? "bg-frost-mist/50")} />
-          {withLabel && <span className="ui text-ink-500 text-[12px]">{t.freshness[f] ?? freshness}</span>}
+          {withLabel && <span className="ui text-ink-500 text-[13px]">{t.freshness[f] ?? freshness}</span>}
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-[260px] text-xs leading-relaxed">
@@ -217,11 +217,11 @@ export function ScoreMeter({
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex w-full cursor-help items-baseline gap-2.5">
-          <span className={cn("ui text-ink-500 shrink-0", size === "sm" ? "text-[11px]" : "text-[12px]")}>
+          <span className={cn("ui text-ink-500 shrink-0", size === "sm" ? "text-[13px]" : "text-[13px]")}>
             {label}
           </span>
           <MiniRuler value={value} tone={rulerTone} width={0} className="min-w-0 flex-1" />
-          <span className={cn("tnum text-ink-800 shrink-0", size === "sm" ? "text-[12px]" : "text-[12.5px]")}>
+          <span className={cn("tnum text-ink-800 shrink-0", size === "sm" ? "text-[13px]" : "text-[13px]")}>
             {value}
           </span>
         </div>

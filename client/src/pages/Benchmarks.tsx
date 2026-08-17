@@ -25,6 +25,7 @@ import { AlertTriangle, ArrowUpDown, LayoutGrid, List, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useT } from "@/i18n";
 import { Link } from "wouter";
+import { ScoreBar, Rank } from "@/components/ScoreBar";
 
 const ALL = "__all__";
 
@@ -173,7 +174,7 @@ export default function Benchmarks() {
       actions={
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
-            <SelectTrigger className="h-8 w-[128px] text-xs">
+            <SelectTrigger className="h-8 w-[128px] text-[14px]">
               <ArrowUpDown className="size-3" />
               <SelectValue />
             </SelectTrigger>
@@ -189,7 +190,7 @@ export default function Benchmarks() {
             <button
               onClick={() => setView("grid")}
               className={cn(
-                "transition-colors duration-150",
+                "transition-colors duration-120",
                 view === "grid" ? "text-ink-900" : "text-ink-400 hover:text-ink-700",
               )}
               title={t.benchmarks.gridView}
@@ -199,7 +200,7 @@ export default function Benchmarks() {
             <button
               onClick={() => setView("list")}
               className={cn(
-                "transition-colors duration-150",
+                "transition-colors duration-120",
                 view === "list" ? "text-ink-900" : "text-ink-400 hover:text-ink-700",
               )}
               title={t.benchmarks.listView}
@@ -215,7 +216,7 @@ export default function Benchmarks() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t.benchmarks.searchPlaceholder}
-          className="h-8 w-[180px] text-xs"
+          className="h-8 w-[180px] text-[14px]"
         />
         <FilterSelect value={domain} onChange={setDomain} placeholder={t.benchmarks.filterDomain}
           options={domains.map(d => ({ value: d, label: t.capability[d as CapabilityDomain] ?? d }))} />
@@ -226,7 +227,7 @@ export default function Benchmarks() {
         <FilterSelect value={mechanism} onChange={setMechanism} placeholder={t.benchmarks.filterMechanism}
           options={mechanisms.map(m => ({ value: m, label: t.mechanism[m as ScoringMechanism] ?? m }))} />
         {(activeFilters > 0 || query) && (
-          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs"
+          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[14px]"
             onClick={() => { setDomain(ALL); setSaturation(ALL); setStance(ALL); setMechanism(ALL); setQuery(""); }}>
             <X className="size-3" />{t.benchmarks.clearFilters}
           </Button>
@@ -252,10 +253,10 @@ export default function Benchmarks() {
           {bands.map(band => (
             <section key={band.key}>
               <div className="bg-background hair-b sticky top-[52px] z-10 flex items-baseline justify-between py-2">
-                <h2 className="ui text-ink-500 text-[12px] tracking-[0.16em] uppercase">
+                <h2 className="ui text-ink-700 text-[14px] font-semibold">
                   {band.label}
                 </h2>
-                <span className="ui text-ink-400 text-[12px]">
+                <span className="ui text-ink-500 text-[14px]">
                   <span className="tnum">{band.items.length}</span> {t.benchmarks.itemsCount} · {band.note}
                 </span>
               </div>
@@ -263,17 +264,17 @@ export default function Benchmarks() {
             <Link
               key={b.slug}
               href={`/benchmarks/${b.slug}`}
-              className="group hair-b block py-4 first:pt-0"
+              className="group hair-b block py-4 first:pt-0 hover:bg-surface transition-colors duration-120"
             >
               <div className="grid gap-x-6 gap-y-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,3fr)]">
                 {/* identity */}
                 <div className="flex items-baseline gap-3">
-                  <span className="tnum text-ink-400 w-6 shrink-0 text-[12px]">
+                  <span className="tnum text-ink-400 w-6 shrink-0 text-[14px]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div className="min-w-0">
-                    <h3 className="text-ink-900 truncate text-[15px] leading-snug">{b.name}</h3>
-                    <p className="ui text-ink-400 mt-1 truncate text-[12px]">
+                    <h3 className="text-ink-900 truncate text-[15px] leading-[1.75]">{b.name}</h3>
+                    <p className="ui text-ink-500 mt-1 truncate text-[14px]">
                       {b.issuer ?? t.benchmarks.noIssuer}
                       {b.version ? ` · ${b.version}` : ""}
                       {" · "}
@@ -317,7 +318,7 @@ export default function Benchmarks() {
                       />
                     );
                   })()}
-                  <div className="ui text-ink-400 mt-1 flex items-center gap-3 text-[9.5px]">
+                  <div className="ui text-ink-500 mt-1 flex items-center gap-3 text-[14px]">
                     <span className="tnum">{t.benchmarks.difficultyPrefix} ×{b.difficultyCoefficient.toFixed(2)}</span>
                     <span className={cn("tnum", b.scoreCount === 0 && "text-caution")}>
                       {b.scoreCount} {t.benchmarks.evidenceCount}
@@ -341,7 +342,7 @@ export default function Benchmarks() {
                       tone="violet"
                     />
                     {(b.scoreCount === 0 || !b.ciDisclosed) && (
-                      <div className="ui text-caution flex flex-wrap items-center gap-x-2.5 pt-0.5 text-[9.5px]">
+                      <div className="ui text-caution flex flex-wrap items-center gap-x-2.5 pt-0.5 text-[14px]">
                         {b.scoreCount === 0 && (
                           <span className="inline-flex items-center gap-1">
                             <AlertTriangle className="size-2.5" />
@@ -359,7 +360,7 @@ export default function Benchmarks() {
                   </div>
                   <div className="shrink-0 text-right">
                     <div className="tnum text-ink-900 text-[24px] leading-none">{b.utilityScore}</div>
-                    <div className="ui text-ink-400 mt-1 text-[12px]">{t.benchmarks.utilityLabel}</div>
+                    <div className="ui text-ink-500 mt-1 text-[14px]">{t.benchmarks.utilityLabel}</div>
                   </div>
                 </div>
               </div>
@@ -369,38 +370,38 @@ export default function Benchmarks() {
           ))}
         </div>
       ) : (
-        <div>
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse">
             <thead>
-              <tr className="hair-b ui text-ink-400 text-[12px] tracking-[0.14em] uppercase">
-                <th className="px-1 py-2 text-left font-normal">{t.benchmarks.thBenchmark}</th>
-                <th className="px-3 py-2 text-left font-normal">{t.benchmarks.thDomain}</th>
-                <th className="px-3 py-2 text-left font-normal">{t.benchmarks.thMechanism}</th>
-                <th className="px-3 py-2 text-left font-normal">{t.benchmarks.thStatus}</th>
-                <th className="px-3 py-2 text-right font-normal">
+              <tr className="hair-b">
+                <th className="ui text-ink-700 px-1 pb-2.5 text-left text-[14px] font-semibold">{t.benchmarks.thBenchmark}</th>
+                <th className="ui text-ink-700 px-3 pb-2.5 text-left text-[14px] font-semibold">{t.benchmarks.thDomain}</th>
+                <th className="ui text-ink-700 px-3 pb-2.5 text-left text-[14px] font-semibold">{t.benchmarks.thMechanism}</th>
+                <th className="ui text-ink-700 px-3 pb-2.5 text-left text-[14px] font-semibold">{t.benchmarks.thStatus}</th>
+                <th className="ui text-ink-700 px-3 pb-2.5 text-right text-[14px] font-semibold">
                   <span className="inline-flex items-center gap-1">{t.benchmarks.thUtility} <InfoHint>{metricExplain.utility}</InfoHint></span>
                 </th>
-                <th className="px-3 py-2 text-right font-normal">
+                <th className="ui text-ink-700 px-3 pb-2.5 text-right text-[14px] font-semibold">
                   <span className="inline-flex items-center gap-1">
                     {t.benchmarks.thEvidence}
                     <InfoHint>{t.benchmarks.evidenceHint}</InfoHint>
                   </span>
                 </th>
-                <th className="px-3 py-2 text-right font-normal">{t.benchmarks.thTrust}</th>
-                <th className="px-3 py-2 text-right font-normal">{t.benchmarks.thDisc}</th>
-                <th className="px-1 py-2 text-right font-normal">{t.benchmarks.thDifficulty}</th>
+                <th className="ui text-ink-700 px-3 pb-2.5 text-right text-[14px] font-semibold">{t.benchmarks.thTrust}</th>
+                <th className="ui text-ink-700 px-3 pb-2.5 text-right text-[14px] font-semibold">{t.benchmarks.thDisc}</th>
+                <th className="ui text-ink-700 px-1 pb-2.5 text-right text-[14px] font-semibold">{t.benchmarks.thDifficulty}</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(b => (
-                <tr key={b.slug} className="hair-row">
+              {filtered.map((b, i) => (
+                <tr key={b.slug} className="hair-row hover:bg-surface transition-colors duration-120">
                   <td className="px-1 py-2">
                     <Link href={`/benchmarks/${b.slug}`} className="block min-w-0">
-                      <div className="text-ink-800 truncate text-[12.5px]">{b.name}</div>
-                      <div className="ui text-ink-400 truncate text-[9.5px]">{b.issuer ?? "—"}</div>
+                      <div className="text-ink-900 truncate text-[14px]">{b.name}</div>
+                      <div className="ui text-ink-500 truncate text-[14px]">{b.issuer ?? <span className="text-ink-400">—</span>}</div>
                     </Link>
                   </td>
-                  <td className="ui text-ink-500 px-3 py-2 text-[12px]">
+                  <td className="ui text-ink-700 px-3 py-2 text-[14px]">
                     {t.capability[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                   </td>
                   <td className="px-3 py-2">
@@ -415,15 +416,21 @@ export default function Benchmarks() {
                       <StanceBadge stance={b.issuerStance} />
                     </div>
                   </td>
-                  <td className="tnum text-ink-900 px-3 py-2 text-right text-[12.5px]">{b.utilityScore}</td>
-                  <td className="tnum px-3 py-2 text-right text-[12px]">
-                    <span className={b.scoreCount === 0 ? "text-caution" : "text-ink-500"}>
+                  <td className="px-3 py-2">
+                    <ScoreBar value={b.utilityScore} max={100} delay={i} />
+                  </td>
+                  <td className="tnum px-3 py-2 text-right text-[14px]">
+                    <span className={b.scoreCount === 0 ? "text-caution" : "text-ink-900"}>
                       {b.scoreCount}
                     </span>
                   </td>
-                  <td className="tnum text-ink-600 px-3 py-2 text-right text-[12px]">{b.trustScore}</td>
-                  <td className="tnum text-ink-600 px-3 py-2 text-right text-[12px]">{b.discriminativePower}</td>
-                  <td className="tnum text-ink-600 px-1 py-2 text-right text-[12px]">×{b.difficultyCoefficient.toFixed(2)}</td>
+                  <td className="px-3 py-2">
+                    <ScoreBar value={b.trustScore} max={100} delay={i} />
+                  </td>
+                  <td className="px-3 py-2">
+                    <ScoreBar value={b.discriminativePower} max={100} delay={i} />
+                  </td>
+                  <td className="tnum text-ink-900 px-1 py-2 text-right text-[14px]">×{b.difficultyCoefficient.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -441,9 +448,23 @@ function FilterSelect({
   options: Array<{ value: string; label: string }>;
 }) {
   const t = useT();
+  if (options.length < 8) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <button type="button" className="chip" data-on={value === ALL} onClick={() => onChange(ALL)}>
+          {placeholder}{t.benchmarks.allSuffix}
+        </button>
+        {options.map(o => (
+          <button key={o.value} type="button" className="chip" data-on={value === o.value} onClick={() => onChange(o.value)}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue placeholder={placeholder} /></SelectTrigger>
+      <SelectTrigger className="h-8 w-[130px] text-[14px]"><SelectValue placeholder={placeholder} /></SelectTrigger>
       <SelectContent>
         <SelectItem value={ALL}>{placeholder}{t.benchmarks.allSuffix}</SelectItem>
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}

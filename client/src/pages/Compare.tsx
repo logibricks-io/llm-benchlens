@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { type CapabilityDomain } from "@shared/metaModel";
 import { ExternalLink, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { providerColor, formatPrice } from "@/lib/series";
+import { ScoreBar, Rank, ProviderDot } from "@/components/ScoreBar";
 
 const PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
@@ -111,10 +113,10 @@ export default function Compare() {
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2 rounded-sm hair-all px-2.5 py-1.5">
                 <Switch checked={sharedOnly} onCheckedChange={setSharedOnly} className="scale-90" />
-                <span className="text-xs whitespace-nowrap">{t.compare.sharedOnly}</span>
+                <span className="text-[14px] whitespace-nowrap">{t.compare.sharedOnly}</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
+            <TooltipContent className="max-w-[300px] text-[14px] leading-relaxed">
               {t.compare.sharedOnlyTooltip}
             </TooltipContent>
           </Tooltip>
@@ -133,12 +135,12 @@ export default function Compare() {
             >
               <span className="size-2 shrink-0 rounded-full" style={{ background: PALETTE[i] }} />
               <div className="min-w-0">
-                <div className="truncate text-[13px]">{m?.name ?? slug}</div>
-                <div className="truncate text-[12px] text-ink-500">{m?.provider ?? ""}</div>
+                <div className="flex items-center gap-1.5"><ProviderDot provider={m?.provider} /><div className="truncate text-[14px] text-ink-900">{m?.name ?? slug}</div></div>
+                <div className="truncate text-[14px] text-ink-500">{m?.provider ?? ""}</div>
               </div>
               <button
                 onClick={() => setSelected(selected.filter(s => s !== slug))}
-                className="ml-1 rounded p-0.5 text-ink-500 transition-colors duration-150 hover:bg-frost-mist/50 hover:text-ink-900"
+                className="ml-1 rounded p-0.5 text-ink-500 transition-colors duration-150 hover:bg-surface-2 transition-colors duration-120 hover:text-ink-900"
               >
                 <X className="size-3.5" />
               </button>
@@ -151,7 +153,7 @@ export default function Compare() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-[52px] gap-1.5 rounded-none border-dashed px-4 text-xs"
+                className="h-[52px] gap-1.5 rounded-none border-dashed px-4 text-[14px]"
               >
                 <Plus className="size-3.5" />
                 {t.common.addModel}
@@ -159,9 +161,9 @@ export default function Compare() {
             </PopoverTrigger>
             <PopoverContent className="w-[280px] p-0" align="start">
               <Command>
-                <CommandInput placeholder={t.common.searchModel} className="text-xs" />
+                <CommandInput placeholder={t.common.searchModel} className="text-[14px]" />
                 <CommandList>
-                  <CommandEmpty className="py-4 text-center text-xs text-ink-500">{t.common.noModelFound}</CommandEmpty>
+                  <CommandEmpty className="py-4 text-center text-[14px] text-ink-500">{t.common.noModelFound}</CommandEmpty>
                   <CommandGroup>
                     {all
                       .filter(m => !selected.includes(m.slug) && m.coverage > 0)
@@ -170,11 +172,11 @@ export default function Compare() {
                           key={m.slug}
                           value={`${m.name} ${m.provider}`}
                           onSelect={() => setSelected([...selected, m.slug])}
-                          className="text-xs"
+                          className="text-[14px]"
                         >
                           <div className="flex w-full items-center justify-between gap-2">
                             <span className="truncate">{m.name}</span>
-                            <span className="tnum shrink-0 text-[12px] text-ink-500">
+                            <span className="tnum shrink-0 text-[14px] text-ink-500">
                               {t.common.recordsCount.replace("{n}", String(m.coverage))}
                             </span>
                           </div>
@@ -194,7 +196,7 @@ export default function Compare() {
             <p className="text-ink-800 text-[19px] leading-snug font-medium">
               {t.compare.emptyStateTitle}
             </p>
-            <p className="ui text-ink-500 mt-2.5 text-[12px] leading-relaxed">
+            <p className="ui text-ink-500 mt-2.5 text-[14px] leading-relaxed">
               {t.compare.emptyStateDesc}
             </p>
           </div>
@@ -207,26 +209,26 @@ export default function Compare() {
               <div key={m.slug} className="hair-t p-4">
                 <div className="flex items-center gap-1.5">
                   <span className="size-2 rounded-full" style={{ background: PALETTE[i] }} />
-                  <span className="truncate text-xs text-ink-500">{m.provider}</span>
+                  <span className="truncate text-[14px] text-ink-500">{m.provider}</span>
                 </div>
-                <div className="mt-1.5 truncate text-[13px]">{m.name}</div>
+                <div className="mt-1.5 flex items-center gap-1.5"><ProviderDot provider={m.provider} /><div className="truncate text-[14px] text-ink-900">{m.name}</div></div>
                 <div className="mt-3 flex items-end justify-between">
                   <div>
                     <div className="tnum text-2xl leading-none" style={{ color: PALETTE[i] }}>
                       {m.compositeScore ?? "—"}
                     </div>
-                    <div className="mt-1 flex items-center gap-1 text-[12px] text-ink-500">
+                    <div className="mt-1 flex items-center gap-1 text-[14px] text-ink-500">
                       {t.compare.compositeScore}
                       <InfoHint>{t.metricExplain.normalized}</InfoHint>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="tnum text-sm">{m.coverage}</div>
-                    <div className="text-[12px] text-ink-500">{t.compare.evidenceCount}</div>
+                    <div className="tnum text-[15px]">{m.coverage}</div>
+                    <div className="text-[14px] text-ink-500">{t.compare.evidenceCount}</div>
                   </div>
                 </div>
                 {m.priceOutput !== null && (
-                  <div className="mt-2 hair-t pt-2 text-[12px] text-ink-500">
+                  <div className="mt-2 hair-t pt-2 text-[14px] text-ink-500">
                     {t.compare.priceOutput.replace("{price}", String(m.priceOutput))}
                   </div>
                 )}
@@ -236,9 +238,9 @@ export default function Compare() {
 
           {/* Per-benchmark comparison */}
           <div className="hair-t">
-            <table className="w-full text-sm">
+            <table className="w-full text-[15px]">
               <thead>
-                <tr className="hair-b text-[12px] tracking-wide text-ink-500 uppercase">
+                <tr className="hair-b text-[14px] font-semibold text-ink-700">
                   <th className="px-4 py-2 text-left">{t.compare.metric}</th>
                   {picked.map((m, i) => (
                     <th key={m.slug} className="px-3 py-2 text-right">
@@ -252,12 +254,12 @@ export default function Compare() {
                   const vals = picked.map(m => b.cells.get(m.slug)?.normalized ?? null);
                   const best = Math.max(...vals.filter((v): v is number => v !== null), -1);
                   return (
-                    <tr key={b.slug} className="hair-b last:border-0 hover:bg-frost-mist/40">
+                    <tr key={b.slug} className="hair-b last:border-0 hover:bg-surface transition-colors duration-120">
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <div className="min-w-0">
-                            <div className="truncate text-[13px]">{b.name}</div>
-                            <div className="flex items-center gap-1.5 text-[12px] text-ink-500">
+                            <div className="truncate text-[14px]">{b.name}</div>
+                            <div className="flex items-center gap-1.5 text-[14px] text-ink-500">
                               <span>{t.capability[b.domain as CapabilityDomain] ?? b.domain}</span>
                               <span className="tnum">×{b.difficulty.toFixed(2)}</span>
                             </div>
@@ -270,7 +272,7 @@ export default function Compare() {
                         if (!cell) {
                           return (
                             <td key={m.slug} className="px-3 py-2 text-right">
-                              <span className="text-xs text-ink-400">{t.common.noRecord}</span>
+                              <span className="text-ink-400">—</span>
                             </td>
                           );
                         }
@@ -281,15 +283,10 @@ export default function Compare() {
                               <TooltipTrigger asChild>
                                 <div className="inline-flex cursor-help items-center justify-end gap-1.5">
                                   <FreshnessDot freshness={cell.freshness} />
-                                  <span
-                                    className={cn("tnum text-[13px]", isBest && "")}
-                                    style={isBest ? { color: PALETTE[i] } : undefined}
-                                  >
-                                    {cell.normalized}
-                                  </span>
+                                  <ScoreBar value={cell.normalized} provider={picked[i].provider} delay={i} />
                                 </div>
                               </TooltipTrigger>
-                              <TooltipContent className="w-[260px] space-y-1 text-xs">
+                              <TooltipContent className="w-[260px] space-y-1 text-[14px]">
                                 <div className="grid grid-cols-2 gap-x-3 text-ink-500">
                                   <span>{t.compare.rawScore}</span>
                                   <span className="tnum text-right text-ink-900">{cell.rawScore}</span>
@@ -303,7 +300,7 @@ export default function Compare() {
                                 </div>
                                 {cell.sourceUrl && (
                                   <a href={cell.sourceUrl} target="_blank" rel="noreferrer"
-                                    className="flex items-center gap-1 text-frost-qing hover:underline">
+                                    className="flex items-center gap-1 text-brand-qing hover:underline">
                                     <ExternalLink className="size-3" />
                                     <span className="truncate">{cell.sourceName ?? t.common.source}</span>
                                   </a>
@@ -320,8 +317,8 @@ export default function Compare() {
             </table>
             {table.length === 0 && (
               <div className="px-4 py-8 text-center">
-                <p className="text-sm">{t.compare.noSharedMetrics}</p>
-                <p className="mt-1 text-xs text-ink-500">
+                <p className="text-[15px]">{t.compare.noSharedMetrics}</p>
+                <p className="mt-1 text-[14px] text-ink-500">
                   {t.compare.noSharedMetricsDesc}
                 </p>
               </div>

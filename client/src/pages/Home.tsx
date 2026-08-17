@@ -246,10 +246,10 @@ export default function Home() {
                           {champMetric(c.unit, c.metric)}
                         </span>
                         {c.unit === "perDollar" && (
-                          <span className="ui text-ink-500 text-[12px]">{t.home.champPerDollar}</span>
+                          <span className="ui text-ink-500 text-[13px]">{t.home.champPerDollar}</span>
                         )}
                       </div>
-                      <div className="ui text-ink-400 mt-1.5 text-[12px]">
+                      <div className="ui text-ink-400 mt-1.5 text-[13px]">
                         {c.provider} · {t.home.champEvidence.replace("{n}", String(c.coverage))}
                       </div>
                     </div>

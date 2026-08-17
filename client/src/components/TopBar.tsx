@@ -100,7 +100,7 @@ export function TopBar({
               aria-label={t.nav.openContents}
             >
               <Search className="size-[14px]" />
-              <kbd className="tnum text-ink-400 hidden text-[12px] sm:inline">⌘K</kbd>
+              <kbd className="tnum text-ink-400 hidden text-[13px] sm:inline">⌘K</kbd>
             </button>
 
             <button

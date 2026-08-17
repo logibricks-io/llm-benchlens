@@ -468,6 +468,84 @@ export const appRouter = router({
       return rows;
     }),
 
+    /*
+     * Normalised variant of the same matrix. The flat shape above repeats every
+     * model's and every benchmark's metadata on all 857 rows — measured at
+     * 848 KB, of which roughly a quarter is `sourceUrl`/`sourceName` alone and
+     * much of the rest is the same trust/difficulty/provider values echoed
+     * dozens of times. Sending three tables and joining them client-side cuts
+     * the payload by an order of magnitude, which is what keeps the matrix page
+     * from sitting on a skeleton while a megabyte deserialises.
+     */
+    matrixCompact: publicProcedure.query(async () => {
+      const rows = (await db.listScores()).map(decorate);
+
+      const models = new Map<string, {
+        slug: string; name: string; provider: string;
+        license: string; status: string;
+        priceInput: number | null; priceOutput: number | null;
+      }>();
+      const benchmarks = new Map<string, {
+        slug: string; name: string; capabilityDomain: string; scoreForm: string;
+        strictness: string; saturationStatus: string; scoringMechanism: string;
+        issuerStance: string; contaminationRisk: string;
+        trustScore: number; discriminativePower: number; difficultyCoefficient: number;
+        version: string | null;
+      }>();
+
+      const cells = rows.map(r => {
+        if (!models.has(r.modelSlug)) {
+          models.set(r.modelSlug, {
+            slug: r.modelSlug,
+            name: r.modelName,
+            provider: r.provider,
+            license: r.license,
+            status: r.modelStatus,
+            priceInput: r.priceInput,
+            priceOutput: r.priceOutput,
+          });
+        }
+        if (!benchmarks.has(r.benchmarkSlug)) {
+          benchmarks.set(r.benchmarkSlug, {
+            slug: r.benchmarkSlug,
+            name: r.benchmarkName,
+            capabilityDomain: r.capabilityDomain,
+            scoreForm: r.scoreForm,
+            strictness: r.strictness,
+            saturationStatus: r.saturationStatus,
+            scoringMechanism: r.scoringMechanism,
+            issuerStance: r.issuerStance,
+            contaminationRisk: r.contaminationRisk,
+            trustScore: r.trustScore,
+            discriminativePower: r.discriminativePower,
+            difficultyCoefficient: r.difficultyCoefficient,
+            version: r.benchmarkVersion,
+          });
+        }
+        return {
+          m: r.modelSlug,
+          b: r.benchmarkSlug,
+          raw: r.rawScore,
+          raw2: r.rawScoreSecondary,
+          label2: r.secondaryLabel,
+          scale: r.commonScale,
+          norm: r.normalized,
+          w: r.evidenceWeight,
+          fresh: r.freshness,
+          at: r.measuredAt,
+          st: r.sourceType,
+          sn: r.sourceName,
+          su: r.sourceUrl,
+        };
+      });
+
+      return {
+        models: Array.from(models.values()),
+        benchmarks: Array.from(benchmarks.values()),
+        cells,
+      };
+    }),
+
     compare: publicProcedure
       .input(z.object({ slugs: z.array(z.string()).min(1).max(4) }))
       .query(async ({ input }) => {

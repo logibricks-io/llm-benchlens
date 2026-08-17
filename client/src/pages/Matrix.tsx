@@ -31,6 +31,8 @@ import { ArrowUpDown, Columns3, ExternalLink, Filter, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useT } from "@/i18n";
+import { providerColor } from "@/lib/series";
+import { ScoreBar, ProviderDot } from "@/components/ScoreBar";
 
 type MatrixRow = {
   modelSlug: string;
@@ -79,7 +81,14 @@ const PRIOR = 50;
 export default function Matrix() {
   const t = useT();
   const metricExplain = useMetricExplain();
-  const matrix = trpc.models.matrix.useQuery();
+  /*
+   * The compact endpoint sends models, benchmarks and cells as three tables
+   * instead of one wide row per score: 294 KB rather than 828 KB, because the
+   * flat shape repeated each model's and benchmark's metadata on all 857 rows.
+   * The join below restores the original field names so nothing downstream of
+   * `rows` has to know the wire format changed.
+   */
+  const matrix = trpc.models.matrixCompact.useQuery();
   const benchmarks = trpc.benchmarks.list.useQuery();
 
   const [domain, setDomain] = useState(ALL);
@@ -92,7 +101,52 @@ export default function Matrix() {
   /** Explicitly hidden benchmark columns. Empty set = show everything. */
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
 
-  const rows = (matrix.data ?? []) as MatrixRow[];
+  const rows = useMemo<MatrixRow[]>(() => {
+    const d = matrix.data;
+    if (!d) return [];
+    const mById = new Map(d.models.map(m => [m.slug, m]));
+    const bById = new Map(d.benchmarks.map(b => [b.slug, b]));
+    const out: MatrixRow[] = [];
+    for (const c of d.cells) {
+      const m = mById.get(c.m);
+      const b = bById.get(c.b);
+      if (!m || !b) continue;
+      out.push({
+        modelSlug: m.slug,
+        modelName: m.name,
+        provider: m.provider,
+        license: m.license,
+        modelStatus: m.status,
+        priceInput: m.priceInput,
+        priceOutput: m.priceOutput,
+        benchmarkSlug: b.slug,
+        benchmarkName: b.name,
+        benchmarkVersion: b.version,
+        capabilityDomain: b.capabilityDomain,
+        scoreForm: b.scoreForm,
+        strictness: b.strictness,
+        saturationStatus: b.saturationStatus,
+        scoringMechanism: b.scoringMechanism,
+        issuerStance: b.issuerStance,
+        contaminationRisk: b.contaminationRisk,
+        trustScore: b.trustScore,
+        discriminativePower: b.discriminativePower,
+        difficultyCoefficient: b.difficultyCoefficient,
+        rawScore: c.raw,
+        rawScoreSecondary: c.raw2,
+        secondaryLabel: c.label2,
+        commonScale: c.scale,
+        normalized: c.norm,
+        evidenceWeight: c.w,
+        freshness: c.fresh,
+        measuredAt: c.at,
+        sourceType: c.st,
+        sourceName: c.sn,
+        sourceUrl: c.su,
+      } as MatrixRow);
+    }
+    return out;
+  }, [matrix.data]);
 
   const filteredRows = useMemo(() => {
     return rows.filter(r => {
@@ -182,11 +236,11 @@ export default function Matrix() {
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs">
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-[14px]">
                 <Columns3 className="size-3" />
                 {t.common.columns}
                 {hiddenCols.size > 0 && (
-                  <span className="tnum rounded-full bg-frost-qing/12 px-1.5 text-[12px] text-frost-qing">
+                  <span className="tnum rounded-full bg-surface-2 px-1.5 text-[13px] text-brand-qing">
                     -{hiddenCols.size}
                   </span>
                 )}
@@ -194,10 +248,10 @@ export default function Matrix() {
             </PopoverTrigger>
             <PopoverContent className="w-[260px] p-0" align="end">
               <div className="flex items-center justify-between hair-b px-3 py-2">
-                <span className="text-xs">{t.matrix.visibleColumns}</span>
+                <span className="text-[14px]">{t.matrix.visibleColumns}</span>
                 <button
                   onClick={() => setHiddenCols(new Set())}
-                  className="text-[12px] text-frost-qing hover:underline"
+                  className="text-[14px] text-brand-qing hover:underline"
                 >
                   {t.common.all}
                 </button>
@@ -208,7 +262,7 @@ export default function Matrix() {
                   return (
                     <label
                       key={c.slug}
-                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-frost-mist/50"
+                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-surface-2"
                     >
                       <Checkbox
                         checked={shown}
@@ -222,8 +276,8 @@ export default function Matrix() {
                         }}
                         className="scale-90"
                       />
-                      <span className="min-w-0 flex-1 truncate text-xs">{c.name}</span>
-                      <span className="tnum shrink-0 text-[12px] text-ink-500">{c.count}</span>
+                      <span className="min-w-0 flex-1 truncate text-[14px]">{c.name}</span>
+                      <span className="tnum shrink-0 text-[14px] text-ink-500">{c.count}</span>
                     </label>
                   );
                 })}
@@ -234,15 +288,15 @@ export default function Matrix() {
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2 rounded-sm hair-all px-2.5 py-1.5">
                 <Switch checked={normalize} onCheckedChange={setNormalize} className="scale-90" />
-                <span className="text-xs whitespace-nowrap">
+                <span className="text-[14px] whitespace-nowrap">
                   {normalize ? t.common.normalized : t.common.raw}
                 </span>
               </div>
             </TooltipTrigger>
-            <TooltipContent className="max-w-[320px] text-xs leading-relaxed">{metricExplain.normalized}</TooltipContent>
+            <TooltipContent className="max-w-[320px] text-[14px] leading-relaxed">{metricExplain.normalized}</TooltipContent>
           </Tooltip>
           <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
-            <SelectTrigger className="h-8 w-[120px] text-xs">
+            <SelectTrigger className="h-8 w-[120px] text-[14px]">
               <ArrowUpDown className="size-3" />
               <SelectValue />
             </SelectTrigger>
@@ -258,18 +312,18 @@ export default function Matrix() {
       {/* Filter bar */}
       {/* Parks below the floating islet so the rotated headers never sit under it. */}
       <div className="hair-b bg-background sticky top-[54px] z-20 flex flex-wrap items-center gap-2 px-7 py-2.5">
-        <div className="ui text-ink-500 flex items-center gap-1.5 text-[12px]">
+        <div className="ui text-ink-500 flex items-center gap-1.5 text-[14px]">
           <Filter className="size-3.5" />
           <span>{t.common.filters}</span>
           {activeFilters > 0 && (
-            <span className="tnum text-frost-qing text-[12px]">{activeFilters}</span>
+            <span className="tnum text-brand-qing text-[14px]">{activeFilters}</span>
           )}
         </div>
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t.matrix.searchPlaceholder}
-          className="h-8 w-[160px] text-xs"
+          className="h-8 w-[160px] text-[14px]"
         />
         <FilterSelect
           value={domain}
@@ -306,7 +360,7 @@ export default function Matrix() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 gap-1 px-2 text-xs"
+            className="h-8 gap-1 px-2 text-[14px]"
             onClick={() => {
               setDomain(ALL);
               setSaturation(ALL);
@@ -331,7 +385,7 @@ export default function Matrix() {
         <div className="flex h-[320px] items-center justify-center">
           <div className="text-center">
             <p className="text-ink-800 text-[15px]">{t.matrix.noRecords}</p>
-            <p className="ui text-ink-500 mt-1.5 text-[12px]">{t.matrix.noRecordsHint}</p>
+            <p className="ui text-ink-500 mt-1.5 text-[14px]">{t.matrix.noRecordsHint}</p>
           </div>
         </div>
       ) : (
@@ -339,11 +393,11 @@ export default function Matrix() {
           <table className="w-max border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className="hair-r hair-b bg-background ui text-ink-400 sticky left-0 z-10 w-[210px] min-w-[210px] px-7 py-2 text-left align-bottom text-[12px] tracking-[0.14em] uppercase">
+                <th className="hair-r hair-b bg-background ui text-ink-700 sticky left-0 z-10 w-[210px] min-w-[210px] px-7 py-2 text-left align-bottom text-[14px] font-semibold">
                   {t.matrix.colModel}
                 </th>
-                <th className="hair-r hair-b bg-background ui text-ink-400 sticky left-[210px] z-10 w-[64px] min-w-[64px] px-2 py-2 text-right align-bottom text-[12px] uppercase">
-                  <span className="inline-flex items-center gap-1 normal-case">
+                <th className="hair-r hair-b bg-background ui text-ink-700 sticky left-[210px] z-10 w-[64px] min-w-[64px] px-2 py-2 text-right align-bottom text-[14px] font-semibold">
+                  <span className="inline-flex items-center gap-1">
                     {t.matrix.colMean}
                     <InfoHint>
                       {t.matrix.meanHint}
@@ -367,24 +421,24 @@ export default function Matrix() {
                         {/* 124px of vertical room at 42° allows ~166px of run;
                             cap the label so it never climbs past the header. */}
                         <div className="flex max-w-[158px] items-baseline gap-1.5">
-                          <span className="text-ink-700 group-hover:text-ink-900 max-w-[104px] truncate text-[10.5px] transition-colors duration-150">
+                          <span className="text-ink-700 group-hover:text-ink-900 max-w-[104px] truncate text-[14px] font-semibold transition-colors duration-120">
                             {c.name}
                           </span>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="tnum text-ink-400 shrink-0 cursor-help text-[12px]">
+                              <span className="tnum text-ink-500 shrink-0 cursor-help text-[14px]">
                                 ×{c.difficulty.toFixed(2)}
                               </span>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
+                            <TooltipContent className="max-w-[300px] text-[14px] leading-relaxed">
                               {metricExplain.difficulty}
                             </TooltipContent>
                           </Tooltip>
                           {c.saturation === "saturated" && (
-                            <span className="ui text-danger shrink-0 text-[8.5px]">{t.matrix.badgeSaturated}</span>
+                            <span className="ui text-danger shrink-0 text-[13px]">{t.matrix.badgeSaturated}</span>
                           )}
                           {c.scoreForm === "elo" && (
-                            <span className="ui text-ink-400 shrink-0 text-[8.5px]">Elo</span>
+                            <span className="ui text-ink-500 shrink-0 text-[13px]">Elo</span>
                           )}
                         </div>
                       </Link>
@@ -395,30 +449,35 @@ export default function Matrix() {
             </thead>
             <tbody>
               {modelRows.map(m => (
-                <tr key={m.slug} className="group">
-                  <td className="hair-r hair-row bg-background sticky left-0 z-10 px-7 py-1.5">
+                <tr key={m.slug} className="group hover:bg-surface transition-colors duration-120">
+                  <td className="hair-r hair-row bg-background group-hover:bg-surface sticky left-0 z-10 px-7 py-1.5 transition-colors duration-120">
                     <Link href={`/models?focus=${m.slug}`} className="block min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-ink-800 truncate text-[12.5px]">{m.name}</span>
+                        <ProviderDot provider={m.provider} />
+                        <span className="text-ink-900 truncate text-[14px]">{m.name}</span>
                         {m.license === "open" && (
-                          <span className="ui text-good shrink-0 text-[8.5px]">{t.matrix.badgeOpen}</span>
+                          <span className="ui text-good shrink-0 text-[13px]">{t.matrix.badgeOpen}</span>
                         )}
                         {m.status === "superseded" && (
-                          <span className="ui text-ink-400 shrink-0 text-[8.5px]">{t.matrix.badgeSuperseded}</span>
+                          <span className="ui text-ink-500 shrink-0 text-[13px]">{t.matrix.badgeSuperseded}</span>
                         )}
                       </div>
-                      <div className="ui text-ink-400 truncate text-[9.5px]">{m.provider}</div>
+                      <div className="ui text-ink-400 truncate text-[13px]">{m.provider}</div>
                     </Link>
                   </td>
-                  <td className="tnum hair-r hair-row bg-background text-ink-900 sticky left-[210px] z-10 px-2 py-1.5 text-right text-[12.5px]">
-                    {m.composite >= 0 ? m.composite.toFixed(1) : "—"}
+                  <td className="tnum hair-r hair-row bg-background group-hover:bg-surface sticky left-[210px] z-10 px-2 py-1.5 text-right text-[14px] transition-colors duration-120">
+                    {m.composite >= 0 ? (
+                      <ScoreBar value={m.composite} provider={m.provider} delay={0} />
+                    ) : (
+                      <span className="text-ink-400">—</span>
+                    )}
                   </td>
                   {columns.map(c => {
                     const cell = m.cells.get(c.slug);
                     if (!cell) {
                       return (
                         <td key={c.slug} className="hair-row px-1 py-1.5 text-center">
-                          <span className="text-ink-400/40 text-[12px]">·</span>
+                          <span className="text-ink-400">—</span>
                         </td>
                       );
                     }
@@ -432,7 +491,7 @@ export default function Matrix() {
                             <div className="cursor-help">
                               <div className="flex items-center justify-center gap-0.5">
                                 <FreshnessDot freshness={cell.freshness} />
-                                <span className="tnum text-ink-800 text-[11.5px]">
+                                <span className="tnum text-ink-900 text-[14px]">
                                   {shown.toFixed(1)}
                                 </span>
                               </div>
@@ -444,7 +503,7 @@ export default function Matrix() {
                               />
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent className="w-[290px] space-y-1.5 text-xs">
+                          <TooltipContent className="w-[290px] space-y-1.5 text-[14px]">
                             <div className="">
                               {cell.modelName} · {cell.benchmarkName}
                             </div>
@@ -482,7 +541,7 @@ export default function Matrix() {
                                 href={cell.sourceUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center gap-1 pt-0.5 text-frost-qing hover:underline"
+                                className="flex items-center gap-1 pt-0.5 text-brand-qing hover:underline"
                               >
                                 <ExternalLink className="size-3" />
                                 <span className="truncate">{cell.sourceName ?? t.common.viewSource}</span>
@@ -497,7 +556,7 @@ export default function Matrix() {
               ))}
             </tbody>
           </table>
-          <div className="ui text-ink-500 flex items-center gap-2 px-7 py-4 text-[10.5px]">
+          <div className="ui text-ink-500 flex items-center gap-2 px-7 py-4 text-[14px]">
             <InfoHint>
               {t.matrix.footerHint1}
             </InfoHint>
@@ -524,9 +583,35 @@ function FilterSelect({
   options: Array<{ value: string; label: string }>;
   allLabel: string;
 }) {
+  if (options.length < 8) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          className="chip"
+          data-on={value === ALL}
+          onClick={() => onChange(ALL)}
+        >
+          {placeholder} {allLabel}
+        </button>
+        {options.map(o => (
+          <button
+            key={o.value}
+            type="button"
+            className="chip"
+            data-on={value === o.value}
+            onClick={() => onChange(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[132px] text-xs">
+      <SelectTrigger className="h-8 w-[132px] text-[14px]">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

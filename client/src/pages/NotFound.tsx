@@ -24,7 +24,7 @@ export default function NotFound() {
   return (
     <div className="paper min-h-screen">
       <div className="mx-auto max-w-[880px] px-7 pt-28 pb-16">
-        <div className="ui text-ink-400 text-[12px] tracking-[0.18em] uppercase">
+        <div className="ui text-ink-400 text-[13px] tracking-[0.18em] uppercase">
           404 · Not found
         </div>
         <h1 className="display text-ink-900 mt-4 text-[40px] leading-[1.1]">
@@ -37,7 +37,7 @@ export default function NotFound() {
         </p>
 
         <div className="hair-t mt-12 pt-6">
-          <div className="ui text-ink-400 mb-4 text-[12px] tracking-[0.18em] uppercase">
+          <div className="ui text-ink-400 mb-4 text-[13px] tracking-[0.18em] uppercase">
             {t.notFound.elsewhere}
           </div>
           <div className="grid gap-x-10 gap-y-4 sm:grid-cols-3">
@@ -49,13 +49,13 @@ export default function NotFound() {
                     →
                   </span>
                 </div>
-                <p className="ui text-ink-500 mt-1 text-[12px] leading-relaxed">{item.why}</p>
+                <p className="ui text-ink-500 mt-1 text-[13px] leading-relaxed">{item.why}</p>
               </Link>
             ))}
           </div>
         </div>
 
-        <p className="ui text-ink-400 mt-12 text-[12px]">
+        <p className="ui text-ink-400 mt-12 text-[13px]">
           {t.notFound.shortcutHintPrefix} <span className="text-ink-600">Ctrl / Cmd + K</span> {t.notFound.shortcutHintSuffix}
         </p>
       </div>
