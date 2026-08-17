@@ -13,7 +13,7 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useT } from "@/i18n";
 import { providerColor, formatPrice } from "@/lib/series";
-import { ScoreBar, Rank, ProviderDot } from "@/components/ScoreBar";
+import { ScoreBar, Rank, ProviderMark } from "@/components/ScoreBar";
 import { formatContextWindow } from "@shared/formatContext";
 
 const ALL = "__all__";
@@ -190,7 +190,7 @@ export default function Models() {
                   </td>
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
-                      <ProviderDot provider={m.provider} />
+                      <ProviderMark provider={m.provider} size={18} />
                       <Link
                         href={`/models/${m.slug}`}
                         className="text-[14px] text-ink-900 transition-colors hover:text-ink-950 hover:underline decoration-ink-300 underline-offset-2"

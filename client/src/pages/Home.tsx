@@ -3,7 +3,7 @@ import { TrustScatter } from "@/components/TrustScatter";
 import { InfoHint } from "@/components/MetaBadges";
 import { MiniRuler, ProjectionRuler } from "@/components/Ruler";
 import { Scatter, type ScatterPoint } from "@/components/Scatter";
-import { ProviderDot, Rank, ScoreBar } from "@/components/ScoreBar";
+import { ProviderMark, Rank, ScoreBar } from "@/components/ScoreBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
@@ -374,7 +374,7 @@ export default function Home() {
                       </td>
                       <td className="py-2.5 pr-4">
                         <Link href={`/models?q=${encodeURIComponent(m.name)}`} className="group flex items-center gap-2">
-                          <ProviderDot provider={m.provider} />
+                          <ProviderMark provider={m.provider} size={17} />
                           <span className="text-ink-900 group-hover:text-ink-950 text-[14px]">
                             {m.name}
                           </span>

@@ -52,6 +52,65 @@ export function providerColor(provider: string | null | undefined): string {
   return seriesVar(providerSlot(provider));
 }
 
+/*
+ * Vendor identity marks.
+ *
+ * The reference sites use real vendor logos, which would mean shipping other
+ * companies' trademarks. A short monogram on the vendor's own series colour
+ * gives the same at-a-glance row anchor without that, and stays legible at the
+ * 18px the table can spare.
+ *
+ * Hand-written abbreviations only for vendors carrying enough models to be
+ * recognised by them; everything else falls back to an initial. "Other" and
+ * "Unknown" — together the largest group in the library at 64 models — get no
+ * mark at all, since "O" and "U" would be identity theatre.
+ */
+const MONOGRAM: Record<string, string> = {
+  openai: "OA",
+  anthropic: "AN",
+  alibaba: "AL",
+  qwen: "QW",
+  google: "GO",
+  deepseek: "DS",
+  xai: "xAI",
+  "moonshot ai": "MS",
+  meta: "ME",
+  "z.ai": "Z",
+  bytedance: "BD",
+  minimax: "MM",
+  nvidia: "NV",
+  mistral: "MI",
+  xiaomi: "XM",
+  tencent: "TC",
+  baai: "BA",
+  amazon: "AM",
+  cohere: "CO",
+  /* Not "MS": Moonshot AI holds it, with 11 models against Microsoft's one. */
+  microsoft: "MST",
+  "microsoft research": "MSR",
+  stepfun: "SF",
+  "voyage ai": "VO",
+  "thinking machines lab": "TM",
+};
+
+/** Providers with no meaningful identity to mark. */
+const ANONYMOUS = new Set(["other", "unknown", ""]);
+
+/**
+ * Short identity mark for a provider, or null when the provider is a catch-all
+ * bucket rather than an actual vendor.
+ */
+export function providerMonogram(provider: string | null | undefined): string | null {
+  if (!provider) return null;
+  const key = provider.trim().toLowerCase();
+  if (ANONYMOUS.has(key)) return null;
+  if (MONOGRAM[key]) return MONOGRAM[key];
+  /* Fall back to the first two alphanumerics, so "InclusionAI" reads "In". */
+  const letters = provider.replace(/[^A-Za-z0-9]/g, "");
+  if (!letters) return null;
+  return letters.slice(0, 2).replace(/^(.)(.)$/, (_, a: string, b: string) => a.toUpperCase() + b.toLowerCase());
+}
+
 /**
  * Format a USD-per-million-tokens price the way spec sheets do: no trailing
  * zeroes on whole dollars, two decimals under $1.

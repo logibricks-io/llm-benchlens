@@ -1,4 +1,4 @@
-import { providerColor } from "@/lib/series";
+import { providerColor, providerMonogram } from "@/lib/series";
 
 /**
  * A number that is also its own bar chart.
@@ -87,5 +87,42 @@ export function ProviderDot({ provider }: { provider?: string | null }) {
       style={{ background: providerColor(provider) }}
       aria-hidden="true"
     />
+  );
+}
+
+/**
+ * Vendor identity mark: a monogram tile in the vendor's series colour.
+ *
+ * A stronger row anchor than the dot — the eye can find "all the Anthropic rows"
+ * by shape as well as hue, which matters in the light theme where several series
+ * colours sit at similar lightness. Falls back to the dot for catch-all buckets
+ * ("Other", "Unknown"), where a letter would imply an identity that isn't there.
+ */
+export function ProviderMark({
+  provider,
+  size = 18,
+}: {
+  provider?: string | null;
+  size?: number;
+}) {
+  const mark = providerMonogram(provider);
+  const tint = providerColor(provider);
+  if (!mark) return <ProviderDot provider={provider} />;
+  return (
+    <span
+      className="inline-flex shrink-0 items-center justify-center rounded-[3px] font-semibold"
+      style={{
+        width: size,
+        height: size,
+        fontSize: mark.length > 2 ? size * 0.42 : size * 0.48,
+        letterSpacing: "-0.01em",
+        color: tint,
+        background: `color-mix(in oklch, ${tint} 16%, transparent)`,
+        border: `1px solid color-mix(in oklch, ${tint} 34%, transparent)`,
+      }}
+      title={provider ?? undefined}
+    >
+      {mark}
+    </span>
   );
 }

@@ -1,5 +1,5 @@
 import { FreshnessDot, InfoHint, SourceBadge, useMetricExplain } from "@/components/MetaBadges";
-import { ProviderDot, Rank, ScoreBar } from "@/components/ScoreBar";
+import { ProviderMark, Rank, ScoreBar } from "@/components/ScoreBar";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/i18n";
@@ -150,7 +150,7 @@ export default function ModelDetail() {
       title={m.name}
       subtitle={
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <ProviderDot provider={m.provider} />
+          <ProviderMark provider={m.provider} size={20} />
           <span>{m.provider}</span>
           {m.license && (
             <>
@@ -170,7 +170,7 @@ export default function ModelDetail() {
       }
       actions={
         <Link
-          href={`/compare?models=${m.slug}`}
+          href={`/compare?m=${m.slug}`}
           className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[14px] text-ink-700 ring-1 ring-border transition-colors hover:text-ink-950"
         >
           <GitCompare className="size-3.5" />
@@ -254,10 +254,10 @@ export default function ModelDetail() {
                           href={`/models/${p.slug}`}
                           className="flex items-center gap-2 text-[15px] text-ink-900 transition-colors hover:text-ink-950"
                         >
-                          <ProviderDot provider={p.provider} />
+                          <ProviderMark provider={p.provider} size={17} />
                           <span className="truncate">{p.name}</span>
                         </Link>
-                        <div className="pl-4 text-[13px] text-ink-500">{p.provider}</div>
+                        <div className="pl-[25px] text-[13px] text-ink-500">{p.provider}</div>
                       </td>
                       <td className="w-[168px] py-2.5 pr-3 align-middle">
                         <ScoreBar value={p.compositeScore} provider={p.provider} delay={i} />
