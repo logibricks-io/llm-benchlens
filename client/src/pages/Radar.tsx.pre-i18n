@@ -3,26 +3,24 @@ import { NoteBlock } from "@/components/MarginNote";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { ExternalLink, Radio } from "lucide-react";
-import { useT } from "@/i18n";
 
 export default function Radar() {
-  const t = useT();
   const { data, isLoading } = trpc.releases.feed.useQuery({ limit: 30 });
   const rows = data ?? [];
 
   return (
     <WorkbenchLayout
-      title={t.nav.radar}
-      subtitle={t.radar.subtitle}
+      title="发布雷达"
+      subtitle="新模型与新评测的事件流，按发布日期倒序"
       readNext={[
-        { href: "/models", label: t.nav.models, why: t.radar.readNextModelsWhy },
-        { href: "/benchmarks", label: t.nav.benchmarks, why: t.radar.readNextBenchmarksWhy },
+        { href: "/models", label: "模型库", why: "查看这些新模型的综合分与证据量" },
+        { href: "/benchmarks", label: "指标库", why: "新指标往往比新模型更值得关注" },
       ]}
       aside={
-        <NoteBlock label={t.radar.noteLabel}>
+        <NoteBlock label="发布日期不等于可比">
           <p>
-            {t.radar.noteText1}
-            <strong className="text-ink-700">{t.radar.noteText2}</strong>
+            新模型上榜初期证据常只有个位数，综合分会被向中位收缩。
+            <strong className="text-ink-700">先看证据条数，再看分数</strong>。
           </p>
         </NoteBlock>
       }
@@ -35,7 +33,7 @@ export default function Radar() {
         <div className="flex h-[280px] items-center justify-center">
           <div className="hair-t px-6 py-5 text-center">
             <Radio className="mx-auto size-5 text-ink-500" />
-            <p className="mt-2 text-sm">{t.radar.emptyFeed}</p>
+            <p className="mt-2 text-sm">暂无发布事件</p>
           </div>
         </div>
       ) : (
@@ -66,7 +64,7 @@ export default function Radar() {
                       className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-frost-qing hover:underline"
                     >
                       <ExternalLink className="size-3" />
-                      {t.common.viewSource}
+                      查看出处
                     </a>
                   )}
                 </div>

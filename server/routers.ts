@@ -179,7 +179,13 @@ export const appRouter = router({
       };
     }),
     scenarios: publicProcedure.query(() =>
-      SCENARIOS.map(s => ({ key: s.key, title: s.title, summary: s.summary, emphasisSlugs: s.emphasisSlugs })),
+      /*
+       * Keys only, never labels. Returning the Chinese `title`/`summary` here
+       * made the picker show Chinese under an English UI, and because the tRPC
+       * response is cached it could not react to a language switch at all.
+       * Display copy for these keys lives in the client dictionaries.
+       */
+      SCENARIOS.map(s => ({ key: s.key, emphasisSlugs: s.emphasisSlugs })),
     ),
   }),
 
@@ -207,7 +213,13 @@ export const appRouter = router({
       // across score entries, which is how version drift actually surfaces.
       const versionMap = new Map<string, { version: string; count: number; firstSeen: string | null; lastSeen: string | null }>();
       for (const r of rows) {
-        const key = r.benchmarkVersion ?? "未标注版本";
+        /*
+         * Group unlabelled entries under the empty string, not a Chinese label.
+         * A display string used as a map key is a sentinel the client has to
+         * string-compare against, so translating the label silently broke the
+         * comparison. The client renders its own copy when it sees "".
+         */
+        const key = r.benchmarkVersion ?? "";
         const cur = versionMap.get(key) ?? { version: key, count: 0, firstSeen: null, lastSeen: null };
         cur.count++;
         if (r.measuredAt) {
@@ -455,8 +467,6 @@ export const appRouter = router({
         return {
           scenario: {
             key: scenario.key,
-            title: scenario.title,
-            summary: scenario.summary,
             emphasisSlugs: scenario.emphasisSlugs,
             domainWeights: scenario.domainWeights,
           },

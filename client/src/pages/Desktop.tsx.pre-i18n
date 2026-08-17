@@ -1,7 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { type CapabilityDomain } from "@shared/metaModel";
-import { useT } from "@/i18n";
+import { CAPABILITY_LABELS, type CapabilityDomain } from "@shared/metaModel";
 import {
   Activity,
   AlertTriangle,
@@ -25,7 +24,6 @@ import { useState } from "react";
 type Panel = "leaderboard" | "radar" | "health";
 
 export default function Desktop() {
-  const t = useT();
   const [panel, setPanel] = useState<Panel>("leaderboard");
   const [domain, setDomain] = useState<string>("__all__");
   const [collapsed, setCollapsed] = useState(false);
@@ -61,11 +59,11 @@ export default function Desktop() {
             <button
               onClick={() => setCollapsed(!collapsed)}
               className="rounded p-0.5 text-ink-500 transition-colors duration-150 hover:bg-frost-mist/50"
-              title={collapsed ? t.desktop.expand : t.desktop.collapse}
+              title={collapsed ? "展开" : "折叠"}
             >
               {collapsed ? <ChevronDown className="size-3" /> : <Minus className="size-3" />}
             </button>
-            <a href="/" className="rounded p-0.5 text-ink-500 transition-colors duration-150 hover:bg-frost-mist/50" title={t.desktop.openWorkbench}>
+            <a href="/" className="rounded p-0.5 text-ink-500 transition-colors duration-150 hover:bg-frost-mist/50" title="打开工作台">
               <Settings2 className="size-3" />
             </a>
           </div>
@@ -74,24 +72,24 @@ export default function Desktop() {
         {/* Segmented control */}
         <div className="flex gap-0.5 hair-b/70 bg-background/20 p-1.5">
           {([
-            { key: "leaderboard" as Panel, label: t.desktop.leaderboard, icon: Trophy },
-            { key: "radar" as Panel, label: t.desktop.releases, icon: Radio },
-            { key: "health" as Panel, label: t.desktop.health, icon: Activity },
-          ]).map(tab => {
-            const Icon = tab.icon;
+            { key: "leaderboard" as Panel, label: "榜单", icon: Trophy },
+            { key: "radar" as Panel, label: "发布", icon: Radio },
+            { key: "health" as Panel, label: "体检", icon: Activity },
+          ]).map(t => {
+            const Icon = t.icon;
             return (
               <button
-                key={tab.key}
-                onClick={() => setPanel(tab.key)}
+                key={t.key}
+                onClick={() => setPanel(t.key)}
                 className={cn(
                   "flex flex-1 items-center justify-center gap-1 rounded-sm py-1 text-[12px] transition-colors duration-150",
-                  panel === tab.key
+                  panel === t.key
                     ? "bg-frost-mist/60 text-ink-900"
                     : "text-ink-500 hover:bg-frost-mist/50",
                 )}
               >
                 <Icon className="size-3" />
-                {tab.label}
+                {t.label}
               </button>
             );
           })}
@@ -112,7 +110,6 @@ export default function Desktop() {
 }
 
 function LeaderboardPanel({ domain, setDomain }: { domain: string; setDomain: (v: string) => void }) {
-  const t = useT();
   const { data, isLoading } = trpc.models.list.useQuery();
   const benchmarks = trpc.benchmarks.list.useQuery();
   const domains = Array.from(new Set((benchmarks.data ?? []).map(b => b.capabilityDomain)));
@@ -132,10 +129,10 @@ function LeaderboardPanel({ domain, setDomain }: { domain: string; setDomain: (v
           onChange={e => setDomain(e.target.value)}
           className="w-full bg-transparent text-[12px] text-ink-500 outline-none"
         >
-          <option value="__all__" className="bg-paper">{t.desktop.allDomains}</option>
+          <option value="__all__" className="bg-paper">全部能力域</option>
           {domains.map(d => (
             <option key={d} value={d} className="bg-paper">
-              {t.capability[d as CapabilityDomain] ?? d}
+              {CAPABILITY_LABELS[d as CapabilityDomain] ?? d}
             </option>
           ))}
         </select>
@@ -148,7 +145,7 @@ function LeaderboardPanel({ domain, setDomain }: { domain: string; setDomain: (v
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="px-3 py-8 text-center text-[12px] text-ink-500">{t.desktop.noRecordsInDomain}</div>
+        <div className="px-3 py-8 text-center text-[12px] text-ink-500">该能力域暂无记录</div>
       ) : (
         <div className="py-1">
           {rows.map((m, i) => (
@@ -178,7 +175,6 @@ function LeaderboardPanel({ domain, setDomain }: { domain: string; setDomain: (v
 }
 
 function RadarPanel() {
-  const t = useT();
   const { data, isLoading } = trpc.releases.feed.useQuery({ limit: 12 });
   const rows = data ?? [];
 
@@ -187,7 +183,7 @@ function RadarPanel() {
       {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded bg-frost-mist/50/30" />)}
     </div>
   ) : rows.length === 0 ? (
-    <div className="px-3 py-8 text-center text-[12px] text-ink-500">{t.desktop.noReleaseEvents}</div>
+    <div className="px-3 py-8 text-center text-[12px] text-ink-500">暂无发布事件</div>
   ) : (
     <div className="py-1">
       {rows.map(r => (
@@ -213,7 +209,6 @@ function RadarPanel() {
 }
 
 function HealthPanel() {
-  const t = useT();
   const { data } = trpc.meta.overview.useQuery();
   const benchmarks = trpc.benchmarks.list.useQuery();
   const low = [...(benchmarks.data ?? [])].sort((a, b) => a.utilityScore - b.utilityScore).slice(0, 5);
@@ -222,10 +217,10 @@ function HealthPanel() {
     <div className="p-3">
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: t.common.benchmarks, value: data?.benchmarks ?? "—" },
-          { label: t.common.models, value: data?.models ?? "—" },
-          { label: t.common.records, value: data?.scores ?? "—" },
-          { label: t.desktop.ciDisclosure, value: data ? `${data.ciDisclosureRate}%` : "—", danger: true },
+          { label: "指标", value: data?.benchmarks ?? "—" },
+          { label: "模型", value: data?.models ?? "—" },
+          { label: "记录", value: data?.scores ?? "—" },
+          { label: "CI 披露", value: data ? `${data.ciDisclosureRate}%` : "—", danger: true },
         ].map(s => (
           <div key={s.label} className="rounded-sm hair-all/70 bg-background px-2.5 py-2">
             <div className={cn("tnum text-base leading-none", s.danger && "text-danger")}>
@@ -239,12 +234,12 @@ function HealthPanel() {
       <div className="mt-3 flex items-start gap-1.5 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 px-2.5 py-2">
         <AlertTriangle className="mt-0.5 size-3 shrink-0 text-caution" />
         <p className="text-[10.5px] leading-relaxed text-ink-500">
-          {t.desktop.saturationWarning.replace("{saturated}", String(data?.saturated ?? 0)).replace("{frontier}", String(data?.frontier ?? 0))}
+          {data?.saturated ?? 0} 项指标已饱和，{data?.frontier ?? 0} 项处于前沿。饱和指标上的排名差异多为噪声。
         </p>
       </div>
 
       <div className="mt-3">
-        <div className="mb-1.5 text-[12px] tracking-wide text-ink-500 uppercase">{t.desktop.lowestUtility}</div>
+        <div className="mb-1.5 text-[12px] tracking-wide text-ink-500 uppercase">最低效用指标</div>
         <div className="space-y-0.5">
           {low.map(b => (
             <div key={b.slug} className="flex items-center gap-2 rounded px-1 py-1 hover:bg-frost-mist/40">
@@ -260,11 +255,11 @@ function HealthPanel() {
       <div className="mt-3 grid grid-cols-2 gap-2 hair-t/70 pt-2.5">
         <div>
           <div className="tnum text-sm">{data?.avgTrust ?? "—"}</div>
-          <div className="text-[12px] text-ink-500">{t.desktop.avgTrust}</div>
+          <div className="text-[12px] text-ink-500">平均可信度</div>
         </div>
         <div>
           <div className="tnum text-sm">{data?.avgDiscriminative ?? "—"}</div>
-          <div className="text-[12px] text-ink-500">{t.desktop.avgDiscriminative}</div>
+          <div className="text-[12px] text-ink-500">平均分辨力</div>
         </div>
       </div>
     </div>
@@ -272,7 +267,6 @@ function HealthPanel() {
 }
 
 function StatusBar() {
-  const t = useT();
   const { data } = trpc.meta.overview.useQuery();
   const fresh = data?.freshness.fresh ?? 0;
   const stale = data?.freshness.stale ?? 0;
@@ -280,14 +274,14 @@ function StatusBar() {
     <div className="flex items-center gap-2 hair-t/70 bg-background px-3 py-1.5">
       <span className="flex items-center gap-1">
         <span className="size-1.5 rounded-full bg-[color:var(--signal-good)]" />
-        <span className="tnum text-[12px] text-ink-500">{fresh} {t.desktop.fresh}</span>
+        <span className="tnum text-[12px] text-ink-500">{fresh} 新鲜</span>
       </span>
       <span className="flex items-center gap-1">
         <span className="size-1.5 rounded-full bg-[color:var(--signal-danger)]" />
-        <span className="tnum text-[12px] text-ink-500">{stale} {t.desktop.stale}</span>
+        <span className="tnum text-[12px] text-ink-500">{stale} 陈旧</span>
       </span>
       <a href="/matrix" className="ml-auto text-[12px] text-frost-qing hover:underline">
-        {t.desktop.fullMatrix}
+        全量矩阵
       </a>
     </div>
   );

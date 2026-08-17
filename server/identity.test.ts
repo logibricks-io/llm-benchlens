@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as db from "./db";
+import { en } from "../client/src/i18n/en";
+import { zh } from "../client/src/i18n/zh";
 
 /**
  * Identity hygiene. Two different strings that denote the same real-world thing
@@ -60,15 +60,12 @@ describe("entity identity", () => {
   it("has a human-readable label for every sourceType actually stored", async () => {
     // A missing label leaks a raw snake_case value like "third_party_aggregator"
     // into the UI, which is exactly the kind of unexplained jargon this product
-    // exists to remove.
-    const badges = readFileSync(
-      resolve(__dirname, "..", "client", "src", "components", "MetaBadges.tsx"),
-      "utf8",
-    );
+    // exists to remove. Labels now live in the i18n packs, so check both.
     const rows = await db.listScores();
 
-    for (const t of new Set(rows.map(r => r.sourceType))) {
-      expect(badges.includes(`${t}:`), `SOURCE_LABELS missing "${t}"`).toBe(true);
+    for (const type of new Set(rows.map(r => r.sourceType))) {
+      expect(en.sourceType[type as keyof typeof en.sourceType], `en.sourceType missing "${type}"`).toBeTruthy();
+      expect(zh.sourceType[type as keyof typeof zh.sourceType], `zh.sourceType missing "${type}"`).toBeTruthy();
     }
   });
 
@@ -80,24 +77,32 @@ describe("entity identity", () => {
      * bare English identifiers next to Chinese ones. The vocabularies are closed
      * by design — assert that, rather than trusting each loader script to have
      * picked from the right list.
+     *
+     * The lookup used to grep shared/metaModel.ts for `<value>:`. Those Chinese
+     * label tables have been deleted (display copy in the shared layer is what
+     * leaked Chinese into the English UI), so resolve against the i18n packs —
+     * which is also what the pages actually render from.
      */
-    const meta = readFileSync(resolve(__dirname, "..", "shared", "metaModel.ts"), "utf8");
     const benchmarks = await db.listBenchmarks();
 
-    const fields: Array<[string, (b: (typeof benchmarks)[number]) => string]> = [
-      ["scoringMechanism", b => b.scoringMechanism],
-      ["strictness", b => b.strictness],
-      ["issuerStance", b => b.issuerStance],
-      ["contaminationRisk", b => b.contaminationRisk],
-      ["saturationStatus", b => b.saturationStatus],
-      ["capabilityDomain", b => b.capabilityDomain],
+    /* [db field, dictionary namespace, accessor] */
+    const fields: Array<[string, keyof typeof en, (b: (typeof benchmarks)[number]) => string]> = [
+      ["scoringMechanism", "mechanism", b => b.scoringMechanism],
+      ["strictness", "strictness", b => b.strictness],
+      ["issuerStance", "stance", b => b.issuerStance],
+      ["contaminationRisk", "contamination", b => b.contaminationRisk],
+      ["saturationStatus", "saturation", b => b.saturationStatus],
+      ["capabilityDomain", "capability", b => b.capabilityDomain],
     ];
 
     const missing: string[] = [];
-    for (const [field, get] of fields) {
+    for (const [field, ns, get] of fields) {
+      const enNs = en[ns] as Record<string, string>;
+      const zhNs = (zh as unknown as Record<string, Record<string, string>>)[ns];
       for (const value of new Set(benchmarks.map(get))) {
         if (!value) continue;
-        if (!meta.includes(`${value}:`)) missing.push(`${field}="${value}"`);
+        if (!enNs?.[value]) missing.push(`en ${field}="${value}"`);
+        if (!zhNs?.[value]) missing.push(`zh ${field}="${value}"`);
       }
     }
 

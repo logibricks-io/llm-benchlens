@@ -140,7 +140,9 @@ describe("scenario definitions", () => {
   });
 
   it("resolves by key and rejects unknown keys", () => {
-    expect(scenarioByKey("agentic_coding")?.title).toBeTruthy();
+    /* `title`/`summary` deliberately no longer exist on ScenarioDef — scenario
+       display copy is client dictionary data, keyed by scenario key. */
+    expect(scenarioByKey("agentic_coding")?.emphasisSlugs.length).toBeGreaterThan(0);
     expect(scenarioByKey("nope")).toBeUndefined();
   });
 });

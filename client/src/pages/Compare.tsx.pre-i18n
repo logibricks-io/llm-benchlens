@@ -1,11 +1,11 @@
 import {
   FreshnessDot,
   InfoHint,
+  NORMALIZED_EXPLAIN,
   SaturationBadge,
   SourceBadge,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
-import { useT } from "@/i18n";
 import { NoteBlock } from "@/components/MarginNote";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,14 +21,13 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { type CapabilityDomain } from "@shared/metaModel";
+import { CAPABILITY_LABELS, type CapabilityDomain } from "@shared/metaModel";
 import { ExternalLink, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
 export default function Compare() {
-  const t = useT();
   const params = new URLSearchParams(window.location.search);
   const initial = [params.get("a"), params.get("b")].filter((v): v is string => Boolean(v));
 
@@ -81,27 +80,27 @@ export default function Compare() {
 
   return (
     <WorkbenchLayout
-      title={t.compare.title}
+      title="对战台"
       subtitle={
         selected.length === 0
-          ? t.compare.subtitleEmpty
-          : t.compare.subtitleSelected.replace("{models}", String(picked.length)).replace("{benchmarks}", String(table.length))
+          ? "选择 2–4 个模型进行同尺对比"
+          : `${picked.length} 个模型 · ${table.length} 个可比指标`
       }
       readNext={[
-        { href: "/decide", label: t.compare.readNextDecide, why: t.compare.readNextDecideWhy },
-        { href: "/benchmarks", label: t.compare.readNextBenchmarks, why: t.compare.readNextBenchmarksWhy },
+        { href: "/decide", label: "场景决策", why: "不确定该比什么时，先给出场景" },
+        { href: "/benchmarks", label: "指标库", why: "查证这些尺各自的严格度与污染风险" },
       ]}
       aside={
         <>
-          <NoteBlock label={t.compare.noteSharedOnlyTitle}>
+          <NoteBlock label="为什么默认只看共同指标">
             <p>
-              {t.compare.noteSharedOnlyP1}
-              <strong className="text-ink-700">{t.compare.noteSharedOnlyP1Strong}</strong>
+              只有所有被选模型都测过的尺才构成对比。混入单方独有的记录，
+              <strong className="text-ink-700">看起来像差距，实际是覆盖差异</strong>。
             </p>
           </NoteBlock>
-          <NoteBlock label={t.compare.noteTraceableTitle}>
-            <p>{t.compare.noteTraceableP1}</p>
-            <p>{t.compare.noteTraceableP2}</p>
+          <NoteBlock label="每格都可追溯">
+            <p>悬停任一读数可看到原始分、归一化值、采集时间与出处链接。</p>
+            <p>无出处的分数不会进入本库。</p>
           </NoteBlock>
         </>
       }
@@ -111,11 +110,12 @@ export default function Compare() {
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2 rounded-sm hair-all px-2.5 py-1.5">
                 <Switch checked={sharedOnly} onCheckedChange={setSharedOnly} className="scale-90" />
-                <span className="text-xs whitespace-nowrap">{t.compare.sharedOnly}</span>
+                <span className="text-xs whitespace-nowrap">仅共同指标</span>
               </div>
             </TooltipTrigger>
             <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
-              {t.compare.sharedOnlyTooltip}
+              只有所有被选模型都测过的指标才构成真正的对比。关闭后会显示全部指标，但缺失格不代表能力弱，
+              只代表没有公开记录。
             </TooltipContent>
           </Tooltip>
         )
@@ -154,14 +154,14 @@ export default function Compare() {
                 className="h-[52px] gap-1.5 rounded-none border-dashed px-4 text-xs"
               >
                 <Plus className="size-3.5" />
-                {t.common.addModel}
+                添加模型
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[280px] p-0" align="start">
               <Command>
-                <CommandInput placeholder={t.common.searchModel} className="text-xs" />
+                <CommandInput placeholder="搜索模型…" className="text-xs" />
                 <CommandList>
-                  <CommandEmpty className="py-4 text-center text-xs text-ink-500">{t.common.noModelFound}</CommandEmpty>
+                  <CommandEmpty className="py-4 text-center text-xs text-ink-500">未找到模型</CommandEmpty>
                   <CommandGroup>
                     {all
                       .filter(m => !selected.includes(m.slug) && m.coverage > 0)
@@ -175,7 +175,7 @@ export default function Compare() {
                           <div className="flex w-full items-center justify-between gap-2">
                             <span className="truncate">{m.name}</span>
                             <span className="tnum shrink-0 text-[12px] text-ink-500">
-                              {t.common.recordsCount.replace("{n}", String(m.coverage))}
+                              {m.coverage} 条
                             </span>
                           </div>
                         </CommandItem>
@@ -192,10 +192,11 @@ export default function Compare() {
         <div className="hair-t py-16">
           <div className="max-w-[46ch]">
             <p className="text-ink-800 text-[19px] leading-snug font-medium">
-              {t.compare.emptyStateTitle}
+              从上方添加模型开始对比
             </p>
             <p className="ui text-ink-500 mt-2.5 text-[12px] leading-relaxed">
-              {t.compare.emptyStateDesc}
+              对战台只在共同测过的指标上做比较，并对每个数值标注出处与采集时间。
+              跨指标的总分差异会用归一化口径消除量纲影响。
             </p>
           </div>
         </div>
@@ -216,18 +217,18 @@ export default function Compare() {
                       {m.compositeScore ?? "—"}
                     </div>
                     <div className="mt-1 flex items-center gap-1 text-[12px] text-ink-500">
-                      {t.compare.compositeScore}
-                      <InfoHint>{t.metricExplain.normalized}</InfoHint>
+                      综合分
+                      <InfoHint>{NORMALIZED_EXPLAIN}</InfoHint>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="tnum text-sm">{m.coverage}</div>
-                    <div className="text-[12px] text-ink-500">{t.compare.evidenceCount}</div>
+                    <div className="text-[12px] text-ink-500">证据条数</div>
                   </div>
                 </div>
                 {m.priceOutput !== null && (
                   <div className="mt-2 hair-t pt-2 text-[12px] text-ink-500">
-                    {t.compare.priceOutput.replace("{price}", String(m.priceOutput))}
+                    输出 ${m.priceOutput} / 百万 token
                   </div>
                 )}
               </div>
@@ -239,7 +240,7 @@ export default function Compare() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="hair-b text-[12px] tracking-wide text-ink-500 uppercase">
-                  <th className="px-4 py-2 text-left">{t.compare.metric}</th>
+                  <th className="px-4 py-2 text-left">指标</th>
                   {picked.map((m, i) => (
                     <th key={m.slug} className="px-3 py-2 text-right">
                       <span style={{ color: PALETTE[i] }}>{m.name}</span>
@@ -258,7 +259,7 @@ export default function Compare() {
                           <div className="min-w-0">
                             <div className="truncate text-[13px]">{b.name}</div>
                             <div className="flex items-center gap-1.5 text-[12px] text-ink-500">
-                              <span>{t.capability[b.domain as CapabilityDomain] ?? b.domain}</span>
+                              <span>{CAPABILITY_LABELS[b.domain as CapabilityDomain] ?? b.domain}</span>
                               <span className="tnum">×{b.difficulty.toFixed(2)}</span>
                             </div>
                           </div>
@@ -270,7 +271,7 @@ export default function Compare() {
                         if (!cell) {
                           return (
                             <td key={m.slug} className="px-3 py-2 text-right">
-                              <span className="text-xs text-ink-400">{t.common.noRecord}</span>
+                              <span className="text-xs text-ink-400">无记录</span>
                             </td>
                           );
                         }
@@ -291,12 +292,12 @@ export default function Compare() {
                               </TooltipTrigger>
                               <TooltipContent className="w-[260px] space-y-1 text-xs">
                                 <div className="grid grid-cols-2 gap-x-3 text-ink-500">
-                                  <span>{t.compare.rawScore}</span>
+                                  <span>原始分</span>
                                   <span className="tnum text-right text-ink-900">{cell.rawScore}</span>
-                                  <span>{t.compare.normalized}</span>
+                                  <span>归一化</span>
                                   <span className="tnum text-right text-ink-900">{cell.normalized}</span>
-                                  <span>{t.compare.measuredAt}</span>
-                                  <span className="tnum text-right text-ink-900">{cell.measuredAt ?? t.common.unlabeled}</span>
+                                  <span>采集</span>
+                                  <span className="tnum text-right text-ink-900">{cell.measuredAt ?? "未标注"}</span>
                                 </div>
                                 <div className="pt-0.5">
                                   <SourceBadge sourceType={cell.sourceType} />
@@ -305,7 +306,7 @@ export default function Compare() {
                                   <a href={cell.sourceUrl} target="_blank" rel="noreferrer"
                                     className="flex items-center gap-1 text-frost-qing hover:underline">
                                     <ExternalLink className="size-3" />
-                                    <span className="truncate">{cell.sourceName ?? t.common.source}</span>
+                                    <span className="truncate">{cell.sourceName ?? "出处"}</span>
                                   </a>
                                 )}
                               </TooltipContent>
@@ -320,9 +321,9 @@ export default function Compare() {
             </table>
             {table.length === 0 && (
               <div className="px-4 py-8 text-center">
-                <p className="text-sm">{t.compare.noSharedMetrics}</p>
+                <p className="text-sm">这些模型没有共同测过的指标</p>
                 <p className="mt-1 text-xs text-ink-500">
-                  {t.compare.noSharedMetricsDesc}
+                  关闭「仅共同指标」可查看各自的记录，但请注意那不构成直接对比。
                 </p>
               </div>
             )}

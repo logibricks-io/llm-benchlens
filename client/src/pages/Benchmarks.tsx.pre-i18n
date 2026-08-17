@@ -1,12 +1,14 @@
 import {
   ContaminationBadge,
+  DISC_EXPLAIN,
   InfoHint,
   MechanismBadge,
   SaturationBadge,
   ScoreMeter,
   StanceBadge,
   StrictnessBadge,
-  useMetricExplain,
+  TRUST_EXPLAIN,
+  UTILITY_EXPLAIN,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { NoteBlock, NoteFigure } from "@/components/MarginNote";
@@ -18,19 +20,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
+  CAPABILITY_LABELS,
+  MECHANISM_LABELS,
+  SATURATION_LABELS,
+  STANCE_LABELS,
   type CapabilityDomain,
   type ScoringMechanism,
 } from "@shared/metaModel";
 import { AlertTriangle, ArrowUpDown, LayoutGrid, List, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useT } from "@/i18n";
 import { Link } from "wouter";
 
 const ALL = "__all__";
 
 export default function Benchmarks() {
-  const t = useT();
-  const metricExplain = useMetricExplain();
   const { data, isLoading } = trpc.benchmarks.list.useQuery();
   const initialDomain = new URLSearchParams(window.location.search).get("domain") ?? ALL;
 
@@ -90,8 +93,8 @@ export default function Benchmarks() {
       return [
         {
           key: "all",
-          label: t.benchmarks.sortByName,
-          note: t.benchmarks.alphabetical,
+          label: "按名称排列",
+          note: "字母顺序",
           items: entries,
         },
       ];
@@ -109,14 +112,14 @@ export default function Benchmarks() {
     const defs =
       sortBy === "difficulty"
         ? [
-            { key: "hard", label: t.benchmarks.difficultyHard, note: t.benchmarks.difficultyHardNote, lo: 1.6, hi: Infinity },
-            { key: "mid", label: t.benchmarks.difficultyMid, note: t.benchmarks.difficultyMidNote, lo: 1.2, hi: 1.6 },
-            { key: "loose", label: t.benchmarks.difficultyLoose, note: t.benchmarks.difficultyLooseNote, lo: -Infinity, hi: 1.2 },
+            { key: "hard", label: "最严的尺", note: "难度 ×1.60 以上", lo: 1.6, hi: Infinity },
+            { key: "mid", label: "中等严格", note: "×1.20 – ×1.60", lo: 1.2, hi: 1.6 },
+            { key: "loose", label: "宽松的尺", note: "×1.20 以下", lo: -Infinity, hi: 1.2 },
           ]
         : [
-            { key: "high", label: t.benchmarks.utilityHigh, note: t.benchmarks.utilityHighNote, lo: 60, hi: Infinity },
-            { key: "mid", label: t.benchmarks.utilityMid, note: t.benchmarks.utilityMidNote, lo: 40, hi: 60 },
-            { key: "low", label: t.benchmarks.utilityLow, note: t.benchmarks.utilityLowNote, lo: -Infinity, hi: 40 },
+            { key: "high", label: "现在最值得看", note: "60 分以上", lo: 60, hi: Infinity },
+            { key: "mid", label: "仍有参考价值", note: "40 – 60 分", lo: 40, hi: 60 },
+            { key: "low", label: "已难以分辨", note: "40 分以下", lo: -Infinity, hi: 40 },
           ];
 
     return defs
@@ -135,37 +138,37 @@ export default function Benchmarks() {
 
   return (
     <WorkbenchLayout
-      title={t.benchmarks.title}
-      subtitle={t.benchmarks.subtitle.replace("{filtered}", String(filtered.length)).replace("{total}", String(rows.length))}
+      title="指标库"
+      subtitle={`${filtered.length} / ${rows.length} 项评测的元模型档案`}
       readNext={[
-        { href: "/matrix", label: t.benchmarks.readNextMatrix, why: t.benchmarks.readNextMatrixWhy },
-        { href: "/decide", label: t.benchmarks.readNextDecide, why: t.benchmarks.readNextDecideWhy },
+        { href: "/matrix", label: "指标矩阵", why: "把这些尺并排，看模型在每把尺上的读数" },
+        { href: "/decide", label: "场景决策", why: "按落地场景挑出该看哪几把尺" },
       ]}
       aside={
         <>
-          <NoteBlock label={t.benchmarks.howToRead}>
+          <NoteBlock label="怎么读这一页">
             <p>
-              {t.benchmarks.howToReadP1_1}
-              <strong className="text-ink-700">{t.benchmarks.howToReadP1_2}</strong>
-              {t.benchmarks.howToReadP1_3}
+              每条档案中间那把尺的
+              <strong className="text-ink-700">物理长度就是难度系数</strong>
+              ，全库区间 0.61–2.03。尺越长，同样的读数含义越重。
             </p>
-            <p>{t.benchmarks.howToReadP2}</p>
+            <p>SOTA 标记落在尺上的位置，是这把尺当前被推到的最远处。</p>
           </NoteBlock>
-          <NoteBlock label={t.benchmarks.methodologyGap}>
+          <NoteBlock label="全库方法学缺口">
             <NoteFigure
               value={
                 rows.length > 0
                   ? `${Math.round((rows.filter(b => b.ciDisclosed).length / rows.length) * 100)}%`
                   : "—"
               }
-              caption={t.benchmarks.methodologyGapCaption}
+              caption="披露置信区间的指标占比。其余指标的分差无法判断是否只是采样噪声。"
             />
           </NoteBlock>
-          <NoteBlock label={t.benchmarks.utilityMeaning}>
+          <NoteBlock label="效用分的含义">
             <p>
-              {t.benchmarks.utilityMeaningP1_1}
-              <strong className="text-ink-700">{t.benchmarks.utilityMeaningP1_2}</strong>
-              {t.benchmarks.utilityMeaningP1_3}
+              它不回答"这个指标好不好"，而是
+              <strong className="text-ink-700">现在还值不值得看</strong>
+              ：已饱和的尺分辨力低，零证据的尺无从比较，两者都会被折减。
             </p>
           </NoteBlock>
         </>
@@ -178,11 +181,11 @@ export default function Benchmarks() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="utility">{t.benchmarks.sortByUtility}</SelectItem>
-              <SelectItem value="trust">{t.benchmarks.sortByTrust}</SelectItem>
-              <SelectItem value="disc">{t.benchmarks.sortByDisc}</SelectItem>
-              <SelectItem value="difficulty">{t.benchmarks.sortByDifficulty}</SelectItem>
-              <SelectItem value="name">{t.benchmarks.sortByNameOption}</SelectItem>
+              <SelectItem value="utility">按效用分</SelectItem>
+              <SelectItem value="trust">按可信度</SelectItem>
+              <SelectItem value="disc">按分辨力</SelectItem>
+              <SelectItem value="difficulty">按难度系数</SelectItem>
+              <SelectItem value="name">按名称</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center gap-3">
@@ -192,7 +195,7 @@ export default function Benchmarks() {
                 "transition-colors duration-150",
                 view === "grid" ? "text-ink-900" : "text-ink-400 hover:text-ink-700",
               )}
-              title={t.benchmarks.gridView}
+              title="档案视图"
             >
               <LayoutGrid className="size-3.5" />
             </button>
@@ -202,7 +205,7 @@ export default function Benchmarks() {
                 "transition-colors duration-150",
                 view === "list" ? "text-ink-900" : "text-ink-400 hover:text-ink-700",
               )}
-              title={t.benchmarks.listView}
+              title="表格视图"
             >
               <List className="size-3.5" />
             </button>
@@ -214,21 +217,21 @@ export default function Benchmarks() {
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={t.benchmarks.searchPlaceholder}
+          placeholder="搜索评测或出题方"
           className="h-8 w-[180px] text-xs"
         />
-        <FilterSelect value={domain} onChange={setDomain} placeholder={t.benchmarks.filterDomain}
-          options={domains.map(d => ({ value: d, label: t.capability[d as CapabilityDomain] ?? d }))} />
-        <FilterSelect value={saturation} onChange={setSaturation} placeholder={t.benchmarks.filterSaturation}
-          options={["frontier", "contested", "saturated"].map(s => ({ value: s, label: t.saturation[s as keyof typeof t.saturation] }))} />
-        <FilterSelect value={stance} onChange={setStance} placeholder={t.benchmarks.filterStance}
-          options={stances.map(s => ({ value: s, label: t.stance[s as keyof typeof t.stance] ?? s }))} />
-        <FilterSelect value={mechanism} onChange={setMechanism} placeholder={t.benchmarks.filterMechanism}
-          options={mechanisms.map(m => ({ value: m, label: t.mechanism[m as ScoringMechanism] ?? m }))} />
+        <FilterSelect value={domain} onChange={setDomain} placeholder="能力域"
+          options={domains.map(d => ({ value: d, label: CAPABILITY_LABELS[d as CapabilityDomain] ?? d }))} />
+        <FilterSelect value={saturation} onChange={setSaturation} placeholder="饱和状态"
+          options={["frontier", "contested", "saturated"].map(s => ({ value: s, label: SATURATION_LABELS[s as keyof typeof SATURATION_LABELS] }))} />
+        <FilterSelect value={stance} onChange={setStance} placeholder="出题方"
+          options={stances.map(s => ({ value: s, label: STANCE_LABELS[s as keyof typeof STANCE_LABELS] ?? s }))} />
+        <FilterSelect value={mechanism} onChange={setMechanism} placeholder="评分机制"
+          options={mechanisms.map(m => ({ value: m, label: MECHANISM_LABELS[m as ScoringMechanism] ?? m }))} />
         {(activeFilters > 0 || query) && (
           <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs"
             onClick={() => { setDomain(ALL); setSaturation(ALL); setStance(ALL); setMechanism(ALL); setQuery(""); }}>
-            <X className="size-3" />{t.benchmarks.clearFilters}
+            <X className="size-3" />清除
           </Button>
         )}
       </div>
@@ -256,7 +259,7 @@ export default function Benchmarks() {
                   {band.label}
                 </h2>
                 <span className="ui text-ink-400 text-[12px]">
-                  <span className="tnum">{band.items.length}</span> {t.benchmarks.itemsCount} · {band.note}
+                  <span className="tnum">{band.items.length}</span> 项 · {band.note}
                 </span>
               </div>
               {band.items.map(({ item: b, index: i }) => (
@@ -274,10 +277,10 @@ export default function Benchmarks() {
                   <div className="min-w-0">
                     <h3 className="text-ink-900 truncate text-[15px] leading-snug">{b.name}</h3>
                     <p className="ui text-ink-400 mt-1 truncate text-[12px]">
-                      {b.issuer ?? t.benchmarks.noIssuer}
+                      {b.issuer ?? "未标注出题方"}
                       {b.version ? ` · ${b.version}` : ""}
                       {" · "}
-                      {t.capability[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
+                      {CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                       <SaturationBadge status={b.saturationStatus} />
@@ -318,9 +321,9 @@ export default function Benchmarks() {
                     );
                   })()}
                   <div className="ui text-ink-400 mt-1 flex items-center gap-3 text-[9.5px]">
-                    <span className="tnum">{t.benchmarks.difficultyPrefix} ×{b.difficultyCoefficient.toFixed(2)}</span>
+                    <span className="tnum">难度 ×{b.difficultyCoefficient.toFixed(2)}</span>
                     <span className={cn("tnum", b.scoreCount === 0 && "text-caution")}>
-                      {b.scoreCount} {t.benchmarks.evidenceCount}
+                      {b.scoreCount} 条证据
                     </span>
                     {parseLeadingNumber(b.currentSotaScore) !== null &&
                       !(parseLeadingNumber(b.currentSotaScore)! <= 100) && (
@@ -332,11 +335,11 @@ export default function Benchmarks() {
                 {/* figures + caveats */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <ScoreMeter value={b.trustScore} label={t.benchmarks.trustLabel} explain={metricExplain.trust} size="sm" />
+                    <ScoreMeter value={b.trustScore} label="可信" explain={TRUST_EXPLAIN} size="sm" />
                     <ScoreMeter
                       value={b.discriminativePower}
-                      label={t.benchmarks.discLabel}
-                      explain={metricExplain.discriminative}
+                      label="分辨"
+                      explain={DISC_EXPLAIN}
                       size="sm"
                       tone="violet"
                     />
@@ -345,13 +348,13 @@ export default function Benchmarks() {
                         {b.scoreCount === 0 && (
                           <span className="inline-flex items-center gap-1">
                             <AlertTriangle className="size-2.5" />
-                            {t.benchmarks.noTraceableScores}
+                            无可追溯成绩
                           </span>
                         )}
                         {!b.ciDisclosed && (
                           <span className="inline-flex items-center gap-1">
                             <AlertTriangle className="size-2.5" />
-                            {t.benchmarks.noCiDisclosed}
+                            未披露 CI
                           </span>
                         )}
                       </div>
@@ -359,7 +362,7 @@ export default function Benchmarks() {
                   </div>
                   <div className="shrink-0 text-right">
                     <div className="tnum text-ink-900 text-[24px] leading-none">{b.utilityScore}</div>
-                    <div className="ui text-ink-400 mt-1 text-[12px]">{t.benchmarks.utilityLabel}</div>
+                    <div className="ui text-ink-400 mt-1 text-[12px]">效用分</div>
                   </div>
                 </div>
               </div>
@@ -373,22 +376,22 @@ export default function Benchmarks() {
           <table className="w-full text-sm">
             <thead>
               <tr className="hair-b ui text-ink-400 text-[12px] tracking-[0.14em] uppercase">
-                <th className="px-1 py-2 text-left font-normal">{t.benchmarks.thBenchmark}</th>
-                <th className="px-3 py-2 text-left font-normal">{t.benchmarks.thDomain}</th>
-                <th className="px-3 py-2 text-left font-normal">{t.benchmarks.thMechanism}</th>
-                <th className="px-3 py-2 text-left font-normal">{t.benchmarks.thStatus}</th>
+                <th className="px-1 py-2 text-left font-normal">评测</th>
+                <th className="px-3 py-2 text-left font-normal">能力域</th>
+                <th className="px-3 py-2 text-left font-normal">机制 / 严格度</th>
+                <th className="px-3 py-2 text-left font-normal">状态</th>
                 <th className="px-3 py-2 text-right font-normal">
-                  <span className="inline-flex items-center gap-1">{t.benchmarks.thUtility} <InfoHint>{metricExplain.utility}</InfoHint></span>
+                  <span className="inline-flex items-center gap-1">效用 <InfoHint>{UTILITY_EXPLAIN}</InfoHint></span>
                 </th>
                 <th className="px-3 py-2 text-right font-normal">
                   <span className="inline-flex items-center gap-1">
-                    {t.benchmarks.thEvidence}
-                    <InfoHint>{t.benchmarks.evidenceHint}</InfoHint>
+                    证据
+                    <InfoHint>该评测下已收录的可追溯成绩条数。为 0 时无法用于比较模型，效用分已被相应折减。</InfoHint>
                   </span>
                 </th>
-                <th className="px-3 py-2 text-right font-normal">{t.benchmarks.thTrust}</th>
-                <th className="px-3 py-2 text-right font-normal">{t.benchmarks.thDisc}</th>
-                <th className="px-1 py-2 text-right font-normal">{t.benchmarks.thDifficulty}</th>
+                <th className="px-3 py-2 text-right font-normal">可信</th>
+                <th className="px-3 py-2 text-right font-normal">分辨</th>
+                <th className="px-1 py-2 text-right font-normal">难度</th>
               </tr>
             </thead>
             <tbody>
@@ -401,7 +404,7 @@ export default function Benchmarks() {
                     </Link>
                   </td>
                   <td className="ui text-ink-500 px-3 py-2 text-[12px]">
-                    {t.capability[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
+                    {CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-x-2.5 gap-y-1">
@@ -440,12 +443,11 @@ function FilterSelect({
   value: string; onChange: (v: string) => void; placeholder: string;
   options: Array<{ value: string; label: string }>;
 }) {
-  const t = useT();
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue placeholder={placeholder} /></SelectTrigger>
       <SelectContent>
-        <SelectItem value={ALL}>{placeholder}{t.benchmarks.allSuffix}</SelectItem>
+        <SelectItem value={ALL}>{placeholder}（全部）</SelectItem>
         {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
       </SelectContent>
     </Select>

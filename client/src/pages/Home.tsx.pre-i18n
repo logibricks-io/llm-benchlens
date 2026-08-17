@@ -1,13 +1,12 @@
-import { InfoHint } from "@/components/MetaBadges";
+import { InfoHint, NORMALIZED_EXPLAIN } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { TrustScatter } from "@/components/TrustScatter";
 import { MiniRuler, ProjectionRuler, Ruler } from "@/components/Ruler";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { type CapabilityDomain } from "@shared/metaModel";
+import { CAPABILITY_LABELS, type CapabilityDomain } from "@shared/metaModel";
 import { normalizedScore } from "@shared/metaModel";
-import { useT } from "@/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 
@@ -52,7 +51,6 @@ function Marker({ n, label }: { n: string; label: string }) {
 }
 
 export default function Home() {
-  const t = useT();
   const overview = trpc.meta.overview.useQuery();
   const benchmarks = trpc.benchmarks.list.useQuery();
 
@@ -109,27 +107,28 @@ export default function Home() {
       : [];
 
   return (
-    <WorkbenchLayout title={t.nav.home} subtitle="" bare wide>
+    <WorkbenchLayout title="总览" subtitle="" bare wide>
       <div className="mx-auto max-w-[1180px] px-7 pb-24">
         {/* ───────────── viewport 1: the claim ───────────── */}
         <section className="pt-14 pb-20">
           <div className="grid gap-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             <div>
               <div className="ui text-ink-400 mb-6 text-[12px] tracking-[0.16em] uppercase">
-                {t.home.metaModel}
+                指标元模型 · Metric meta-model
               </div>
               {/* Type as the design: the claim is the largest object on screen. */}
               <h2 className="display text-ink-900 text-[54px] leading-[1.04] tracking-tight">
-                {t.home.scoresNotComparable}
+                分数
                 <br />
-                <span className="text-frost-qing">{t.home.scoresNotComparableHighlight}</span>
+                <span className="text-frost-qing">不可比</span>
               </h2>
               <p className="text-ink-600 mt-7 max-w-[46ch] text-[14px] leading-[1.95]">
-                {t.home.scoresNotComparableP1}
-                <span className="text-ink-900">{t.home.scoresNotComparableP1Highlight}</span>
+                全通过评分的法律指标只有个位数，已饱和的数学竞赛题接近满分。把它们并列在同一张表里，
+                <span className="text-ink-900">表格本身就在制造误读</span>。
               </p>
               <p className="text-ink-500 mt-4 max-w-[46ch] text-[13px] leading-[1.95]">
-                {t.home.scoresNotComparableP2}
+                BenchLens 先把每个评测拆解为「能力域 × 评分机制 × 严格度 × 饱和状态 ×
+                出题方立场 × 污染风险」的结构描述，再用由此推导的难度系数对分数做重标定。
               </p>
             </div>
 
@@ -145,29 +144,27 @@ export default function Home() {
                 <dl className="space-y-7">
                   <Figure
                     value={String(o.benchmarks)}
-                    label={t.home.includedBenchmarks}
-                    note={t.home.frontierBenchmarks.replace("{n}", String(o.frontier))}
+                    label="收录指标"
+                    note={`其中 ${o.frontier} 项仍处前沿未解`}
                   />
                   <Figure
                     value={String(o.scores)}
-                    label={t.home.evidenceCount}
-                    note={t.home.evidenceCoverage
-                      .replace("{b}", String(o.coveredBenchmarks))
-                      .replace("{m}", String(o.models))}
+                    label="条证据"
+                    note={`覆盖 ${o.coveredBenchmarks} 指标 · ${o.models} 模型 · 出处零缺失`}
                   />
                   <Figure
                     value={`${o.ciDisclosureRate}%`}
-                    label={t.home.ciDisclosure}
-                    note={t.home.ciDisclosedCount.replace("{n}", String(o.ciDisclosed))}
+                    label="披露置信区间"
+                    note={`仅 ${o.ciDisclosed} 项公布误差范围`}
                     tone="danger"
-                    hint={t.home.ciHint}
+                    hint="绝大多数评测不公布置信区间，这意味着榜单上 1–2 个百分点的差距通常无法判断是否为噪声。这是全行业最系统性的方法学缺陷。"
                   />
                   <Figure
                     value={String(o.saturated)}
-                    label={t.home.saturatedBenchmarks}
-                    note={t.home.saturatedNote}
+                    label="已饱和指标"
+                    note="分辨力接近枯竭，排名差异多为噪声"
                     tone="danger"
-                    hint={t.home.saturatedHint}
+                    hint="顶级模型得分已超过 85% 的指标。它们仍频繁出现在发布材料中，但几乎无法再区分模型强弱。"
                   />
                 </dl>
               )}
@@ -177,21 +174,21 @@ export default function Home() {
 
         {/* ───────────── viewport 2: the demonstration ───────────── */}
         <section ref={demoRef} className="hair-t py-20">
-          <Marker n={t.home.demoMarker} label={t.home.demoLabel} />
+          <Marker n="01" label="演示 · the same reading, two rules" />
           <div className="grid gap-12 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
             <div>
               <h3 className="display text-ink-900 text-[27px] leading-tight">
-                {t.home.demoTitle1.replace("{n}", String(DEMO_RAW))}
+                同一个 {DEMO_RAW} 分
                 <br />
-                {t.home.demoTitle2}
+                不是一回事
               </h3>
               <p className="text-ink-600 mt-5 text-[13px] leading-[1.95]">
-                {t.home.demoP1}
-                <span className="text-ink-900">{t.home.demoP1Highlight}</span>
-                {t.home.demoP1Suffix}
+                尺的长度就是这把评测的难度系数。宽松的评测是一把
+                <span className="text-ink-900">短尺</span>——同样的读数落在上面，
+                实际含义弱得多。
               </p>
               <p className="text-ink-500 mt-3 text-[12px] leading-[1.9]">
-                {t.home.demoP2}
+                归一化就是把读数投射到同一把中性尺上。这是跨指标比较的唯一合法口径。
               </p>
             </div>
             <div className="lg:pt-3">
@@ -206,7 +203,7 @@ export default function Home() {
 
         {/* ───────────── viewport 3: the evidence ───────────── */}
         <section className="hair-t py-20">
-          <Marker n={t.home.evidenceMarker} label={t.home.evidenceLabel} />
+          <Marker n="02" label="证据 · which rules still measure" />
           <div className="grid gap-x-10 gap-y-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             <div>
               {benchmarks.isLoading && bms.length === 0 ? (
@@ -219,17 +216,15 @@ export default function Home() {
             {/* Marginal notes hang outside the main column — the "designed" signal. */}
             <aside className="hair-l pl-6">
               <div className="ui text-ink-400 mb-4 text-[12px] tracking-[0.16em] uppercase">
-                {t.home.marginalNotes}
+                边注
               </div>
               <div className="space-y-7">
-                <UtilityList title={t.home.mostUseful} rows={topUtility} tone="good" trustAbbr={t.home.trustAbbr} discAbbr={t.home.discAbbr} />
+                <UtilityList title="最值得看" rows={topUtility} tone="good" />
                 <UtilityList
-                  title={t.home.leastUseful}
+                  title="最不值得看"
                   rows={lowUtility}
                   tone="danger"
-                  note={t.home.leastUsefulNote}
-                  trustAbbr={t.home.trustAbbr}
-                  discAbbr={t.home.discAbbr}
+                  note="这些常出现在发布材料最显眼处，却已饱和或披露不足——发布图上最醒目的数字，往往信息量最低。"
                 />
               </div>
             </aside>
@@ -239,7 +234,7 @@ export default function Home() {
           <div className="hair-t mt-14 grid gap-x-10 gap-y-6 pt-7 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div>
               <div className="ui text-ink-400 mb-4 text-[12px] tracking-[0.16em] uppercase">
-                {t.home.methodologyVitals}
+                方法学体检 · 全库均值
               </div>
               {overview.isLoading || !o ? (
                 <div className="space-y-4">
@@ -248,27 +243,24 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <VitalRow label={t.home.avgTrust} value={o.avgTrust} />
-                  <VitalRow label={t.home.avgDiscriminative} value={o.avgDiscriminative} tone="neutral" />
+                  <VitalRow label="平均可信度" value={o.avgTrust} />
+                  <VitalRow label="平均分辨力" value={o.avgDiscriminative} tone="neutral" />
                 </div>
               )}
               <p className="text-ink-500 mt-6 text-[12px] leading-[1.9]">
-                {t.home.normalizationBasis.replace("{explain}", t.metricExplain.normalized)}
+                归一化口径：{NORMALIZED_EXPLAIN}
               </p>
               {o && (
                 <p className="text-ink-500 mt-2 text-[12px] leading-[1.9]">
-                  {t.home.freshnessStats
-                    .replace("{fresh}", String(o.freshness.fresh))
-                    .replace("{recent}", String(o.freshness.recent))
-                    .replace("{aging}", String(o.freshness.aging))
-                    .replace("{stale}", String(o.freshness.stale))}
+                  证据新鲜度：30 天内 {o.freshness.fresh} 条 · 90 天内 {o.freshness.recent} 条 · 8
+                  个月内 {o.freshness.aging} 条 · 陈旧 {o.freshness.stale} 条。
                 </p>
               )}
             </div>
 
             <div>
               <div className="ui text-ink-400 mb-4 text-[12px] tracking-[0.16em] uppercase">
-                {t.home.domainCoverage}
+                能力域覆盖
               </div>
               <div className="grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
                 {benchmarks.isLoading && domainRows.length === 0
@@ -284,7 +276,7 @@ export default function Home() {
                           className="group flex items-baseline gap-2.5 py-0.5"
                         >
                           <span className="text-ink-500 group-hover:text-ink-900 w-[86px] shrink-0 truncate text-[12px] transition-colors duration-150">
-                            {t.capability[domain as CapabilityDomain] ?? domain}
+                            {CAPABILITY_LABELS[domain as CapabilityDomain] ?? domain}
                           </span>
                           <MiniRuler
                             value={(count / max) * 100}
@@ -305,23 +297,20 @@ export default function Home() {
 
         {/* ───────────── viewport 4: the doors ───────────── */}
         <section className="hair-t py-20">
-          <Marker n={t.home.doorsMarker} label={t.home.doorsLabel} />
+          <Marker n="03" label="入口 · into the data" />
           {/* Deliberately unequal weights: the matrix is the product. */}
           <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             <Link href="/matrix" className="group block">
               <div className="recessed px-7 py-8 transition-colors duration-200">
                 <div className="ui text-ink-400 text-[12px] tracking-[0.16em] uppercase">
-                  {t.home.matrixNum}
+                  01 / 全量对比
                 </div>
                 <div className="display text-ink-900 mt-3 text-[30px] leading-none">
-                  {t.home.matrixTitle}
+                  指标矩阵
                 </div>
                 <div className="ui text-ink-500 mt-3 text-[12px]">
-                  {o
-                    ? t.home.matrixNote
-                        .replace("{b}", String(o.benchmarks))
-                        .replace("{m}", String(o.models))
-                    : t.home.matrixNoteFallback}
+                  {o ? `${o.benchmarks} 指标 × ${o.models} 模型` : "全量对比"}，
+                  每格可追溯到出处
                 </div>
                 <div className="mt-6">
                   <Ruler difficulty={2.03} height={16} ticks={20} />
@@ -329,10 +318,10 @@ export default function Home() {
               </div>
             </Link>
             <div className="grid content-start gap-4">
-              <DoorLink href="/decide" n={t.home.decideNum} label={t.home.decideTitle} note={t.home.decideNote} />
-              <DoorLink href="/compare" n={t.home.compareNum} label={t.home.compareTitle} note={t.home.compareNote} />
-              <DoorLink href="/benchmarks" n={t.home.benchmarksNum} label={t.home.benchmarksTitle} note={t.home.benchmarksNote} />
-              <DoorLink href="/radar" n={t.home.radarNum} label={t.home.radarTitle} note={t.home.radarNote} />
+              <DoorLink href="/decide" n="02" label="按场景选型" note="给定场景与预算，输出排序与依据" />
+              <DoorLink href="/compare" n="03" label="对战台" note="两到四个模型，只比共同指标" />
+              <DoorLink href="/benchmarks" n="04" label="指标库" note="逐项元模型档案与解读警示" />
+              <DoorLink href="/radar" n="05" label="发布雷达" note="最近的前沿发布事件" />
             </div>
           </div>
         </section>
@@ -398,8 +387,6 @@ function UtilityList({
   rows,
   tone,
   note,
-  trustAbbr,
-  discAbbr,
 }: {
   title: string;
   rows: Array<{
@@ -411,9 +398,6 @@ function UtilityList({
   }>;
   tone: "good" | "danger";
   note?: string;
-  /* Passed in rather than read via useT: keeps this a pure presentational leaf. */
-  trustAbbr: string;
-  discAbbr: string;
 }) {
   return (
     <div>
@@ -443,13 +427,13 @@ function UtilityList({
                     {b.name}
                   </span>
                 </div>
-                <div className="tnum text-ink-400 mt-0.5 pl-[42px] text-[11px]">
-                  {trustAbbr} {b.trustScore} · {discAbbr} {b.discriminativePower}
+                <div className="tnum text-ink-400 mt-0.5 pl-[42px] text-[9.5px]">
+                  信 {b.trustScore} · 辨 {b.discriminativePower}
                 </div>
               </Link>
             ))}
       </div>
-      {note && <p className="text-ink-500 mt-3 text-[12px] leading-[1.8]">{note}</p>}
+      {note && <p className="text-ink-500 mt-3 text-[10.5px] leading-[1.8]">{note}</p>}
     </div>
   );
 }

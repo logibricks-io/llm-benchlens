@@ -1,8 +1,12 @@
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
+  CAPABILITY_LABELS,
+  CONTAMINATION_LABELS,
+  SATURATION_LABELS,
+  SATURATION_EXPLAIN,
+  STRICTNESS_LABELS,
   type CapabilityDomain,
-  type ScenarioKey,
 } from "@shared/metaModel";
 import {
   AlertTriangle,
@@ -20,8 +24,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { useT } from "@/i18n";
-import type { Dict } from "@/i18n/en";
 
 /** Horizontal swipe detection for card decks. */
 function useSwipe(onLeft: () => void, onRight: () => void) {
@@ -65,19 +67,15 @@ function useSwipe(onLeft: () => void, onRight: () => void) {
 
 type Tab = "radar" | "browse" | "models" | "duel" | "decide";
 
-function getTabs(t: Dict): Array<{ key: Tab; label: string; icon: typeof Radio }> {
-  return [
-    { key: "radar", label: t.nav.radar, icon: Radio },
-    { key: "browse", label: t.mobile.browse, icon: Database },
-    { key: "models", label: t.nav.models, icon: Sparkles },
-    { key: "duel", label: t.nav.compare, icon: Layers },
-    { key: "decide", label: t.nav.decide, icon: Compass },
-  ];
-}
+const TABS: Array<{ key: Tab; label: string; icon: typeof Radio }> = [
+  { key: "radar", label: "雷达", icon: Radio },
+  { key: "browse", label: "指标", icon: Database },
+  { key: "models", label: "模型", icon: Sparkles },
+  { key: "duel", label: "对比", icon: Layers },
+  { key: "decide", label: "决策", icon: Compass },
+];
 
 export default function Mobile() {
-  const t = useT();
-  const TABS = getTabs(t);
   // Tab lives in the URL, not in component state: on a PWA installed to the
   // home screen a shared link or a reload must land on the same panel, and the
   // OS back gesture should step back through panels rather than leaving the app.
@@ -129,12 +127,12 @@ export default function Mobile() {
           </div>
           <span className="text-[15px] tracking-tight">BenchLens</span>
         </div>
-        <a href="/" className="text-[12px] text-ink-500">{t.mobile.desktopVersion}</a>
+        <a href="/" className="text-[12px] text-ink-500">桌面版</a>
       </header>
 
       {offline && (
         <div className="shrink-0 border-b border-[color:var(--signal-caution)]/30 bg-[color:var(--signal-caution)]/10 px-4 py-1.5 text-[12px] leading-relaxed text-caution">
-          {t.mobile.offlineWarning}
+          离线中 · 显示的是上次加载的成绩，每条记录的出处与采集时间仍然有效
         </div>
       )}
 
@@ -147,13 +145,13 @@ export default function Mobile() {
       </main>
 
       <nav className="flex shrink-0 hair-t bg-sidebar pb-[env(safe-area-inset-bottom)]">
-        {TABS.map(tabItem => {
-          const Icon = tabItem.icon;
-          const active = tab === tabItem.key;
+        {TABS.map(t => {
+          const Icon = t.icon;
+          const active = tab === t.key;
           return (
             <button
-              key={tabItem.key}
-              onClick={() => setTab(tabItem.key)}
+              key={t.key}
+              onClick={() => setTab(t.key)}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-2.5 transition-transform duration-150 active:scale-[0.94]",
                 active ? "text-frost-qing" : "text-ink-500",
@@ -161,7 +159,7 @@ export default function Mobile() {
               style={{ transitionTimingFunction: "var(--ease-out)" }}
             >
               <Icon className="size-[18px]" />
-              <span className="text-[12px]">{tabItem.label}</span>
+              <span className="text-[12px]">{t.label}</span>
             </button>
           );
         })}
@@ -174,7 +172,6 @@ export default function Mobile() {
 
 /** Push-style release feed — the mobile home surface. */
 function RadarTab() {
-  const t = useT();
   const releases = trpc.releases.feed.useQuery({ limit: 20 });
   const overview = trpc.meta.overview.useQuery();
   const o = overview.data;
@@ -184,31 +181,32 @@ function RadarTab() {
       <div className="relative mb-4 overflow-hidden rounded-sm hair-all p-4">
         <div className="absolute inset-0 bg-gradient-to-br from-card via-card/90 to-card/50" />
         <div className="relative">
-          <div className="text-[12px] tracking-wide text-frost-qing uppercase">{t.mobile.dataFoundation}</div>
+          <div className="text-[12px] tracking-wide text-frost-qing uppercase">数据基座</div>
           <div className="mt-2 flex items-baseline gap-4">
             <div>
               <div className="tnum text-2xl leading-none">{o?.benchmarks ?? "—"}</div>
-              <div className="mt-0.5 text-[12px] text-ink-500">{t.common.benchmarks}</div>
+              <div className="mt-0.5 text-[12px] text-ink-500">指标</div>
             </div>
             <div>
               <div className="tnum text-2xl leading-none">{o?.models ?? "—"}</div>
-              <div className="mt-0.5 text-[12px] text-ink-500">{t.common.models}</div>
+              <div className="mt-0.5 text-[12px] text-ink-500">模型</div>
             </div>
             <div>
               <div className="tnum text-2xl leading-none">{o?.scores ?? "—"}</div>
-              <div className="mt-0.5 text-[12px] text-ink-500">{t.common.records}</div>
+              <div className="mt-0.5 text-[12px] text-ink-500">记录</div>
             </div>
           </div>
           <div className="mt-3 flex items-start gap-1.5 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 px-2.5 py-2">
             <AlertTriangle className="mt-0.5 size-3 shrink-0 text-caution" />
             <p className="text-[12px] leading-relaxed text-ink-500">
-              {t.mobile.ciWarning.replace("{ci}", String(o?.ciDisclosureRate ?? 0)).replace("{sat}", String(o?.saturated ?? 0))}
+              全库仅 <span className="tnum text-caution">{o?.ciDisclosureRate ?? 0}%</span> 的
+              指标披露置信区间，{o?.saturated ?? 0} 项已饱和。榜单上的小幅差距通常无法与噪声区分。
             </p>
           </div>
         </div>
       </div>
 
-      <h2 className="mb-2 px-0.5 text-[13px]">{t.nav.radar}</h2>
+      <h2 className="mb-2 px-0.5 text-[13px]">发布雷达</h2>
       <div className="space-y-2">
         {(releases.data ?? []).map(r => (
           <div key={r.id} className="rounded-sm hair-all bg-paper p-3.5">
@@ -223,7 +221,7 @@ function RadarTab() {
             {r.sourceUrl && (
               <a href={r.sourceUrl} target="_blank" rel="noreferrer"
                 className="mt-2 inline-flex items-center gap-1 text-[12px] text-frost-qing">
-                <ExternalLink className="size-3" />{t.common.source}
+                <ExternalLink className="size-3" />出处
               </a>
             )}
           </div>
@@ -242,7 +240,6 @@ function RadarTab() {
 
 /** Card-based benchmark browsing with a bottom sheet for detail. */
 function BrowseTab() {
-  const t = useT();
   const { data } = trpc.benchmarks.list.useQuery();
   const [query, setQuery] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -263,7 +260,7 @@ function BrowseTab() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={t.mobile.searchBenchmarks}
+          placeholder="搜索指标"
           className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[13px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
         />
       </div>
@@ -280,21 +277,21 @@ function BrowseTab() {
               <div className="min-w-0">
                 <div className="truncate text-[14px]">{b.name}</div>
                 <div className="mt-0.5 truncate text-[12px] text-ink-500">
-                  {t.capability[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
+                  {CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}
                   {b.issuer ? ` · ${b.issuer}` : ""}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <div className="text-right">
                   <div className="tnum text-lg leading-none text-frost-qing">{b.utilityScore}</div>
-                  <div className="mt-0.5 text-[12px] text-ink-500">{t.common.utility}</div>
+                  <div className="mt-0.5 text-[12px] text-ink-500">效用</div>
                 </div>
                 <ChevronRight className="size-4 text-ink-500/50" />
               </div>
             </div>
             <div className="mt-2.5 flex items-center gap-1.5">
-              <MiniBar label={t.mobile.trustShort} value={b.trustScore} color="var(--signal-contested)" />
-              <MiniBar label={t.mobile.discShort} value={b.discriminativePower} color="var(--signal-frontier)" />
+              <MiniBar label="信" value={b.trustScore} color="var(--signal-contested)" />
+              <MiniBar label="辨" value={b.discriminativePower} color="var(--signal-frontier)" />
               <span
                 className={cn(
                   "ml-auto shrink-0 rounded px-1.5 py-0.5 text-[12px]",
@@ -305,7 +302,7 @@ function BrowseTab() {
                       : "bg-[color:var(--signal-contested)]/12 text-[color:var(--signal-contested)]",
                 )}
               >
-                {t.saturation[b.saturationStatus as keyof typeof t.saturation]}
+                {SATURATION_LABELS[b.saturationStatus as keyof typeof SATURATION_LABELS]}
               </span>
             </div>
           </button>
@@ -331,7 +328,6 @@ function MiniBar({ label, value, color }: { label: string; value: number; color:
 
 /** Card-based model browsing — the mobile counterpart of the desktop model库. */
 function ModelsTab() {
-  const t = useT();
   const { data } = trpc.models.list.useQuery();
   const [query, setQuery] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
@@ -354,7 +350,7 @@ function ModelsTab() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={t.mobile.searchModels}
+          placeholder="搜索模型或厂商"
           className="h-10 w-full rounded-sm hair-all bg-paper pr-3 pl-9 text-[13px] outline-none placeholder:text-ink-500 focus:border-frost-qing/40"
         />
       </div>
@@ -367,7 +363,7 @@ function ModelsTab() {
             : "border-rule bg-paper text-ink-500",
         )}
       >
-        {t.mobile.openWeightsOnly}
+        仅开放权重
       </button>
 
       <div className="space-y-2">
@@ -384,11 +380,11 @@ function ModelsTab() {
                   <span>{m.provider}</span>
                   {m.license === "open" && (
                     <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[12px] text-good">
-                      {t.common.openWeights}
+                      开放权重
                     </span>
                   )}
-                  {m.status === "superseded" && <span className="text-ink-400">{t.common.superseded}</span>}
-                  <span>· {t.mobile.evidenceCount.replace("{n}", String(m.coverage))}</span>
+                  {m.status === "superseded" && <span className="text-ink-400">已被取代</span>}
+                  <span>· {m.coverage} 条证据</span>
                   {m.priceOutput !== null && <span>· ${m.priceOutput}/M</span>}
                 </div>
                 <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-frost-mist/50">
@@ -401,7 +397,7 @@ function ModelsTab() {
                   <div className="mt-2 flex flex-wrap gap-1">
                     {m.domains.slice(0, 3).map(d => (
                       <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px] text-ink-500">
-                        {t.capability[d as CapabilityDomain] ?? d}
+                        {CAPABILITY_LABELS[d as CapabilityDomain] ?? d}
                       </span>
                     ))}
                     {m.domains.length > 3 && (
@@ -420,7 +416,6 @@ function ModelsTab() {
 
 /** Bottom sheet detail — mobile's answer to the desktop detail page. */
 function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }) {
-  const t = useT();
   const { data, isLoading } = trpc.benchmarks.detail.useQuery({ slug });
 
   return (
@@ -448,15 +443,15 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
           <div className="p-4">
             <h2 className="text-[17px] leading-tight">{data.benchmark.name}</h2>
             <p className="mt-1 text-[12px] text-ink-500">
-              {data.benchmark.issuer ?? t.mobile.noIssuer}
+              {data.benchmark.issuer ?? "未标注出题方"}
               {data.benchmark.version ? ` · ${data.benchmark.version}` : ""}
             </p>
 
             <div className="mt-3 grid grid-cols-3 gap-2">
               {[
-                { label: t.common.utility, value: data.benchmark.utilityScore, color: "var(--signal-contested)" },
-                { label: t.common.trust, value: data.benchmark.trustScore, color: "var(--signal-good)" },
-                { label: t.common.resolution, value: data.benchmark.discriminativePower, color: "var(--signal-frontier)" },
+                { label: "效用分", value: data.benchmark.utilityScore, color: "var(--signal-contested)" },
+                { label: "可信度", value: data.benchmark.trustScore, color: "var(--signal-good)" },
+                { label: "分辨力", value: data.benchmark.discriminativePower, color: "var(--signal-frontier)" },
               ].map(m => (
                 <div key={m.label} className="rounded-sm hair-all bg-background p-2.5 text-center">
                   <div className="tnum text-xl leading-none" style={{ color: m.color }}>{m.value}</div>
@@ -466,29 +461,29 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
             </div>
 
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <Tag>{t.saturation[data.benchmark.saturationStatus as keyof typeof t.saturation]}</Tag>
-              <Tag>{t.strictness[data.benchmark.strictness as keyof typeof t.strictness]}</Tag>
-              <Tag>{t.mobile.difficultyMultiplier.replace("{n}", data.benchmark.difficultyCoefficient.toFixed(2))}</Tag>
+              <Tag>{SATURATION_LABELS[data.benchmark.saturationStatus as keyof typeof SATURATION_LABELS]}</Tag>
+              <Tag>{STRICTNESS_LABELS[data.benchmark.strictness as keyof typeof STRICTNESS_LABELS]}</Tag>
+              <Tag>难度 ×{data.benchmark.difficultyCoefficient.toFixed(2)}</Tag>
               {data.benchmark.contaminationRisk !== "low" && (
                 <Tag tone="caution">
-                  {t.contamination[data.benchmark.contaminationRisk as keyof typeof t.contamination]}
+                  {CONTAMINATION_LABELS[data.benchmark.contaminationRisk as keyof typeof CONTAMINATION_LABELS]}
                 </Tag>
               )}
-              {!data.benchmark.ciDisclosed && <Tag tone="caution">{t.mobile.noCi}</Tag>}
+              {!data.benchmark.ciDisclosed && <Tag tone="caution">未披露 CI</Tag>}
             </div>
 
             <div className="mt-3 rounded-sm hair-all bg-background p-3">
-              <div className="text-[12px] text-frost-qing">{t.mobile.whatItMeasures}</div>
+              <div className="text-[12px] text-frost-qing">这个指标测什么</div>
               <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
                 {data.benchmark.scenarioMapping ??
-                  t.saturationExplain[data.benchmark.saturationStatus as keyof typeof t.saturationExplain]}
+                  SATURATION_EXPLAIN[data.benchmark.saturationStatus as keyof typeof SATURATION_EXPLAIN]}
               </p>
             </div>
 
             {data.benchmark.interpretationCaveat && (
               <div className="mt-2 rounded-sm border border-[color:var(--signal-caution)]/25 bg-[color:var(--signal-caution)]/8 p-3">
                 <div className="flex items-center gap-1 text-[12px] text-caution">
-                  <AlertTriangle className="size-3" />{t.mobile.interpretationCaveat}
+                  <AlertTriangle className="size-3" />解读警示
                 </div>
                 <p className="mt-1 text-[12px] leading-relaxed text-ink-500">
                   {data.benchmark.interpretationCaveat}
@@ -498,7 +493,7 @@ function BenchmarkSheet({ slug, onClose }: { slug: string; onClose: () => void }
 
             {data.leaderboard.length > 0 && (
               <div className="mt-3">
-                <div className="mb-1.5 text-[12px] text-ink-500">{t.mobile.scoreRecords}</div>
+                <div className="mb-1.5 text-[12px] text-ink-500">分数记录</div>
                 <div className="space-y-1">
                   {data.leaderboard.slice(0, 12).map((r, i) => (
                     <div key={r.id} className="flex items-center gap-2 rounded-sm bg-background px-2.5 py-2">
@@ -539,7 +534,6 @@ function Tag({ children, tone }: { children: React.ReactNode; tone?: "caution" }
 
 /** Swipeable two-model duel: one benchmark per card, flick through them. */
 function DuelTab() {
-  const t = useT();
   const models = trpc.models.list.useQuery();
   const all = (models.data ?? []).filter(m => m.coverage >= 3);
   const [a, setA] = useState<string | null>(null);
@@ -567,8 +561,8 @@ function DuelTab() {
   }, [compare.data, a, b, slugs.length]);
 
   const card = cards[idx];
-  const nameA = all.find(m => m.slug === a)?.name ?? t.mobile.modelA;
-  const nameB = all.find(m => m.slug === b)?.name ?? t.mobile.modelB;
+  const nameA = all.find(m => m.slug === a)?.name ?? "模型 A";
+  const nameB = all.find(m => m.slug === b)?.name ?? "模型 B";
 
   const next = () => setIdx(i => Math.min(cards.length - 1, i + 1));
   const prev = () => setIdx(i => Math.max(0, i - 1));
@@ -584,13 +578,13 @@ function DuelTab() {
       {slugs.length < 2 ? (
         <div className="flex h-[300px] items-center justify-center rounded-sm hair-all">
           <p className="px-8 text-center text-[12px] leading-relaxed text-ink-500">
-            {t.mobile.duelEmptyState}
+            选择两个模型，逐张翻看它们在共同测过的指标上的差距。
           </p>
         </div>
       ) : cards.length === 0 ? (
         <div className="rounded-sm hair-all bg-paper p-6 text-center">
-          <p className="text-[13px]">{t.mobile.noSharedBenchmarks}</p>
-          <p className="mt-1 text-[12px] text-ink-500">{t.mobile.tryAnotherPair}</p>
+          <p className="text-[13px]">没有共同测过的指标</p>
+          <p className="mt-1 text-[12px] text-ink-500">换一组模型再试。</p>
         </div>
       ) : (
         <>
@@ -604,14 +598,14 @@ function DuelTab() {
           >
             <div className="flex items-center justify-between">
               <span className="text-[12px] text-ink-500">
-                {t.capability[card.domain as CapabilityDomain] ?? card.domain}
+                {CAPABILITY_LABELS[card.domain as CapabilityDomain] ?? card.domain}
               </span>
               <span className="tnum text-[12px] text-ink-500">
                 {idx + 1} / {cards.length}
               </span>
             </div>
             <h3 className="mt-1.5 text-[16px] leading-tight">{card.name}</h3>
-            <div className="tnum mt-0.5 text-[12px] text-ink-500">{t.mobile.difficultyMultiplier.replace("{n}", card.difficulty.toFixed(2))}</div>
+            <div className="tnum mt-0.5 text-[12px] text-ink-500">难度系数 ×{card.difficulty.toFixed(2)}</div>
 
             <div className="mt-4 space-y-3">
               <DuelBar name={nameA} raw={card.ar} value={card.av} color="var(--chart-1)" win={(card.av ?? 0) >= (card.bv ?? 0)} />
@@ -639,12 +633,13 @@ function DuelTab() {
                 disabled={idx >= cards.length - 1}
                 className="rounded-sm bg-frost-qing px-4 py-2 text-[12px] text-paper transition-transform duration-150 active:scale-[0.95] disabled:opacity-30"
               >
-                {t.mobile.nextItem}
+                下一项
               </button>
             </div>
           </div>
           <p className="mt-3 px-1 text-[12px] leading-relaxed text-ink-500">
-            {t.mobile.duelHint}
+            左右滑动卡片翻看下一个指标。条形长度为归一化分，括号内为原始分。
+            只显示两个模型都测过的指标——单方缺失不构成对比。
           </p>
         </>
       )}
@@ -678,19 +673,18 @@ function ModelPicker({
   label: string; value: string | null; onChange: (v: string) => void;
   options: Array<{ slug: string; name: string; provider: string }>; exclude: string | null; color: string;
 }) {
-  const t = useT();
   return (
     <div className="rounded-sm hair-all bg-paper p-2.5" style={{ borderColor: `color-mix(in oklch, ${color} 30%, transparent)` }}>
       <div className="mb-1 flex items-center gap-1.5">
-        <span className="size-1.5 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-[12px] text-ink-500">{t.mobile.modelLabel.replace("{label}", label)}</span>
+        <span className="size-1.5 rounded-full" style={{ background: color }} />
+        <span className="text-[12px] text-ink-500">模型 {label}</span>
       </div>
       <select
         value={value ?? ""}
         onChange={e => onChange(e.target.value)}
         className="w-full bg-transparent text-[12px] outline-none"
       >
-        <option value="" disabled>{t.mobile.pleaseSelect}</option>
+        <option value="" disabled>请选择</option>
         {options.filter(o => o.slug !== exclude).map(o => (
           <option key={o.slug} value={o.slug} className="bg-paper">{o.name}</option>
         ))}
@@ -701,7 +695,6 @@ function ModelPicker({
 
 /** Scenario decision, reduced to a single-column ranked list. */
 function DecideTab() {
-  const t = useT();
   const scenarios = trpc.meta.scenarios.useQuery();
   const [scenario, setScenario] = useState("agentic_coding");
   const rec = trpc.recommend.byScenario.useQuery({ scenario });
@@ -720,15 +713,13 @@ function DecideTab() {
                 : "border-rule bg-paper text-ink-500",
             )}
           >
-            {t.scenario[s.key as ScenarioKey] ?? s.key}
+            {s.title}
           </button>
         ))}
       </div>
 
       {rec.data?.scenario && (
-        <p className="mb-3 px-0.5 text-[12px] leading-relaxed text-ink-500">
-          {t.scenarioSummary[rec.data.scenario.key as ScenarioKey] ?? ""}
-        </p>
+        <p className="mb-3 px-0.5 text-[12px] leading-relaxed text-ink-500">{rec.data.scenario.summary}</p>
       )}
 
       <div className="space-y-2">
@@ -749,7 +740,7 @@ function DecideTab() {
                   <span className="tnum shrink-0 text-[15px] text-frost-qing">{r.fitScore}</span>
                 </div>
                 <div className="mt-0.5 text-[12px] text-ink-500">
-                  {r.provider} · {t.mobile.evidenceCount.replace("{n}", String(r.evidenceCount))}
+                  {r.provider} · {r.evidenceCount} 条证据
                   {r.priceOutput !== null && ` · $${r.priceOutput}/M`}
                 </div>
                 <div className="mt-2 space-y-1">

@@ -1,8 +1,7 @@
 import { InfoHint } from "@/components/MetaBadges";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { type SaturationStatus } from "@shared/metaModel";
+import { SATURATION_LABELS, type SaturationStatus } from "@shared/metaModel";
 import { Link } from "wouter";
-import { useT } from "@/i18n";
 
 type Point = {
   slug: string;
@@ -28,7 +27,6 @@ const DOT_COLOR: Record<SaturationStatus, string> = {
  * itself a pair of rulers — instead of inside a bordered panel.
  */
 export function TrustScatter({ points }: { points: Point[] }) {
-  const t = useT();
   /**
    * Trust scores cluster in a narrow high band (roughly 45-100), so a raw 0-100
    * mapping would stack every dot against the top edge. Stretch both axes to the
@@ -56,9 +54,10 @@ export function TrustScatter({ points }: { points: Point[] }) {
   return (
     <div>
       <div className="mb-4 flex items-baseline gap-2">
-        <h3 className="text-ink-800 text-[15px]">{t.trustScatter.title}</h3>
+        <h3 className="text-ink-800 text-[15px]">可信度 × 分辨力分布</h3>
         <InfoHint>
-          {t.trustScatter.hint}
+          横轴为分辨力（还能区分多少模型差异），纵轴为可信度（这把尺子本身可不可信）。
+          右上象限是真正值得引用的指标；左下象限的指标既不可信也已失去分辨力，却仍频繁出现在发布材料中。
         </InfoHint>
       </div>
 
@@ -75,13 +74,13 @@ export function TrustScatter({ points }: { points: Point[] }) {
             className="ui absolute text-[12px]"
             style={{ right: 6, top: 5, color: "var(--sig-good)", opacity: 0.85 }}
           >
-            {t.trustScatter.quadrantGood}
+            可信 · 有分辨力
           </div>
           <div
             className="ui absolute text-[12px]"
             style={{ left: 6, bottom: 5, color: "var(--sig-danger)", opacity: 0.85 }}
           >
-            {t.trustScatter.quadrantBad}
+            低可信 · 已饱和
           </div>
           {/* median axes — the quadrant split, stated as hairlines */}
           <div
@@ -119,7 +118,7 @@ export function TrustScatter({ points }: { points: Point[] }) {
                 <TooltipContent className="text-xs">
                   <div>{p.name}</div>
                   <div className="tnum text-ink-500 mt-0.5">
-                    {t.trustScatter.tooltipTrust} {p.trustScore} · {t.trustScatter.tooltipDiscriminative} {p.discriminativePower} · {t.trustScatter.tooltipUtility} {p.utilityScore}
+                    可信 {p.trustScore} · 分辨 {p.discriminativePower} · 效用 {p.utilityScore}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -164,12 +163,12 @@ export function TrustScatter({ points }: { points: Point[] }) {
           ))}
         </div>
 
-        <div className="ui text-ink-400 absolute bottom-0 left-6 text-[12px]">{t.trustScatter.axisDiscriminative}</div>
+        <div className="ui text-ink-400 absolute bottom-0 left-6 text-[12px]">分辨力 →</div>
         <div
           className="ui text-ink-400 absolute top-0 left-0 text-[12px]"
           style={{ writingMode: "vertical-rl" }}
         >
-          {t.trustScatter.axisTrust}
+          ↑ 可信度
         </div>
       </div>
 
@@ -178,11 +177,11 @@ export function TrustScatter({ points }: { points: Point[] }) {
           {(["frontier", "contested", "saturated"] as SaturationStatus[]).map(s => (
             <span key={s} className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full" style={{ background: DOT_COLOR[s] }} />
-              <span className="ui text-ink-500 text-[9.5px]">{t.saturation[s]}</span>
+              <span className="ui text-ink-500 text-[9.5px]">{SATURATION_LABELS[s]}</span>
             </span>
           ))}
         </div>
-        <span className="ui text-ink-400 text-[9.5px]">{t.trustScatter.legendSize}</span>
+        <span className="ui text-ink-400 text-[9.5px]">点面积 ∝ 效用分</span>
       </div>
     </div>
   );

@@ -1,15 +1,7 @@
-import { useEffect, useState } from "react";
-import { Download, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useT } from "@/i18n";
+import { Download, Share, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
-/*
- * Not in the standard DOM lib, so it is declared locally. The i18n pass dropped
- * this type plus the two platform probes below and imported them from
- * `@/lib/utils`, where they never existed; they are restored here verbatim,
- * along with the original storage keys and timings (changing those would silently
- * re-prompt users who had already dismissed the banner).
- */
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -43,11 +35,9 @@ function isIos() {
  * silently does nothing.
  */
 export function InstallPrompt() {
-  const t = useT();
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === "1");
-
   /* Gate on a timer so the prompt never competes with first paint, and collapse
      it afterwards: an install banner that permanently covers the last row of a
      list is a worse offence than never offering the install at all. */
@@ -62,7 +52,6 @@ export function InstallPrompt() {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
     };
-
     window.addEventListener("beforeinstallprompt", onPrompt);
 
     // iOS never fires beforeinstallprompt, so it gets the manual steps instead.
@@ -74,7 +63,6 @@ export function InstallPrompt() {
         if (isIos()) setShowIosHint(true);
       }, APPEAR_DELAY_MS),
     );
-
     timers.push(window.setTimeout(() => setCollapsed(true), APPEAR_DELAY_MS + COLLAPSE_AFTER_MS));
 
     return () => {
@@ -100,7 +88,7 @@ export function InstallPrompt() {
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 68px)" }}
       >
         <Download className="size-3 text-frost-qing" />
-        {t.installPrompt.install}
+        安装
       </button>
     );
   }
@@ -115,16 +103,16 @@ export function InstallPrompt() {
           <Download className="size-4 text-frost-qing" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px]">{t.installPrompt.addToHomeScreen}</p>
+          <p className="text-[13px]">添加到主屏幕</p>
           {deferred ? (
             <p className="mt-0.5 text-[12px] leading-relaxed text-ink-500">
-              {t.installPrompt.offlineDesc}
+              安装后全屏运行，离线可查看上次加载的成绩与出处。
             </p>
           ) : (
             <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] leading-relaxed text-ink-500">
-              {t.installPrompt.safariStep1}
+              在 Safari 中点按
               <Share className="inline size-3 text-ink-900" />
-              {t.installPrompt.safariStep2}
+              分享，然后选择「添加到主屏幕」。
             </p>
           )}
           {deferred && (
@@ -139,13 +127,13 @@ export function InstallPrompt() {
               }}
             >
               <Download className="size-3" />
-              {t.installPrompt.install}
+              安装
             </Button>
           )}
         </div>
         <button
           onClick={dismiss}
-          aria-label={t.installPrompt.closeAria}
+          aria-label="关闭安装提示"
           className="-m-1 shrink-0 rounded p-1 text-ink-500 transition-colors hover:text-ink-900"
         >
           <X className="size-3.5" />

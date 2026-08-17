@@ -16,8 +16,8 @@ export function NoteBlock({
 }) {
   return (
     <section className="mb-6 last:mb-0">
-      <div className="ui text-ink-400 mb-2 text-[9px] tracking-[0.16em] uppercase">{label}</div>
-      <div className="ui text-ink-500 space-y-2 text-[11px] leading-relaxed">{children}</div>
+      <div className="ui text-ink-400 mb-2 text-[12px] tracking-[0.16em] uppercase">{label}</div>
+      <div className="ui text-ink-500 space-y-2 text-[12px] leading-relaxed">{children}</div>
     </section>
   );
 }
@@ -33,7 +33,7 @@ export function NoteFigure({
   return (
     <div className="hair-t pt-2">
       <div className="tnum text-ink-800 text-[17px] leading-none">{value}</div>
-      <div className="ui text-ink-500 mt-1 text-[10px] leading-relaxed">{caption}</div>
+      <div className="ui text-ink-500 mt-1 text-[12px] leading-relaxed">{caption}</div>
     </div>
   );
 }

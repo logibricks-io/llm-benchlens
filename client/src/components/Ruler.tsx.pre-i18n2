@@ -13,7 +13,6 @@
  */
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
-import { useT } from "@/i18n";
 
 /** Widest difficulty coefficient in the corpus; sets the 100% rule length. */
 export const MAX_DIFFICULTY = 2.03;
@@ -298,7 +297,6 @@ export function ProjectionRuler({
   height?: number;
   animate?: boolean;
 }) {
-  const t = useT();
   const rowGap = 46;
   const neutralY = rows.length * rowGap + 34;
   const total = Math.max(height, neutralY + 44);
@@ -361,7 +359,7 @@ export function ProjectionRuler({
         className="ui absolute text-[12px]"
         style={{ top: neutralY - 15, left: 0, color: "var(--ink-800)" }}
       >
-        {t.ruler.neutralRuler}
+        中性尺
       </div>
       <div className="absolute left-0 right-0" style={{ top: neutralY }}>
         <Ruler

@@ -1,9 +1,10 @@
 import {
+  DIFFICULTY_EXPLAIN,
   FreshnessDot,
   InfoHint,
+  NORMALIZED_EXPLAIN,
   SaturationBadge,
   SourceBadge,
-  useMetricExplain,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { Button } from "@/components/ui/button";
@@ -24,13 +25,16 @@ import { MiniRuler, toneForScore } from "@/components/Ruler";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
+  CAPABILITY_LABELS,
+  MECHANISM_LABELS,
+  SATURATION_LABELS,
+  STANCE_LABELS,
   type CapabilityDomain,
   type ScoringMechanism,
 } from "@shared/metaModel";
 import { ArrowUpDown, Columns3, ExternalLink, Filter, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { useT } from "@/i18n";
 
 type MatrixRow = {
   modelSlug: string;
@@ -77,8 +81,6 @@ const PRIOR = 50;
  */
 
 export default function Matrix() {
-  const t = useT();
-  const metricExplain = useMetricExplain();
   const matrix = trpc.models.matrix.useQuery();
   const benchmarks = trpc.benchmarks.list.useQuery();
 
@@ -172,11 +174,8 @@ export default function Matrix() {
 
   return (
     <WorkbenchLayout
-      title={t.nav.matrix}
-      subtitle={t.matrix.subtitle
-        .replace("{models}", String(modelRows.length))
-        .replace("{benchmarks}", String(columns.length))
-        .replace("{records}", String(filteredRows.length))}
+      title="指标矩阵"
+      subtitle={`${modelRows.length} 个模型 × ${columns.length} 个指标 · ${filteredRows.length} 条记录`}
       wide
       actions={
         <div className="flex items-center gap-2">
@@ -184,7 +183,7 @@ export default function Matrix() {
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs">
                 <Columns3 className="size-3" />
-                {t.common.columns}
+                列
                 {hiddenCols.size > 0 && (
                   <span className="tnum rounded-full bg-frost-qing/12 px-1.5 text-[12px] text-frost-qing">
                     -{hiddenCols.size}
@@ -194,12 +193,12 @@ export default function Matrix() {
             </PopoverTrigger>
             <PopoverContent className="w-[260px] p-0" align="end">
               <div className="flex items-center justify-between hair-b px-3 py-2">
-                <span className="text-xs">{t.matrix.visibleColumns}</span>
+                <span className="text-xs">显示的指标列</span>
                 <button
                   onClick={() => setHiddenCols(new Set())}
                   className="text-[12px] text-frost-qing hover:underline"
                 >
-                  {t.common.all}
+                  全选
                 </button>
               </div>
               <div className="max-h-[300px] overflow-y-auto p-1.5">
@@ -235,11 +234,11 @@ export default function Matrix() {
               <div className="flex items-center gap-2 rounded-sm hair-all px-2.5 py-1.5">
                 <Switch checked={normalize} onCheckedChange={setNormalize} className="scale-90" />
                 <span className="text-xs whitespace-nowrap">
-                  {normalize ? t.common.normalized : t.common.raw}
+                  {normalize ? "归一化分" : "原始分"}
                 </span>
               </div>
             </TooltipTrigger>
-            <TooltipContent className="max-w-[320px] text-xs leading-relaxed">{metricExplain.normalized}</TooltipContent>
+            <TooltipContent className="max-w-[320px] text-xs leading-relaxed">{NORMALIZED_EXPLAIN}</TooltipContent>
           </Tooltip>
           <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
             <SelectTrigger className="h-8 w-[120px] text-xs">
@@ -247,9 +246,9 @@ export default function Matrix() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="composite">{t.matrix.sortComposite}</SelectItem>
-              <SelectItem value="coverage">{t.matrix.sortCoverage}</SelectItem>
-              <SelectItem value="name">{t.matrix.sortName}</SelectItem>
+              <SelectItem value="composite">按均分</SelectItem>
+              <SelectItem value="coverage">按覆盖数</SelectItem>
+              <SelectItem value="name">按名称</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -260,7 +259,7 @@ export default function Matrix() {
       <div className="hair-b bg-background sticky top-[54px] z-20 flex flex-wrap items-center gap-2 px-7 py-2.5">
         <div className="ui text-ink-500 flex items-center gap-1.5 text-[12px]">
           <Filter className="size-3.5" />
-          <span>{t.common.filters}</span>
+          <span>筛选</span>
           {activeFilters > 0 && (
             <span className="tnum text-frost-qing text-[12px]">{activeFilters}</span>
           )}
@@ -268,39 +267,35 @@ export default function Matrix() {
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={t.matrix.searchPlaceholder}
+          placeholder="搜索模型或厂商"
           className="h-8 w-[160px] text-xs"
         />
         <FilterSelect
           value={domain}
           onChange={setDomain}
-          placeholder={t.matrix.filterDomain}
-          options={domains.map(d => ({ value: d, label: t.capability[d as keyof typeof t.capability] ?? d }))}
-          allLabel={t.matrix.filterAll}
+          placeholder="能力域"
+          options={domains.map(d => ({ value: d, label: CAPABILITY_LABELS[d as CapabilityDomain] ?? d }))}
         />
         <FilterSelect
           value={saturation}
           onChange={setSaturation}
-          placeholder={t.matrix.filterSaturation}
+          placeholder="饱和状态"
           options={["frontier", "contested", "saturated"].map(s => ({
             value: s,
-            label: t.saturation[s as keyof typeof t.saturation],
+            label: SATURATION_LABELS[s as keyof typeof SATURATION_LABELS],
           }))}
-          allLabel={t.matrix.filterAll}
         />
         <FilterSelect
           value={stance}
           onChange={setStance}
-          placeholder={t.matrix.filterStance}
-          options={stances.map(s => ({ value: s, label: t.stance[s as keyof typeof t.stance] ?? s }))}
-          allLabel={t.matrix.filterAll}
+          placeholder="出题方立场"
+          options={stances.map(s => ({ value: s, label: STANCE_LABELS[s as keyof typeof STANCE_LABELS] ?? s }))}
         />
         <FilterSelect
           value={mechanism}
           onChange={setMechanism}
-          placeholder={t.matrix.filterMechanism}
-          options={mechanisms.map(m => ({ value: m, label: t.mechanism[m as keyof typeof t.mechanism] ?? m }))}
-          allLabel={t.matrix.filterAll}
+          placeholder="评分机制"
+          options={mechanisms.map(m => ({ value: m, label: MECHANISM_LABELS[m as ScoringMechanism] ?? m }))}
         />
         {(activeFilters > 0 || query) && (
           <Button
@@ -316,7 +311,7 @@ export default function Matrix() {
             }}
           >
             <X className="size-3" />
-            {t.common.clear}
+            清除
           </Button>
         )}
       </div>
@@ -330,8 +325,8 @@ export default function Matrix() {
       ) : columns.length === 0 ? (
         <div className="flex h-[320px] items-center justify-center">
           <div className="text-center">
-            <p className="text-ink-800 text-[15px]">{t.matrix.noRecords}</p>
-            <p className="ui text-ink-500 mt-1.5 text-[12px]">{t.matrix.noRecordsHint}</p>
+            <p className="text-ink-800 text-[15px]">当前筛选组合下没有记录</p>
+            <p className="ui text-ink-500 mt-1.5 text-[12px]">尝试放宽能力域或饱和状态筛选</p>
           </div>
         </div>
       ) : (
@@ -340,13 +335,14 @@ export default function Matrix() {
             <thead>
               <tr>
                 <th className="hair-r hair-b bg-background ui text-ink-400 sticky left-0 z-10 w-[210px] min-w-[210px] px-7 py-2 text-left align-bottom text-[12px] tracking-[0.14em] uppercase">
-                  {t.matrix.colModel}
+                  模型
                 </th>
                 <th className="hair-r hair-b bg-background ui text-ink-400 sticky left-[210px] z-10 w-[64px] min-w-[64px] px-2 py-2 text-right align-bottom text-[12px] uppercase">
                   <span className="inline-flex items-center gap-1 normal-case">
-                    {t.matrix.colMean}
+                    均分
                     <InfoHint>
-                      {t.matrix.meanHint}
+                      本行已测指标的均值，并按证据条数向全库中位（50）收缩：n 条证据时观测均值仅占 n/(n+4) 权重。
+                      因此只测过一两项的模型不会靠一次高分排到前面。
                     </InfoHint>
                   </span>
                 </th>
@@ -366,7 +362,7 @@ export default function Matrix() {
                       >
                         {/* 124px of vertical room at 42° allows ~166px of run;
                             cap the label so it never climbs past the header. */}
-                        <div className="flex max-w-[158px] items-baseline gap-1.5">
+                        <div className="flex max-w-[158px] items-baseline gap-1.5 whitespace-nowrap">
                           <span className="text-ink-700 group-hover:text-ink-900 max-w-[104px] truncate text-[10.5px] transition-colors duration-150">
                             {c.name}
                           </span>
@@ -377,11 +373,11 @@ export default function Matrix() {
                               </span>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-[300px] text-xs leading-relaxed">
-                              {metricExplain.difficulty}
+                              {DIFFICULTY_EXPLAIN}
                             </TooltipContent>
                           </Tooltip>
                           {c.saturation === "saturated" && (
-                            <span className="ui text-danger shrink-0 text-[8.5px]">{t.matrix.badgeSaturated}</span>
+                            <span className="ui text-danger shrink-0 text-[8.5px]">饱和</span>
                           )}
                           {c.scoreForm === "elo" && (
                             <span className="ui text-ink-400 shrink-0 text-[8.5px]">Elo</span>
@@ -401,10 +397,10 @@ export default function Matrix() {
                       <div className="flex items-center gap-1.5">
                         <span className="text-ink-800 truncate text-[12.5px]">{m.name}</span>
                         {m.license === "open" && (
-                          <span className="ui text-good shrink-0 text-[8.5px]">{t.matrix.badgeOpen}</span>
+                          <span className="ui text-good shrink-0 text-[8.5px]">开放</span>
                         )}
                         {m.status === "superseded" && (
-                          <span className="ui text-ink-400 shrink-0 text-[8.5px]">{t.matrix.badgeSuperseded}</span>
+                          <span className="ui text-ink-400 shrink-0 text-[8.5px]">已取代</span>
                         )}
                       </div>
                       <div className="ui text-ink-400 truncate text-[9.5px]">{m.provider}</div>
@@ -449,29 +445,29 @@ export default function Matrix() {
                               {cell.modelName} · {cell.benchmarkName}
                             </div>
                             <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-ink-500">
-                              <span>{t.common.raw}</span>
+                              <span>原始分</span>
                               <span className="tnum text-right text-ink-900">
                                 {cell.rawScore}
                                 {cell.scoreForm === "elo" ? " Elo" : cell.scoreForm === "percentage" ? "%" : ""}
                               </span>
                               {cell.rawScoreSecondary !== null && (
                                 <>
-                                  <span>{cell.secondaryLabel ?? t.matrix.secondaryReading}</span>
+                                  <span>{cell.secondaryLabel ?? "第二读数"}</span>
                                   <span className="tnum text-right text-ink-900">{cell.rawScoreSecondary}</span>
                                 </>
                               )}
-                              <span>{t.common.normalized}</span>
+                              <span>归一化</span>
                               <span className="tnum text-right text-ink-900">{cell.normalized}</span>
-                              <span>{t.common.difficulty}</span>
+                              <span>难度系数</span>
                               <span className="tnum text-right text-ink-900">×{cell.difficultyCoefficient.toFixed(2)}</span>
                               {cell.benchmarkVersion && (
                                 <>
-                                  <span>{t.matrix.benchmarkVersion}</span>
+                                  <span>评测版本</span>
                                   <span className="text-right text-ink-900">{cell.benchmarkVersion}</span>
                                 </>
                               )}
-                              <span>{t.common.measured}</span>
-                              <span className="tnum text-right text-ink-900">{cell.measuredAt ?? t.matrix.unmarked}</span>
+                              <span>采集时间</span>
+                              <span className="tnum text-right text-ink-900">{cell.measuredAt ?? "未标注"}</span>
                             </div>
                             <div className="flex flex-wrap items-center gap-1 pt-0.5">
                               <SourceBadge sourceType={cell.sourceType} />
@@ -485,7 +481,7 @@ export default function Matrix() {
                                 className="flex items-center gap-1 pt-0.5 text-frost-qing hover:underline"
                               >
                                 <ExternalLink className="size-3" />
-                                <span className="truncate">{cell.sourceName ?? t.common.viewSource}</span>
+                                <span className="truncate">{cell.sourceName ?? "查看出处"}</span>
                               </a>
                             )}
                           </TooltipContent>
@@ -499,10 +495,11 @@ export default function Matrix() {
           </table>
           <div className="ui text-ink-500 flex items-center gap-2 px-7 py-4 text-[10.5px]">
             <InfoHint>
-              {t.matrix.footerHint1}
+              单元格下方短刻度的长度代表归一化分高低。点号表示该模型在该指标上没有可追溯的公开记录——缺失本身也是信息，
+              厂商通常只公布对自己有利的指标。
             </InfoHint>
             <span>
-              {t.matrix.footerHint2}
+              每个数值均可悬停查看原始分、难度系数、评测版本、采集时间与出处链接。
             </span>
           </div>
         </div>
@@ -516,13 +513,11 @@ function FilterSelect({
   onChange,
   placeholder,
   options,
-  allLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   options: Array<{ value: string; label: string }>;
-  allLabel: string;
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
@@ -530,7 +525,7 @@ function FilterSelect({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={ALL}>{placeholder} {allLabel}</SelectItem>
+        <SelectItem value={ALL}>{placeholder}（全部）</SelectItem>
         {options.map(o => (
           <SelectItem key={o.value} value={o.value}>
             {o.label}

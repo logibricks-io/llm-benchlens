@@ -1,21 +1,25 @@
 import {
   ContaminationBadge,
+  DIFFICULTY_EXPLAIN,
+  DISC_EXPLAIN,
   FreshnessDot,
   InfoHint,
   MechanismBadge,
+  NORMALIZED_EXPLAIN,
   SaturationBadge,
   ScoreMeter,
   SourceBadge,
   StanceBadge,
   StrictnessBadge,
-  useMetricExplain,
+  TRUST_EXPLAIN,
+  UTILITY_EXPLAIN,
 } from "@/components/MetaBadges";
 import { WorkbenchLayout } from "@/components/WorkbenchLayout";
 import { Ruler, MAX_DIFFICULTY, parseLeadingNumber, toneForScore } from "@/components/Ruler";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { type CapabilityDomain } from "@shared/metaModel";
+import { CAPABILITY_LABELS, type CapabilityDomain } from "@shared/metaModel";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -27,8 +31,6 @@ import {
   Users,
 } from "lucide-react";
 import { Link, useParams } from "wouter";
-import { useT } from "@/i18n";
-import type { Dict } from "@/i18n";
 
 function Field({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   if (value === null || value === undefined || value === "") return null;
@@ -55,12 +57,10 @@ function BenchmarkHero({
   difficulty,
   sota,
   rows,
-  t,
 }: {
   difficulty: number;
   sota: string | null;
   rows: Array<{ modelName: string; rawScore: number; normalized: number }>;
-  t: Dict;
 }) {
   /*
    * Three marks on one baseline collide into an unreadable smear when the models
@@ -90,20 +90,16 @@ function BenchmarkHero({
     <section className="hair-b pb-7">
       <div className="mb-5 flex flex-wrap items-baseline gap-x-6 gap-y-1">
         <span className="ui text-ink-400 text-[12px] tracking-[0.16em] uppercase">
-          {t.benchmarkDetail.thisRule}
+          这把尺 · this rule
         </span>
         <span className="ui text-ink-500 text-[12px]">
-          {t.benchmarkDetail.lengthPct.replace("{pct}", String(lengthPct))}
-          <span className="text-ink-400">
-            {t.benchmarkDetail.difficultyHint
-              .replace("{diff}", difficulty.toFixed(2))
-              .replace("{max}", String(MAX_DIFFICULTY))}
-          </span>
+          长度为满尺的 <span className="tnum text-ink-800">{lengthPct}%</span>
+          <span className="text-ink-400">（难度 ×{difficulty.toFixed(2)}，语料最严为 ×{MAX_DIFFICULTY}）</span>
         </span>
         {!sotaOnScale && sota && (
           <span className="ui text-ink-500 text-[12px]">
-            {t.benchmarkDetail.currentSota} <span className="tnum">{sota}</span>
-            <span className="text-ink-400">{t.benchmarkDetail.sotaNotOnScale}</span>
+            当前最优 <span className="tnum">{sota}</span>
+            <span className="text-ink-400">（非百分制，不画在尺上）</span>
           </span>
         )}
       </div>
@@ -112,7 +108,7 @@ function BenchmarkHero({
         <div className="py-2">
           <Ruler difficulty={difficulty} height={40} ticks={20} labelBelow />
           <p className="ui text-ink-400 mt-2 text-[12px]">
-            {t.benchmarkDetail.noPlottableScores}
+            尺已画出，但尚无可追溯的百分制成绩落在上面。
           </p>
         </div>
       ) : (
@@ -128,15 +124,13 @@ function BenchmarkHero({
               label: `${r.modelName} ${r.rawScore}`,
               tone: i === 0 ? toneForScore(r.rawScore) : "ink",
               emphasis: i === 0,
-              title: t.benchmarkDetail.markTitle
-                .replace("{raw}", String(r.rawScore))
-                .replace("{norm}", String(r.normalized)),
+              title: `原始分 ${r.rawScore} · 归一化 ${r.normalized}`,
             }))}
           />
           <p className="ui text-ink-400 mt-1 text-[12px]">
-            {t.benchmarkDetail.rulerShowsRaw}
+            尺上是<span className="text-ink-600">原始分</span>；跨指标比较请看下表的归一化列。
             {plottable.length < Math.min(3, rows.length) && (
-              <span>{t.benchmarkDetail.rulerOmittedScores}</span>
+              <span>　只画出彼此可分辨的读数，其余成绩见下表。</span>
             )}
           </p>
         </div>
@@ -148,12 +142,10 @@ function BenchmarkHero({
 export default function BenchmarkDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { data, isLoading, error } = trpc.benchmarks.detail.useQuery({ slug });
-  const t = useT();
-  const metricExplain = useMetricExplain();
 
   if (isLoading) {
     return (
-      <WorkbenchLayout title={t.benchmarkDetail.title}>
+      <WorkbenchLayout title="指标详情">
         <div className="space-y-4">
           <Skeleton className="h-[220px] w-full rounded-sm" />
           <Skeleton className="h-[320px] w-full rounded-sm" />
@@ -164,12 +156,12 @@ export default function BenchmarkDetail() {
 
   if (error || !data) {
     return (
-      <WorkbenchLayout title={t.benchmarkDetail.title}>
+      <WorkbenchLayout title="指标详情">
         <div className="hair-t p-6 text-center">
-          <p className="text-sm">{t.benchmarkDetail.notFound}</p>
+          <p className="text-sm">未找到该指标</p>
           <Link href="/benchmarks" className="mt-2 inline-flex items-center gap-1 text-xs text-frost-qing hover:underline">
             <ArrowLeft className="size-3" />
-            {t.benchmarkDetail.backToLibrary}
+            返回指标库
           </Link>
         </div>
       </WorkbenchLayout>
@@ -185,28 +177,28 @@ export default function BenchmarkDetail() {
       title={b.name}
       subtitle={
         <span className="flex items-center gap-2">
-          <Link href="/benchmarks" className="hover:text-ink-900">{t.nav.benchmarks}</Link>
+          <Link href="/benchmarks" className="hover:text-ink-900">指标库</Link>
           <span className="text-ink-400">/</span>
-          <span>{t.capability[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}</span>
+          <span>{CAPABILITY_LABELS[b.capabilityDomain as CapabilityDomain] ?? b.capabilityDomain}</span>
           {b.version && <><span className="text-ink-400">/</span><span>{b.version}</span></>}
         </span>
       }
       readNext={[
-        { href: "/matrix", label: t.nav.matrix, why: t.benchmarkDetail.readNextMatrixWhy },
-        { href: "/benchmarks", label: t.nav.benchmarks, why: t.benchmarkDetail.readNextLibraryWhy },
+        { href: "/matrix", label: "指标矩阵", why: "把这把尺与其余的尺并排比较" },
+        { href: "/benchmarks", label: "指标库", why: "返回全部指标的元模型档案" },
       ]}
       actions={
         <div className="flex items-center gap-2">
           {b.officialUrl && (
             <a href={b.officialUrl} target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-sm hair-all px-2.5 py-1.5 text-xs transition-colors duration-150 hover:bg-frost-mist/50">
-              <ExternalLink className="size-3" />{t.benchmarkDetail.officialLink}
+              <ExternalLink className="size-3" />官方
             </a>
           )}
           {b.paperUrl && (
             <a href={b.paperUrl} target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-sm hair-all px-2.5 py-1.5 text-xs transition-colors duration-150 hover:bg-frost-mist/50">
-              <BookOpen className="size-3" />{t.benchmarkDetail.paperLink}
+              <BookOpen className="size-3" />论文
             </a>
           )}
         </div>
@@ -217,7 +209,6 @@ export default function BenchmarkDetail() {
           difficulty={b.difficultyCoefficient}
           sota={b.currentSotaScore}
           rows={rows}
-          t={t}
         />
 
         {/* Credibility rating card — the most prominent element on the page. */}
@@ -231,43 +222,43 @@ export default function BenchmarkDetail() {
                 <StanceBadge stance={b.issuerStance} />
                 <ContaminationBadge risk={b.contaminationRisk} />
                 {b.isAgentic && (
-                  <span className="rounded-sm hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px]">{t.benchmarkDetail.agenticTask}</span>
+                  <span className="rounded-sm hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px]">智能体任务</span>
                 )}
                 {b.hasNegativeAssertions && (
                   <span className="rounded-sm border border-[color:var(--signal-caution)]/35 px-1.5 py-0.5 text-[12px] text-caution">
-                    {t.benchmarkDetail.negativeAssertions}
+                    含负向断言
                   </span>
                 )}
                 {b.isOpenSource && (
                   <span className="rounded-sm border border-[color:var(--signal-good)]/35 px-1.5 py-0.5 text-[12px] text-good">
-                    {t.benchmarkDetail.openSource}
+                    开源可复现
                   </span>
                 )}
               </div>
 
               <dl className="divide-y divide-border/60">
-                <Field label={t.benchmarkDetail.issuer} value={b.issuer} />
-                <Field label={t.benchmarkDetail.taskCount} value={b.taskCount} />
-                <Field label={t.benchmarkDetail.metricUnit} value={b.metricUnit} />
+                <Field label="出题方" value={b.issuer} />
+                <Field label="任务规模" value={b.taskCount} />
+                <Field label="度量单位" value={b.metricUnit} />
                 <Field
-                  label={t.benchmarkDetail.humanBaseline}
+                  label="人类基线"
                   value={b.humanBaseline}
-                  hint={t.benchmarkDetail.humanBaselineHint}
+                  hint="有绝对人类参照的指标才能回答「模型是否已达到专业水平」这类问题。缺少基线时，分数只能横向比较。"
                 />
-                <Field label={t.benchmarkDetail.currentSota} value={b.currentSotaScore} />
+                <Field label="当前最优" value={b.currentSotaScore} />
                 <Field
-                  label={t.benchmarkDetail.confidenceInterval}
+                  label="置信区间"
                   value={
                     b.ciDisclosed ? (
                       b.confidenceInterval
                     ) : (
                       <span className="inline-flex items-center gap-1 text-caution">
                         <AlertTriangle className="size-3" />
-                        {t.benchmarkDetail.notDisclosed}
+                        未披露
                       </span>
                     )
                   }
-                  hint={t.benchmarkDetail.ciHint}
+                  hint="未披露置信区间时，榜单上 1–2 个百分点的差距无法判断是否为噪声。全库仅约 13% 的指标公布了误差范围。"
                 />
               </dl>
             </div>
@@ -276,18 +267,18 @@ export default function BenchmarkDetail() {
             <div className="space-y-3 rounded-sm hair-all bg-background p-4">
               <div className="flex items-baseline justify-between">
                 <span className="flex items-center gap-1 text-[12px] tracking-wide text-ink-500 uppercase">
-                  {t.common.utility}
-                  <InfoHint>{metricExplain.utility}</InfoHint>
+                  效用分
+                  <InfoHint>{UTILITY_EXPLAIN}</InfoHint>
                 </span>
                 <span className="tnum text-2xl leading-none text-frost-qing">{b.utilityScore}</span>
               </div>
               <div className="space-y-2.5 hair-t pt-3">
-                <ScoreMeter value={b.trustScore} label={t.common.trust} explain={metricExplain.trust} />
-                <ScoreMeter value={b.discriminativePower} label={t.common.resolution} explain={metricExplain.discriminative} tone="violet" />
+                <ScoreMeter value={b.trustScore} label="可信度" explain={TRUST_EXPLAIN} />
+                <ScoreMeter value={b.discriminativePower} label="分辨力" explain={DISC_EXPLAIN} tone="violet" />
                 <div className="flex items-baseline justify-between pt-1">
                   <span className="flex items-center gap-1 text-[12px] text-ink-500">
-                    {t.common.difficulty}
-                    <InfoHint>{metricExplain.difficulty}</InfoHint>
+                    难度系数
+                    <InfoHint>{DIFFICULTY_EXPLAIN}</InfoHint>
                   </span>
                   <span className="tnum text-sm text-caution">
                     ×{b.difficultyCoefficient.toFixed(2)}
@@ -305,7 +296,7 @@ export default function BenchmarkDetail() {
               <div className="hair-t border-[color:var(--signal-caution)]/25 p-4">
                 <div className="mb-2 flex items-center gap-1.5">
                   <AlertTriangle className="size-3.5 text-caution" />
-                  <h3 className="text-[13px]">{t.benchmarkDetail.caveat}</h3>
+                  <h3 className="text-[13px]">解读警示</h3>
                 </div>
                 <p className="text-xs leading-relaxed text-ink-500">{b.interpretationCaveat}</p>
               </div>
@@ -314,7 +305,7 @@ export default function BenchmarkDetail() {
               <div className="hair-t p-4">
                 <div className="mb-2 flex items-center gap-1.5">
                   <Target className="size-3.5 text-frost-qing" />
-                  <h3 className="text-[13px]">{t.benchmarkDetail.scenarioMapping}</h3>
+                  <h3 className="text-[13px]">对应落地场景</h3>
                 </div>
                 <p className="text-xs leading-relaxed text-ink-500">{b.scenarioMapping}</p>
               </div>
@@ -335,16 +326,16 @@ export default function BenchmarkDetail() {
             <div className="flex items-center justify-between hair-b px-4 py-2.5">
               <div className="flex items-center gap-1.5">
                 <Users className="size-3.5 text-ink-500" />
-                <h3 className="text-[13px]">{t.benchmarkDetail.scoreRecords}</h3>
+                <h3 className="text-[13px]">分数记录</h3>
                 <span className="tnum text-[12px] text-ink-500">{rows.length}</span>
               </div>
-              <InfoHint>{metricExplain.normalized}</InfoHint>
+              <InfoHint>{NORMALIZED_EXPLAIN}</InfoHint>
             </div>
             {rows.length === 0 ? (
               <div className="px-4 py-10 text-center">
-                <p className="text-sm">{t.benchmarkDetail.noRecordsTitle}</p>
+                <p className="text-sm">尚无收录的分数记录</p>
                 <p className="mt-1 text-xs text-ink-500">
-                  {t.benchmarkDetail.noRecordsDesc}
+                  该指标已纳入元模型库，但还没有可追溯出处的模型成绩。
                 </p>
               </div>
             ) : (
@@ -352,11 +343,11 @@ export default function BenchmarkDetail() {
                 <thead>
                   <tr className="hair-b text-[12px] tracking-wide text-ink-500 uppercase">
                     <th className="w-8 px-3 py-2 text-right">#</th>
-                    <th className="px-3 py-2 text-left">{t.benchmarkDetail.colModel}</th>
-                    <th className="px-3 py-2 text-right">{t.common.raw}</th>
-                    <th className="px-3 py-2 text-right">{t.common.normalized}</th>
-                    <th className="px-3 py-2 text-left">{t.common.source}</th>
-                    <th className="px-4 py-2 text-right">{t.common.measured}</th>
+                    <th className="px-3 py-2 text-left">模型</th>
+                    <th className="px-3 py-2 text-right">原始分</th>
+                    <th className="px-3 py-2 text-right">归一化</th>
+                    <th className="px-3 py-2 text-left">出处</th>
+                    <th className="px-4 py-2 text-right">采集</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -368,7 +359,7 @@ export default function BenchmarkDetail() {
                           <span className="truncate text-[13px]">{r.modelName}</span>
                           {r.license === "open" && (
                             <span className="shrink-0 rounded border border-[color:var(--signal-good)]/35 px-1 text-[12px] text-good">
-                              {t.benchmarkDetail.openLicense}
+                              开放
                             </span>
                           )}
                         </div>
@@ -425,19 +416,19 @@ export default function BenchmarkDetail() {
           <div className="hair-t h-fit p-4">
             <div className="mb-3 flex items-center gap-1.5">
               <GitBranch className="size-3.5 text-ink-500" />
-              <h3 className="text-[13px]">{t.benchmarkDetail.versionHistory}</h3>
+              <h3 className="text-[13px]">版本谱系</h3>
             </div>
             {data.versions.length === 0 ? (
-              <p className="text-xs text-ink-500">{t.benchmarkDetail.noVersions}</p>
+              <p className="text-xs text-ink-500">暂无版本记录。</p>
             ) : (
               <div className="space-y-2">
                 {data.versions.map(v => (
                   <div key={v.version} className="rounded-sm hair-all bg-background px-2.5 py-2">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className={cn("truncate font-mono text-[12px]", v.version === "" && "text-ink-500")}>
-                        {v.version === "" ? t.benchmarkDetail.unlabeledVersion : v.version}
+                      <span className={cn("truncate font-mono text-[12px]", v.version === "未标注版本" && "text-ink-500")}>
+                        {v.version}
                       </span>
-                      <span className="tnum shrink-0 text-[12px] text-ink-500">{t.benchmarkDetail.versionCount.replace("{n}", String(v.count))}</span>
+                      <span className="tnum shrink-0 text-[12px] text-ink-500">{v.count} 条</span>
                     </div>
                     {(v.firstSeen || v.lastSeen) && (
                       <div className="tnum mt-0.5 text-[12px] text-ink-400">
@@ -449,7 +440,8 @@ export default function BenchmarkDetail() {
               </div>
             )}
             <p className="mt-3 hair-t pt-2.5 text-[12px] leading-relaxed text-ink-500">
-              {t.benchmarkDetail.versionCaveat}
+              版本号即难度。同一评测的不同版本通常刻意提高了难度上限，跨版本的分数不可直接比较——
+              把 v2.1 的 88% 与 v3.0 的 26% 并列是典型误读。
             </p>
           </div>
         </div>

@@ -16,36 +16,46 @@ interface ThemeProviderProps {
   switchable?: boolean;
 }
 
+const STORAGE_KEY = "benchlens.theme";
+
+/**
+ * Dark is the default. The token layer puts the dark ramp on `:root` and the
+ * light ramp on `.light`, so BOTH themes need an explicit class — the previous
+ * implementation only added `.dark` and relied on "no class" meaning light,
+ * which silently broke the moment the defaults were inverted.
+ */
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
   switchable = false,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
+    if (!switchable) return defaultTheme;
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "light" || stored === "dark") return stored;
+    } catch {
+      /* private mode — fall through to the default */
     }
     return defaultTheme;
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+    root.style.colorScheme = theme;
     if (switchable) {
-      localStorage.setItem("theme", theme);
+      try {
+        localStorage.setItem(STORAGE_KEY, theme);
+      } catch {
+        /* ignore */
+      }
     }
   }, [theme, switchable]);
 
   const toggleTheme = switchable
-    ? () => {
-        setTheme(prev => (prev === "light" ? "dark" : "light"));
-      }
+    ? () => setTheme(prev => (prev === "light" ? "dark" : "light"))
     : undefined;
 
   return (

@@ -7,16 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { type CapabilityDomain } from "@shared/metaModel";
+import { CAPABILITY_LABELS, type CapabilityDomain } from "@shared/metaModel";
 import { ArrowUpDown, GitCompareArrows, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { useT } from "@/i18n";
 
 const ALL = "__all__";
 
 export default function Models() {
-  const t = useT();
   const { data, isLoading } = trpc.models.list.useQuery();
   const [query, setQuery] = useState("");
   const [provider, setProvider] = useState(ALL);
@@ -51,30 +49,30 @@ export default function Models() {
 
   return (
     <WorkbenchLayout
-      title={t.nav.models}
-      subtitle={t.models.subtitle.replace("{filtered}", String(filtered.length)).replace("{total}", String(rows.length))}
+      title="模型库"
+      subtitle={`${filtered.length} / ${rows.length} 个模型 · 综合分按证据权重加权`}
       readNext={[
-        { href: "/compare", label: t.nav.compare, why: t.models.readNextCompare },
-        { href: "/matrix", label: t.nav.matrix, why: t.models.readNextMatrix },
+        { href: "/compare", label: "对战台", why: "选定两三个模型做同尺对比" },
+        { href: "/matrix", label: "指标矩阵", why: "逐格查看每个读数的出处与采集时间" },
       ]}
       aside={
         <>
-          <NoteBlock label={t.models.noteCompositeTitle}>
+          <NoteBlock label="综合分为何不是平均分">
             <p>
-              {t.models.noteCompositeP1Prefix}
+              观测均值按证据条数向全库中位收缩：n 条证据时，观测值只占
               <span className="tnum"> n/(n+4) </span>
-              {t.models.noteCompositeP1Suffix}
+              权重。
             </p>
             <p>
-              {t.models.noteCompositeP2Prefix}
-              <strong className="text-ink-700">{t.models.noteCompositeP2Strong}</strong>
+              所以只测过一两项的模型不会靠一次高分冲到榜首——
+              <strong className="text-ink-700">少量证据本身就是不确定性</strong>。
             </p>
           </NoteBlock>
-          <NoteBlock label={t.models.noteBlankTitle}>
+          <NoteBlock label="缺格的含义">
             <p>
-              {t.models.noteBlankP1Prefix}
-              <strong className="text-ink-700">{t.common.noPublicRecord}</strong>
-              {t.models.noteBlankP1Suffix}
+              空白不代表能力弱，只代表
+              <strong className="text-ink-700">没有可追溯的公开记录</strong>
+              。本库拒收无出处的分数。
             </p>
           </NoteBlock>
         </>
@@ -86,43 +84,43 @@ export default function Models() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="composite">{t.models.sortComposite}</SelectItem>
-            <SelectItem value="coverage">{t.models.sortCoverage}</SelectItem>
-            <SelectItem value="price">{t.models.sortPrice}</SelectItem>
-            <SelectItem value="name">{t.models.sortName}</SelectItem>
+            <SelectItem value="composite">按综合分</SelectItem>
+            <SelectItem value="coverage">按证据条数</SelectItem>
+            <SelectItem value="price">按输出价格</SelectItem>
+            <SelectItem value="name">按名称</SelectItem>
           </SelectContent>
         </Select>
       }
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t.models.searchPlaceholder} className="h-8 w-[180px] text-xs" />
+        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索模型或厂商" className="h-8 w-[180px] text-xs" />
         <Select value={provider} onValueChange={setProvider}>
-          <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder={t.common.provider} /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="厂商" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>{t.models.providerAll}</SelectItem>
+            <SelectItem value={ALL}>厂商（全部）</SelectItem>
             {providers.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={license} onValueChange={setLicense}>
-          <SelectTrigger className="h-8 w-[124px] text-xs"><SelectValue placeholder={t.models.licensePlaceholder} /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[124px] text-xs"><SelectValue placeholder="权重形态" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>{t.models.licenseAll}</SelectItem>
-            <SelectItem value="open">{t.common.openWeights}</SelectItem>
-            <SelectItem value="closed">{t.common.closedWeights}</SelectItem>
+            <SelectItem value={ALL}>权重形态（全部）</SelectItem>
+            <SelectItem value="open">开放权重</SelectItem>
+            <SelectItem value="closed">闭源</SelectItem>
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-8 w-[124px] text-xs"><SelectValue placeholder={t.models.statusPlaceholder} /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[124px] text-xs"><SelectValue placeholder="世代状态" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>{t.models.statusAll}</SelectItem>
-            <SelectItem value="current">{t.common.currentGen}</SelectItem>
-            <SelectItem value="superseded">{t.common.superseded}</SelectItem>
+            <SelectItem value={ALL}>世代状态（全部）</SelectItem>
+            <SelectItem value="current">当前世代</SelectItem>
+            <SelectItem value="superseded">已被取代</SelectItem>
           </SelectContent>
         </Select>
         {(activeFilters > 0 || query) && (
           <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-xs"
             onClick={() => { setProvider(ALL); setLicense(ALL); setStatus(ALL); setQuery(""); }}>
-            <X className="size-3" />{t.common.clear}
+            <X className="size-3" />清除
           </Button>
         )}
       </div>
@@ -136,23 +134,25 @@ export default function Models() {
           <table className="w-full text-sm">
             <thead>
               <tr className="hair-b text-[12px] tracking-wide text-ink-500 uppercase">
-                <th className="px-4 py-2 text-left">{t.models.colModel}</th>
-                <th className="px-3 py-2 text-left">{t.models.colCoverage}</th>
+                <th className="px-4 py-2 text-left">模型</th>
+                <th className="px-3 py-2 text-left">能力覆盖</th>
                 <th className="px-3 py-2 text-right">
                   <span className="inline-flex items-center gap-1">
-                    {t.common.composite}
+                    综合分
                     <InfoHint>
-                      {t.metricExplain.composite}
+                      对该模型所有归一化分做证据加权平均，再按证据条数向全库中位（50）收缩：
+                      n 条证据时观测均值只占 n/(n+4) 的权重。这样仅有一两条成绩的模型不会因为一次高分登顶。
+                      权重本身由指标可信度、分辨力与出处强度合成。
                     </InfoHint>
                   </span>
                 </th>
                 <th className="px-3 py-2 text-right">
                   <span className="inline-flex items-center gap-1">
-                    {t.common.evidence}
-                    <InfoHint>{t.metricExplain.evidence}</InfoHint>
+                    证据
+                    <InfoHint>该模型的成绩条数，以及由此得出的置信度 n/(n+4)。置信度越低，综合分越被拉向中位。</InfoHint>
                   </span>
                 </th>
-                <th className="px-4 py-2 text-right">{t.common.outputPrice}</th>
+                <th className="px-4 py-2 text-right">输出价格</th>
                 <th className="px-4 py-2 text-right"></th>
               </tr>
             </thead>
@@ -163,29 +163,29 @@ export default function Models() {
                     <div className="flex items-center gap-1.5">
                       <span className="text-[13px]">{m.name}</span>
                       {m.license === "open" && (
-                        <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[12px] text-good">{t.common.openWeights}</span>
+                        <span className="rounded border border-[color:var(--signal-good)]/35 px-1 text-[12px] text-good">开放权重</span>
                       )}
-                      {m.status === "superseded" && <span className="text-[12px] text-ink-400">{t.common.superseded}</span>}
+                      {m.status === "superseded" && <span className="text-[12px] text-ink-400">已被取代</span>}
                       {m.isReasoning && (
-                        <span className="rounded hair-all px-1 text-[12px] text-ink-500">{t.common.reasoning}</span>
+                        <span className="rounded hair-all px-1 text-[12px] text-ink-500">推理型</span>
                       )}
                     </div>
                     <div className="text-[12px] text-ink-500">
                       {m.provider}
-                      {m.contextWindow ? ` · ${t.common.context} ${m.contextWindow}` : ""}
+                      {m.contextWindow ? ` · 上下文 ${m.contextWindow}` : ""}
                     </div>
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap gap-1">
                       {m.domains.slice(0, 4).map(d => (
                         <span key={d} className="rounded hair-all bg-frost-mist/50 px-1.5 py-0.5 text-[12px] text-ink-500">
-                          {t.capability[d as CapabilityDomain] ?? d}
+                          {CAPABILITY_LABELS[d as CapabilityDomain] ?? d}
                         </span>
                       ))}
                       {m.domains.length > 4 && (
                         <span className="text-[12px] text-ink-400">+{m.domains.length - 4}</span>
                       )}
-                      {m.domains.length === 0 && <span className="text-[12px] text-ink-500/50">{t.common.noPublicRecord}</span>}
+                      {m.domains.length === 0 && <span className="text-[12px] text-ink-500/50">无公开记录</span>}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -194,7 +194,7 @@ export default function Models() {
                         {m.compositeScore ?? "—"}
                       </span>
                       {m.rawMean !== null && m.confidence < 0.8 && (
-                        <span className="tnum text-[12px] text-ink-400">{t.common.observed} {m.rawMean}</span>
+                        <span className="tnum text-[12px] text-ink-400">观测 {m.rawMean}</span>
                       )}
                     </div>
                   </td>
@@ -203,7 +203,7 @@ export default function Models() {
                       <span className="tnum text-xs text-ink-500">{m.coverage}</span>
                       <span
                         className="h-1 w-8 shrink-0 overflow-hidden rounded-full bg-frost-mist/50"
-                        title={t.models.confidenceTooltip.replace("{n}", String(Math.round(m.confidence * 100)))}
+                        title={`置信度 ${Math.round(m.confidence * 100)}%`}
                       >
                         <span
                           className={cn(
@@ -228,7 +228,7 @@ export default function Models() {
                       className="inline-flex items-center gap-1 rounded hair-all px-2 py-1 text-[12px] whitespace-nowrap text-ink-500 transition-colors duration-150 hover:border-frost-qing/40 hover:text-frost-qing"
                     >
                       <GitCompareArrows className="size-3" />
-                      {t.models.compareAction}
+                      对比
                     </Link>
                   </td>
                 </tr>

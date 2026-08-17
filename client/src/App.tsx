@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { I18nProvider } from "./i18n";
 import BenchmarkDetail from "./pages/BenchmarkDetail";
 import Benchmarks from "./pages/Benchmarks";
 import Compare from "./pages/Compare";
@@ -41,14 +42,17 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      {/* Frost (light) is the stated design position; 夜霜 stays available
-          because this is a tool people read for long stretches. */}
-      <ThemeProvider defaultTheme="light" switchable>
-        <TooltipProvider delayDuration={200}>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      {/* Dark is the default per requirement; the frost light variant stays
+          available because this is a tool people read for long stretches.
+          English is the default language, Chinese is one click away. */}
+      <I18nProvider>
+        <ThemeProvider defaultTheme="dark" switchable>
+          <TooltipProvider delayDuration={200}>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </I18nProvider>
     </ErrorBoundary>
   );
 }
